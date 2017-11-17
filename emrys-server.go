@@ -53,7 +53,7 @@ func Auth(handler http.Handler) http.Handler {
 			realm := "test"
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 			w.WriteHeader(401)
-			w.Write([]byte("Unauthorized.\n"))
+			w.Write([]byte("Unauthorized. Please provide username and password, or create an account at https://emrys.io\n"))
 			fmt.Printf("Unauthorized attempt. User: %s\n", user)
 			return
 		}
