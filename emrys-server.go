@@ -50,9 +50,9 @@ func Auth(handler http.Handler) http.Handler {
 		user, pass, ok := r.BasicAuth()
 		if !ok || !check(user, pass) {
 			// http.Error(w, "Unauthorized.", http.StatusUnauthorized)
-			realm := "test"
+			realm := "Please provide a username and password."
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-			w.WriteHeader(401)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Unauthorized. Please provide username and password, or create an account at https://emrys.io\n"))
 			fmt.Printf("Unauthorized attempt. User: %s\n", user)
 			return
