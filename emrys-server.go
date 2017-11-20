@@ -2,14 +2,24 @@ package main
 
 import (
 	"crypto/subtle"
-	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 )
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "hello, world")
+}
+
+func upload(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading request body from POST /job/upload: %v\n", err)
+	}
+	log.Printf("Body: %s\n", body)
+	io.WriteString(w, "Upload accepted!")
 }
 
 var mux map[string]func(http.ResponseWriter, *http.Request)
@@ -22,8 +32,9 @@ func main() {
 
 	mux = make(map[string]func(http.ResponseWriter, *http.Request))
 	mux["/"] = hello
+	mux["/job/upload"] = upload
 
-	fmt.Printf("Listening on port %s...\n", server.Addr)
+	log.Printf("Listening on port %s...\n", server.Addr)
 	log.Fatal(server.ListenAndServe())
 }
 
@@ -40,7 +51,13 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+		log.Printf("%s %s %s\n", r.Method, r.URL, r.RemoteAddr)
+		// Save a copy of this request for debugging.
+		requestDump, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println(string(requestDump))
 		handler.ServeHTTP(w, r)
 	})
 }
@@ -49,15 +66,14 @@ func Auth(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
 		if !ok || !check(user, pass) {
-			// http.Error(w, "Unauthorized.", http.StatusUnauthorized)
 			realm := "Please provide a username and password."
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Unauthorized. Please provide username and password, or create an account at https://emrys.io\n"))
-			fmt.Printf("Unauthorized attempt. User: %s\n", user)
+			log.Printf("Unauthorized attempt. User: %s\n", user)
 			return
 		}
-		fmt.Printf("Authorized user: %s\n", user)
+		log.Printf("Authorized user: %s\n", user)
 		handler.ServeHTTP(w, r)
 	})
 }
@@ -65,12 +81,5 @@ func Auth(handler http.Handler) http.Handler {
 func check(user, pass string) bool {
 	username := "admin"
 	password := "123456"
-	// fmt.Printf("user: %s\n", user)
-	// fmt.Printf("username: %s\n", username)
-	// fmt.Printf("pass: %s\n", pass)
-	// fmt.Printf("password: %s\n", password)
-	// fmt.Printf("user v username: %v\n", subtle.ConstantTimeCompare([]byte(user), []byte(username)))
-	// fmt.Printf("pass v password: %v\n", subtle.ConstantTimeCompare([]byte(pass), []byte(password)))
-	// fmt.Printf("authorized? %v\n", subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1)
 	return subtle.ConstantTimeCompare([]byte(user), []byte(username)) == 1 && subtle.ConstantTimeCompare([]byte(pass), []byte(password)) == 1
 }
