@@ -2,11 +2,13 @@ package main
 
 import (
 	"crypto/subtle"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"os"
+	"syscall"
 )
 
 func hello(w http.ResponseWriter, r *http.Request) {
@@ -14,12 +16,48 @@ func hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func upload(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading request body from POST /job/upload: %v\n", err)
+	if r.Method == "POST" {
+		maxMemory := int64(1) << 31
+		err := r.ParseMultipartForm(maxMemory)
+		if err != nil {
+			log.Printf("Error parsing request: %v\n", err)
+		}
+
+		trainTempFile, trainHandler, err := r.FormFile("Train")
+		if err != nil {
+			log.Printf("Error opening form file: %v\n", err)
+		}
+		defer trainTempFile.Close()
+
+		username, _, _ := r.BasicAuth()
+		trainDir := "./user-upload/" + username + "/"
+		// TODO: THIS FEELS DANGEROUS; IS THERE A SAFER WAY?
+		// error behavior without adjusting umask:
+		// directory without execution / writing bits cannot be written to
+		oldUmask := syscall.Umask(022)
+		log.Printf("Old Umask: %v\n", oldUmask)
+		if err = os.MkdirAll(trainDir, 0777); err != nil {
+			log.Printf("Error creating directory %s: %v\n", trainDir, err)
+		}
+		_ = syscall.Umask(oldUmask)
+		trainPath := trainDir + trainHandler.Filename
+		f, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			log.Printf("Error opening new file for saving: %v\n", err)
+		}
+		defer f.Close()
+
+		n, err := io.Copy(f, trainTempFile)
+		if err != nil {
+			log.Printf("Error copying file from POST /job/upload: %v\n", err)
+		}
+
+		// send response to client
+		io.WriteString(w, fmt.Sprintf("%d bytes recieved and saved.\n", n))
+	} else {
+		log.Printf("Upload received non-POST method.\n")
+		io.WriteString(w, "Upload only receives POSTs.\n")
 	}
-	log.Printf("Body: %s\n", body)
-	io.WriteString(w, "Upload accepted!")
 }
 
 var mux map[string]func(http.ResponseWriter, *http.Request)
