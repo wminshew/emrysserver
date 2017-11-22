@@ -39,6 +39,29 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		}
 		_ = syscall.Umask(oldUmask)
 
+		// open reader on Requirements file
+		requirementsTempFile, requirementsHandler, err := r.FormFile("Requirements")
+		if err != nil {
+			log.Printf("Error reading requirements form file: %v\n", err)
+		}
+		defer requirementsTempFile.Close()
+
+		// create new file to save down Requirements file on disk
+		requirementsPath := userDir + requirementsHandler.Filename
+		// TODO: may have to chmod this file later to execute; may need to update
+		// file permissions here for ease later
+		requirementsFile, err := os.OpenFile(requirementsPath, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			log.Printf("Error opening requirements file: %v\n", err)
+		}
+		defer requirementsFile.Close()
+
+		// copy Requirements file contents to disk
+		n_requirements, err := io.Copy(requirementsFile, requirementsTempFile)
+		if err != nil {
+			log.Printf("Error copying requirements file to disk: %v\n", err)
+		}
+
 		// open reader on Train file
 		trainTempFile, trainHandler, err := r.FormFile("Train")
 		if err != nil {
@@ -46,8 +69,9 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		}
 		defer trainTempFile.Close()
 
+		// create new file to save down Train file on disk
 		trainPath := userDir + trainHandler.Filename
-		// TODO: would have to chmod this file later to execute; may need to update
+		// TODO: may have to chmod this file later to execute; may need to update
 		// file permissions here for ease later
 		trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
@@ -55,6 +79,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		}
 		defer trainFile.Close()
 
+		// copy Train file contents to disk
 		n_train, err := io.Copy(trainFile, trainTempFile)
 		if err != nil {
 			log.Printf("Error copying train file to disk: %v\n", err)
@@ -66,6 +91,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		}
 		defer dataTempFile.Close()
 
+		// create new file to save down Data Dir on disk
 		dataPath := userDir + dataHandler.Filename
 		dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
@@ -73,12 +99,13 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		}
 		defer dataFile.Close()
 
+		// copy Data Dir contents to disk
 		n_data, err := io.Copy(dataFile, dataTempFile)
 		if err != nil {
 			log.Printf("Error copying data file to disk: %v\n", err)
 		}
 
-		// untar/gzip the file
+		// untar/gzip Data Dir
 		err = archiver.TarGz.Open(dataPath, userDir)
 		if err != nil {
 			log.Printf("Error unzipping data dir: %v\n", err)
@@ -86,7 +113,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		defer os.Remove(dataPath)
 
 		// send response to client
-		io.WriteString(w, fmt.Sprintf("%d bytes recieved and saved.\n", n_train+n_data))
+		io.WriteString(w, fmt.Sprintf("%d bytes recieved and saved.\n", n_train+n_data+n_requirements))
 	} else {
 		log.Printf("Upload received non-POST method.\n")
 		io.WriteString(w, "Upload only receives POSTs.\n")
