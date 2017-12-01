@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"os/exec"
 	"syscall"
 )
 
@@ -28,7 +29,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 		// if doesn't exist yet, create user directory for uploads
 		username, _, _ := r.BasicAuth()
-		// TODO: add extra director layer for job number; return job number to client
+		// TODO: add extra directory layer for job number; return job number to client
 		userDir := "./user-upload/" + username + "/"
 		// TODO: THIS FEELS DANGEROUS; IS THERE A SAFER WAY?
 		// error behavior without adjusting umask:
@@ -71,13 +72,14 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 		// create new file to save down Train file on disk
 		trainPath := userDir + trainHandler.Filename
-		// TODO: may have to chmod this file later to execute; may need to update
-		// file permissions here for ease later
+		// TODO: do i need to use Umask? running with python, still not sure if safe..
+		// oldUmask = syscall.Umask(022)
 		trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			log.Printf("Error opening train file: %v\n", err)
 		}
 		defer trainFile.Close()
+		// _ = syscall.Umask(oldUmask)
 
 		// copy Train file contents to disk
 		n_train, err := io.Copy(trainFile, trainTempFile)
@@ -98,6 +100,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error opening data file: %v\n", err)
 		}
 		defer dataFile.Close()
+		defer os.Remove(dataPath)
 
 		// copy Data Dir contents to disk
 		n_data, err := io.Copy(dataFile, dataTempFile)
@@ -110,10 +113,23 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Error unzipping data dir: %v\n", err)
 		}
-		defer os.Remove(dataPath)
 
 		// send response to client
-		io.WriteString(w, fmt.Sprintf("%d bytes recieved and saved.\n", n_train+n_data+n_requirements))
+		n := n_train + n_data + n_requirements
+		io.WriteString(w, fmt.Sprintf("%d bytes recieved and saved.\n", n))
+
+		// execute train.py
+		// TODO: make safer..?
+		log.Printf("Executing: python %s\n", trainPath)
+		trainCmd := exec.Command("python", trainPath)
+		trainOut, err := trainCmd.Output()
+		if err != nil {
+			log.Printf("Error executing %s: %v\n", trainPath, err)
+			io.WriteString(w, fmt.Sprintf("Failure executing %s\n", trainHandler.Filename))
+		} else {
+			log.Printf("Output: \n%s\n", string(trainOut))
+			io.WriteString(w, string(trainOut))
+		}
 	} else {
 		log.Printf("Upload received non-POST method.\n")
 		io.WriteString(w, "Upload only receives POSTs.\n")
