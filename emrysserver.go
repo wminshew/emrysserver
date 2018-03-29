@@ -116,12 +116,17 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, fmt.Sprintf("%d bytes recieved and saved.\n", n))
 
 		// execute train.py
+		venv := "venv-" + username
 		// TODO: make safer..?
 		log.Printf("Executing: python %s\n", trainPath)
-		trainCmd := exec.Command("python", trainPath)
+		// trainCmd := exec.Command("python", trainPath)
+		longCmdString := fmt.Sprintf("source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv -r %s %s; python %s; deactivate; rmvirtualenv %s",
+			requirementsPath, venv, trainPath, venv)
+		log.Printf("Executing: %s\n", longCmdString)
+		trainCmd := exec.Command("bash", "-c", longCmdString)
 		trainOut, err := trainCmd.Output()
 		if err != nil {
-			log.Printf("Error executing %s: %v\n", trainPath, err)
+			log.Printf("Error executing %s: %v\n", longCmdString, err)
 			io.WriteString(w, fmt.Sprintf("Failure executing %s\n", trainHandler.Filename))
 		} else {
 			log.Printf("Output: \n%s\n", string(trainOut))
