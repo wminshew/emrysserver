@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 )
 
@@ -44,7 +45,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		defer requirementsTempFile.Close()
 
 		// create new file to save down Requirements file on disk
-		requirementsPath := userDir + requirementsHandler.Filename
+		requirementsPath := userDir + filepath.Base(requirementsHandler.Filename)
 		// TODO: may have to chmod this file later to execute; may need to update
 		// file permissions here for ease later
 		requirementsFile, err := os.OpenFile(requirementsPath, os.O_WRONLY|os.O_CREATE, 0666)
@@ -67,7 +68,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		defer trainTempFile.Close()
 
 		// create new file to save down Train file on disk
-		trainPath := userDir + trainHandler.Filename
+		trainPath := userDir + filepath.Base(trainHandler.Filename)
 		// TODO: do i need to use Umask? running with python, still not sure if safe..
 		// oldUmask = syscall.Umask(022)
 		trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE, 0666)
@@ -90,7 +91,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		defer dataTempFile.Close()
 
 		// create new file to save down Data Dir on disk
-		dataPath := userDir + dataHandler.Filename
+		dataPath := userDir + filepath.Base(dataHandler.Filename)
 		dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			log.Printf("Error opening data file: %v\n", err)
