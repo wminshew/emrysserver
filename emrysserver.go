@@ -13,10 +13,6 @@ import (
 	"syscall"
 )
 
-func hello(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "hello, world")
-}
-
 func upload(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		// parse multipart Form request; limit memory usage
@@ -145,7 +141,6 @@ func main() {
 	}
 
 	mux = make(map[string]func(http.ResponseWriter, *http.Request))
-	mux["/"] = hello
 	mux["/job/upload"] = upload
 
 	log.Printf("Listening on port %s...\n", server.Addr)
