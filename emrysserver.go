@@ -118,7 +118,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		// execute train.py
 		venv := "venv-" + username
 		// TODO: make safer..?
-		log.Printf("Executing: python %s\n", trainPath)
+		// log.Printf("Executing: python %s\n", trainPath)
 		// trainCmd := exec.Command("python", trainPath)
 		longCmdString := fmt.Sprintf("source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv -r %s %s; python %s; deactivate; rmvirtualenv %s",
 			requirementsPath, venv, trainPath, venv)
