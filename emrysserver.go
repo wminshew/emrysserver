@@ -120,6 +120,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		// TODO: make safer..?
 		// log.Printf("Executing: python %s\n", trainPath)
 		// trainCmd := exec.Command("python", trainPath)
+		// TODO: files downloaded from web in trainPath are ending up in server folder; should be executing from more isolated environment in user folder
 		longCmdString := fmt.Sprintf("source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv -r %s %s; python %s; deactivate; rmvirtualenv %s",
 			requirementsPath, venv, trainPath, venv)
 		log.Printf("Executing: %s\n", longCmdString)
