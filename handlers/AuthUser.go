@@ -7,7 +7,7 @@ import (
 )
 
 // UserAuth authenticates users against database
-func UserAuth(handler http.Handler) http.Handler {
+func AuthUser(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
 		if !ok || !auth(user, pass) {
