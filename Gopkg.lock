@@ -15,6 +15,15 @@
   revision = "cc9eb1d7ad760af14e8f918698f745e80377af4f"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/lib/pq"
+  packages = [
+    ".",
+    "oid"
+  ]
+  revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
+
+[[projects]]
   name = "github.com/mholt/archiver"
   packages = ["."]
   revision = "cdc68dd1f170b8dfc1a0d2231b5bb0967ed67006"
@@ -49,6 +58,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "806e925a3584d291ed2524487183f524441de7f526271d377388472a16b50493"
+  inputs-digest = "10f96aec6ccdc4b45259713efaa08f70125b8dfce5d78262c9ea0ea34acbbd50"
   solver-name = "gps-cdcl"
   solver-version = 1

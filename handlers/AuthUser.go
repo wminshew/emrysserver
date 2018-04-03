@@ -2,6 +2,10 @@
 package handlers
 
 import (
+	"database/sql"
+	"encoding/json"
+	"github.com/wminshew/emrysserver/db"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 )
@@ -9,16 +13,38 @@ import (
 // UserAuth authenticates users against database
 func AuthUser(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
-		if !ok || !auth(user, pass) {
-			realm := "Please provide a valid username and password."
-			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte("Unauthorized. Please provide valid username and password. Accounts are created at https://emrys.io\n"))
-			log.Printf("Unauthorized attempt. User: %s\n", user)
+		creds := &Credentials{}
+		err := json.NewDecoder(r.Body).Decode(creds)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Printf("Error decoding json:\n", err)
 			return
 		}
-		log.Printf("Authorized user: %s\n", user)
+
+		storedCreds := &Credentials{}
+		// errors from QueryRow are defered until Scan is called
+		result := db.Db.QueryRow("SELECT password FROM users WHERE username=$1", creds.Username)
+		err = result.Scan(&storedCreds.Password)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				w.WriteHeader(http.StatusUnauthorized)
+				log.Printf("Unauthorized user: %s\n", creds.Username)
+				return
+			}
+
+			// TODO: do we really want to give users different errors based on whether we have that username or not?
+			// seems like it might give too much away (aka hacker knows whether a username exists)
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Printf("Internal error:\n", err)
+			return
+		}
+
+		if err = bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Printf("Unauthorized user: %s\n", creds.Username)
+			return
+		}
+
 		handler.ServeHTTP(w, r)
 	})
 }

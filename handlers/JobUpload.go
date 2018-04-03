@@ -13,7 +13,7 @@ import (
 )
 
 func JobUpload(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
+	if r.Method == http.MethodPost {
 		// parse multipart Form request; limit memory usage
 		// (residual should end up temporarily on disk)
 		maxMemory := int64(1) << 31

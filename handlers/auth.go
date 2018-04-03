@@ -9,8 +9,7 @@ import (
 func auth(user, pass string) bool {
 	// username := "admin"
 	password := "123456"
-	cost := 14
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), Cost)
 	if err != nil {
 		log.Println(err)
 	}
