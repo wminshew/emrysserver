@@ -3,8 +3,15 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/lib/pq"
 	// "log"
+)
+
+const (
+	dbUser     = "emrysuser"
+	dbPassword = "simplepassword"
+	dbName     = "emrysuser"
 )
 
 // TODO: db.db is not a good name; think more here
@@ -17,7 +24,8 @@ func Init() {
 
 	// TODO: make sure
 	// connStr := "postgres://pqgotest:password@localhost/pqgotest?sslmode=verify-full"
-	connStr := "user=emrysuser password=simplepassword dbname=emrysuser sslmode=disable"
+	// connStr := "user=emrysuser password=simplepassword dbname=emrysuser sslmode=disable"
+	connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbName)
 	Db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)
