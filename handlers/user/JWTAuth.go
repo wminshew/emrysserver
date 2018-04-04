@@ -25,11 +25,6 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 				return []byte(secret), nil
 			}, request.WithClaims(&UserClaims{}))
 
-		// TODO: break into two?? errors may not be related to token validity... right?
-		if err != nil || !token.Valid {
-			return
-		}
-
 		if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
 			log.Printf("Valid token: \n Email: ", claims.Email)
 		} else {
