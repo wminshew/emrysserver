@@ -5,16 +5,18 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
-	// "log"
+	"os"
 )
 
-const (
-	dbUser     = "emrysuser"
-	dbPassword = "simplepassword"
-	dbName     = "emrysuser"
+var (
+	dbUser     = os.Getenv("DBUSER")
+	dbPassword = os.Getenv("DBPASSWORD")
+	dbNetloc   = os.Getenv("DBNETLOC")
+	dbPort     = os.Getenv("DBPORT")
+	dbName     = os.Getenv("DBNAME")
 )
 
-// TODO: db.db is not a good name; think more here
+// TODO: db.Db is not a good name; think more here. Could just put in package main.
 // I guess eventually we won't export db -- just methods on db so
 // this will be fine.....
 var Db *sql.DB
@@ -22,17 +24,11 @@ var Db *sql.DB
 func Init() {
 	var err error
 
-	// TODO: make sure
-	// connStr := "postgres://pqgotest:password@localhost/pqgotest?sslmode=verify-full"
-	// connStr := "user=emrysuser password=simplepassword dbname=emrysuser sslmode=disable"
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbName)
+	// postgresql://[user[:password]@][netloc][:port][,...][/dbname][?param1=value1&...]
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbNetloc, dbPort, dbName)
+	// connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbName)
 	Db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)
 	}
-	// err = Db.Ping()
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// log.Printf(string(Db.Stats().OpenConnections))
 }
