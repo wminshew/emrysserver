@@ -1,4 +1,4 @@
-package handlers
+package user
 
 import (
 	"encoding/json"
@@ -10,7 +10,8 @@ import (
 
 const Cost = 14
 
-func SignUpUser(w http.ResponseWriter, r *http.Request) {
+// creates new users entry in database if successful
+func SignUp(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
@@ -21,13 +22,15 @@ func SignUpUser(w http.ResponseWriter, r *http.Request) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), Cost)
 
-	// TODO: Need to deliver clear error messages to user if possible (i.e. if username already exists)
-	if _, err = db.Db.Query("INSERT INTO users VALUES ($1, $2)", creds.Username, string(hashedPassword)); err != nil {
+	// TODO: Need to deliver clear error messages to user if possible (i.e. if email already exists, or if its invalid)
+	if _, err = db.Db.Query("INSERT INTO users VALUES ($1, $2)", creds.Email, string(hashedPassword)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Error querying db:\n", err)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	log.Printf("User %s successfully added!", creds.Username)
+	log.Printf("User %s successfully added!", creds.Email)
+
+	// TODO: should we redirect new user to SignUpUser (auto login?)?
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers"
+	"github.com/wminshew/emrysserver/handlers/user"
 	"log"
 	"net/http"
 )
@@ -11,10 +12,11 @@ func main() {
 	server := http.Server{}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/signup/user", handlers.SignUpUser)
-	mux.HandleFunc("/signin/user", handlers.SignInUser)
+	mux.HandleFunc("/user/signup", user.SignUp)
+	mux.HandleFunc("/user/signin", user.SignIn)
 
-	mux.HandleFunc("/job/upload", handlers.JobUpload)
+	// mux.HandleFunc("/job/upload", handlers.JobUpload)
+	mux.HandleFunc("/job/upload", user.JWTAuth(handlers.JobUpload))
 
 	server.Addr = ":4430"
 	// server.Handler = handlers.Log(handlers.AuthUser(mux))
