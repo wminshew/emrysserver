@@ -26,14 +26,17 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 			}, request.WithClaims(&UserClaims{}))
 
 		if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
-			log.Printf("Valid token: \n Email: ", claims.Email)
+			log.Printf("Valid token: ", token.Valid)
+			log.Printf(" Email: ", claims.Email)
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
 			log.Printf("Error validating JWT: ", err)
 			return
 		}
 
-		// TODO: add Context to pass JWT claims
+		// TODO: add Context to pass JWT claims & possibly validity?
+		// I mean technically everything should be authed and shouldn't get into an API if invalid..
+		// but might be good to have. Not sure
 		h(w, r)
 	})
 }
