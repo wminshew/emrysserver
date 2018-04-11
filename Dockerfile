@@ -1,7 +1,6 @@
 # TODO: minimize size... alpine? multi-stage with scratch?
-# TODO: add cuda/gpu support
 # TODO: does access to tensorflow etc come from the image or venv?
-FROM ubuntu:16.04
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 # TODO: switch to emrys email
 MAINTAINER William Minshew <wminshew@gmail.com>
 
