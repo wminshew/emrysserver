@@ -23,9 +23,11 @@ ARG USER
 # all working on the same command) they shouldn't have to replicate
 # image build work
 # TODO: data will likely have to be mounted (vs added?)
-COPY user-upload/$USER $USER
-
 WORKDIR $USER
-RUN virtualenv venv && \
-    venv/bin/pip3 install -r requirements.txt && \
-    venv/bin/python train.py
+RUN virtualenv venv
+COPY ./user-upload/$USER/requirements.txt ./requirements.txt
+RUN ./venv/bin/pip3 install -r ./requirements.txt
+
+COPY user-upload/$USER/train.py train.py
+# MOUNT data volume
+RUN ./venv/bin/python train.py
