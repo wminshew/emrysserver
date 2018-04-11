@@ -2,17 +2,15 @@ package handlers
 
 import (
 	"context"
+	"docker.io/go-docker"
+	"docker.io/go-docker/api/types"
+	"docker.io/go-docker/api/types/container"
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/docker/docker/distribution"
 	"github.com/mholt/archiver"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
@@ -97,38 +95,43 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		deactivate; \\
 		rmvirtualenv %s`,
 			requirementsPath, venv, trainPath, venv)
-		log.Printf("Executing: \n%s\n", longCmdString)
-		trainCmd := exec.Command("bash", "-c", longCmdString)
-		trainOut, err := trainCmd.Output()
-		if err != nil {
-			log.Fatalf("Error executing %s: %v\n", longCmdString, err)
-			io.WriteString(w, fmt.Sprintf("Failure executing %s\n", trainHandler.Filename))
-		} else {
-			log.Printf("Output: \n%s\n", string(trainOut))
-			io.WriteString(w, string(trainOut))
-		}
+		// log.Printf("Executing: \n%s\n", longCmdString)
+		// trainCmd := exec.Command("bash", "-c", longCmdString)
+		// trainOut, err := trainCmd.Output()
+		// if err != nil {
+		// 	log.Fatalf("Error executing %s: %v\n", longCmdString, err)
+		// 	io.WriteString(w, fmt.Sprintf("Failure executing %s\n", trainHandler.Filename))
+		// } else {
+		// 	log.Printf("Output: \n%s\n", string(trainOut))
+		// 	io.WriteString(w, string(trainOut))
+		// }
 
 		log.Printf("Launching docker...\n")
 
 		ctx := context.Background()
-		cli, err := client.NewEnvClient()
+		cli, err := docker.NewEnvClient()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		reader, err := cli.ImagePull(ctx, "docker.io/library/alpine", types.ImagePullOptions{})
+		// reader, err := cli.ImagePull(ctx, "docker.io/library/alpine", types.ImagePullOptions{})
+		reader, err := cli.ImagePull(ctx, "ubuntu:16.04", types.ImagePullOptions{})
+		// reader, err := cli.ImagePull(ctx, "floydhub/dl-docker", types.ImagePullOptions{})
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		io.Copy(os.Stdout, reader)
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
-			Image: "alpine",
-			Cmd:   []string{"echo", "hello world"},
-			Tty:   true,
+			// Image: "dl-docker",
+			// Image: "alpine",
+			Image: "ubuntu:16.04",
+			// Cmd:   []string{"echo", "hello world"},
+			Cmd: []string{"/bin/bash", "-c", longCmdString},
+			Tty: true,
 		}, nil, nil, "")
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
@@ -140,7 +143,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		select {
 		case err := <-errCh:
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		case <-statusCh:
 		}
