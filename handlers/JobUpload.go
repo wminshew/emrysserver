@@ -107,19 +107,14 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// reader, err := cli.ImagePull(ctx, "wminshew/emrys", types.ImagePullOptions{})
-
-		// TODO: add project / job subfolders..
-		// TODO: won't hardlink if it already exists ... either need a work around or to not hard link
 		linkedDocker := filepath.Join(userDir, "Dockerfile")
 		err = os.Link("Dockerfile.user", linkedDocker)
-		defer os.Remove(linkedDocker)
 		if err != nil {
 			log.Print(err)
 			return
 		}
+		defer os.Remove(linkedDocker)
 		buildCtxPath := filepath.Join(userDir + ".tar.gz")
-		log.Print(buildCtxPath)
 		ctxFiles, err := filepath.Glob(filepath.Join(userDir, "/*"))
 		if err != nil {
 			log.Print(err)
@@ -130,7 +125,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			log.Print(err)
 			return
 		}
-		// defer os.Remove(buildCtxPath)
+		defer os.Remove(buildCtxPath)
 		buildCtx, err := os.Open(buildCtxPath)
 		if err != nil {
 			log.Print(err)
@@ -154,7 +149,6 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image: username,
-			// Tty:   true,
 		}, nil, nil, "")
 		if err != nil {
 			log.Print(err)
@@ -165,6 +159,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			log.Print(err)
 			return
 		}
+		defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
 
 		statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
 		select {
@@ -182,8 +177,8 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: Use TeeReader to log somewhere also?
-		_, err = io.Copy(os.Stdout, out)
+		tee := io.TeeReader(out, w)
+		_, err = io.Copy(os.Stdout, tee)
 		if err != nil && err != io.EOF {
 			log.Print(err)
 			return
