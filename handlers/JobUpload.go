@@ -5,6 +5,7 @@ import (
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
 	"docker.io/go-docker/api/types/container"
+	"encoding/json"
 	"fmt"
 	"github.com/mholt/archiver"
 	"io"
@@ -145,7 +146,8 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer buildResp.Body.Close()
-		io.Copy(os.Stdout, buildResp.Body)
+
+		printBuildStream(buildResp.Body)
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image: username,
@@ -187,5 +189,21 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Printf("Upload received non-POST method.\n")
 		io.WriteString(w, "Upload only receives POSTs.\n")
+	}
+}
+
+func printBuildStream(r io.Reader) {
+	type Stream struct {
+		Stream string
+	}
+	dec := json.NewDecoder(r)
+	for dec.More() {
+		var s Stream
+		err := dec.Decode(&s)
+		if err != nil {
+			log.Print(err)
+		}
+
+		fmt.Printf("%v", s.Stream)
 	}
 }
