@@ -15,4 +15,4 @@ RUN venv/bin/pip3 install -r requirements.txt
 
 COPY train.py train.py
 # MOUNT data volume
-RUN venv/bin/python train.py
+CMD ["venv/bin/python", "train.py"]
