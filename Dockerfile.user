@@ -1,0 +1,18 @@
+FROM wminshew/emrys:base
+MAINTAINER William Minshew <wminshew@gmail.com>
+
+ARG USER
+# TODO: think about how to partition this properly so multiple miners
+# can benefit from a single build, i.e. if the user hasn't changed
+# his requirements.txt but runs 8 emrys commands (or if 8 gpus are
+# all working on the same command) they shouldn't have to replicate
+# image build work
+# TODO: data will likely have to be mounted (vs added?)
+WORKDIR $USER
+RUN virtualenv venv
+COPY requirements.txt requirements.txt
+RUN venv/bin/pip3 install -r requirements.txt
+
+COPY train.py train.py
+# MOUNT data volume
+RUN venv/bin/python train.py
