@@ -151,6 +151,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image: username,
+			Tty:   true,
 		}, &container.HostConfig{
 			Runtime: "nvidia",
 		}, nil, "")
