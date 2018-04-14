@@ -35,14 +35,14 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		requirementsTempFile, requirementsHandler, err := r.FormFile("requirements")
+		requirementsTempFile, requirementsHeader, err := r.FormFile("requirements")
 		if err != nil {
 			log.Printf("Error reading requirements form file: %v\n", err)
 			return
 		}
 		defer requirementsTempFile.Close()
-		requirementsPath := filepath.Join(userDir, filepath.Base(requirementsHandler.Filename))
-		requirementsFile, err := os.OpenFile(requirementsPath, os.O_WRONLY|os.O_CREATE, 0644)
+		requirementsPath := filepath.Join(userDir, filepath.Base(requirementsHeader.Filename))
+		requirementsFile, err := os.OpenFile(requirementsPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			log.Printf("Error opening requirements file: %v\n", err)
 			return
@@ -54,14 +54,14 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		trainTempFile, trainHandler, err := r.FormFile("train")
+		trainTempFile, trainHeader, err := r.FormFile("train")
 		if err != nil {
 			log.Printf("Error reading train form file: %v\n", err)
 			return
 		}
 		defer trainTempFile.Close()
-		trainPath := filepath.Join(userDir, filepath.Base(trainHandler.Filename))
-		trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE, 0755)
+		trainPath := filepath.Join(userDir, filepath.Base(trainHeader.Filename))
+		trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			log.Printf("Error opening train file: %v\n", err)
 			return
@@ -73,14 +73,14 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		dataTempFile, dataHandler, err := r.FormFile("data")
+		dataTempFile, dataHeader, err := r.FormFile("data")
 		if err != nil {
 			log.Printf("Error reading data form file: %v\n", err)
 			return
 		}
 		defer dataTempFile.Close()
-		dataPath := filepath.Join(userDir, filepath.Base(dataHandler.Filename))
-		dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE, 0644)
+		dataPath := filepath.Join(userDir, filepath.Base(dataHeader.Filename))
+		dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			log.Printf("Error opening data file: %v\n", err)
 			return
@@ -92,6 +92,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error copying data file to disk: %v\n", err)
 			return
 		}
+		// TODO: need to remove old data / properly manage data update
 		err = archiver.TarGz.Open(dataPath, userDir)
 		if err != nil {
 			log.Printf("Error unzipping data dir: %v\n", err)
@@ -134,12 +135,15 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		}
 		defer buildCtx.Close()
 		buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
-			// TODO: add tags for emrys / project / job?
-			Tags: []string{username},
 			// TODO: explore Isolation: types.Isolation.IsHyperV
 			BuildArgs: map[string]*string{
 				"USER": &username,
 			},
+			// NoCache: true,
+			// PullParent: true,
+			Remove: true,
+			// TODO: add tags for emrys / project / job?
+			Tags: []string{username},
 		})
 		if err != nil {
 			log.Print(err)
@@ -149,10 +153,20 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 
 		printBuildStream(buildResp.Body)
 
+		wd, err := os.Getwd()
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		hostDataPath := filepath.Join(wd, userDir, "data")
+		dockerDataPath := filepath.Join("/"+username, "data")
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image: username,
 			Tty:   true,
 		}, &container.HostConfig{
+			Binds: []string{
+				fmt.Sprintf("%s:%s", hostDataPath, dockerDataPath),
+			},
 			Runtime: "nvidia",
 		}, nil, "")
 		if err != nil {
