@@ -153,6 +153,11 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 
 		printBuildStream(buildResp.Body)
 
+		// TODO: consider if there's an issue here... I don't think
+		// I'm preserving the users' file structure, which might
+		// be really annoying for said user (should preserve the
+		// inner data folder structure and the relative pathing
+		// between train.py and path/to/data/)
 		wd, err := os.Getwd()
 		if err != nil {
 			log.Print(err)
