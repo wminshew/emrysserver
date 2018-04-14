@@ -110,7 +110,8 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		}
 
 		linkedDocker := filepath.Join(userDir, "Dockerfile")
-		err = os.Link("Dockerfile.user", linkedDocker)
+		userDockerfile := filepath.Join("Dockerfiles", "Dockerfile.user")
+		err = os.Link(userDockerfile, linkedDocker)
 		if err != nil {
 			log.Print(err)
 			return
