@@ -1,5 +1,5 @@
-FROM wminshew/emrys:cuda9.0-cudnn7-devel-ubuntu16.04
-MAINTAINER William Minshew <wminshew@gmail.com>
+FROM wminshew/emrys:cuda9.0-base-ubuntu16.04
+LABEL maintainer="William Minshew <w@emrys.io>"
 
 ARG USER
 
