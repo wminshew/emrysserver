@@ -19,7 +19,6 @@ type SignInResponse struct {
 	Token string `json:"token"`
 }
 
-// returns valid JWT to user if successful
 func SignIn(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
@@ -30,7 +29,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	storedCreds := &Credentials{}
-	// errors from QueryRow are defered until Scan is called
+	// errors from QueryRow are defered until Scan
 	result := db.Db.QueryRow("SELECT email, password FROM users WHERE email=$1", creds.Email)
 	err = result.Scan(&storedCreds.Email, &storedCreds.Password)
 	if err != nil {

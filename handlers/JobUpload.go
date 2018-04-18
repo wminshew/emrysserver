@@ -17,6 +17,7 @@ import (
 
 func JobUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
+		w.Write([]byte("Receiving upload...\n"))
 		maxMemory := int64(1) << 31
 		err := r.ParseMultipartForm(maxMemory)
 		if err != nil {
@@ -24,6 +25,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.Write([]byte("Unloading files...\n"))
 		// TODO: add uuid or some other unique identifier for users [emails can't be used in paths safely]
 		username := "test2"
 
@@ -48,7 +50,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer requirementsFile.Close()
-		n_requirements, err := io.Copy(requirementsFile, requirementsTempFile)
+		_, err = io.Copy(requirementsFile, requirementsTempFile)
 		if err != nil {
 			log.Printf("Error copying requirements file to disk: %v\n", err)
 			return
@@ -67,7 +69,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer trainFile.Close()
-		n_train, err := io.Copy(trainFile, trainTempFile)
+		_, err = io.Copy(trainFile, trainTempFile)
 		if err != nil {
 			log.Printf("Error copying train file to disk: %v\n", err)
 			return
@@ -87,20 +89,20 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		}
 		defer dataFile.Close()
 		defer os.Remove(dataPath)
-		n_data, err := io.Copy(dataFile, dataTempFile)
+		_, err = io.Copy(dataFile, dataTempFile)
 		if err != nil {
 			log.Printf("Error copying data file to disk: %v\n", err)
 			return
 		}
-		// TODO: need to remove old data / properly manage data update
+		// TODO: need to remove old data dir contents / properly manage data update from
+		// last job using git lfs or rsync or something
 		err = archiver.TarGz.Open(dataPath, userDir)
 		if err != nil {
 			log.Printf("Error unzipping data dir: %v\n", err)
 			return
 		}
 
-		n := n_train + n_data + n_requirements
-		io.WriteString(w, fmt.Sprintf("%d bytes recieved and saved.\n", n))
+		w.Write([]byte("Building image...\n"))
 
 		ctx := context.Background()
 		cli, err := docker.NewEnvClient()
@@ -153,6 +155,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		defer buildResp.Body.Close()
 
 		printBuildStream(buildResp.Body)
+		w.Write([]byte("Running image...\n"))
 
 		// TODO: consider if there's an issue here... I don't think
 		// I'm preserving the users' file structure, which might
