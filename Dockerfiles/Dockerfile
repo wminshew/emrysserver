@@ -1,12 +1,13 @@
 # TODO: minimize size... alpine? multi-stage with scratch?
+# TODO: make CUDA version dynamic
 # TODO: does access to tensorflow etc come from the image or venv?
 FROM nvidia/cuda:9.0-base-ubuntu16.04
-# TODO: switch to emrys email
 LABEL maintainer="William Minshew <w@emrys.io>"
 
-# TODO: should be able to select version of python to run; maybe
+# TODO: make python version dynamic;
 # should be handled by base image or multi-build...
 # TODO: order packages by alphanumeric
+# TODO: make CUDNN version dynamic
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \

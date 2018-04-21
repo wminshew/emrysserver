@@ -1,11 +1,12 @@
 FROM wminshew/emrys:cuda9.0-base-ubuntu16.04
 LABEL maintainer="William Minshew <w@emrys.io>"
 
-ARG USER
+ENV HOME /home/user
+RUN useradd --create-home --home-dir $HOME user \
+  && chown -R user:user $HOME
 
-# USER user:user
-
-WORKDIR $USER
+WORKDIR $HOME
+User user
 
 RUN virtualenv venv
 COPY requirements.txt requirements.txt
