@@ -17,7 +17,8 @@ import (
 
 func JobUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		w.Write([]byte("Receiving upload...\n"))
+		fw := newFlushWriter(w)
+		fw.Write([]byte("Unpacking request...\n"))
 		maxMemory := int64(1) << 31
 		err := r.ParseMultipartForm(maxMemory)
 		if err != nil {
@@ -25,7 +26,6 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Write([]byte("Unloading files...\n"))
 		// TODO: add uuid or some other unique identifier for users [emails can't be used in paths safely]
 		username := "test2"
 
@@ -102,7 +102,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Write([]byte("Building image...\n"))
+		fw.Write([]byte("Building image...\n"))
 
 		ctx := context.Background()
 		cli, err := docker.NewEnvClient()
@@ -145,7 +145,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			// NoCache: true,
 			// PullParent: true,
 			Remove: true,
-			// TODO: add tags for emrys / project / job?
+			// TODO: add tags or labels for emrys / project / job?
 			Tags: []string{username},
 		})
 		if err != nil {
@@ -155,7 +155,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		defer buildResp.Body.Close()
 
 		printBuildStream(buildResp.Body)
-		w.Write([]byte("Running image...\n"))
+		fw.Write([]byte("Running image...\n"))
 
 		// TODO: consider if there's an issue here... I don't think
 		// I'm preserving the users' file structure, which might
@@ -189,32 +189,36 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		}
 		defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
 
-		statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
-		select {
-		case err := <-errCh:
-			if err != nil {
-				log.Print(err)
-				return
-			}
-		case <-statusCh:
-		}
-
-		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{
+			Follow:     true,
+			ShowStdout: true,
+		})
 		if err != nil {
 			log.Print(err)
 			return
 		}
 
-		tee := io.TeeReader(out, w)
+		tee := io.TeeReader(out, fw)
 		_, err = io.Copy(os.Stdout, tee)
 		if err != nil && err != io.EOF {
 			log.Print(err)
 			return
 		}
 
+		// statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+		// select {
+		// case err := <-errCh:
+		// 	if err != nil {
+		// 		log.Print(err)
+		// 		return
+		// 	}
+		// case <-statusCh:
+		// }
+
 	} else {
 		log.Printf("Upload received non-POST method.\n")
-		io.WriteString(w, "Upload only receives POSTs.\n")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Upload only receives POST.\n"))
 	}
 }
 
