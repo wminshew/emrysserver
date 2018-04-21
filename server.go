@@ -25,12 +25,18 @@ func main() {
 	log.Printf("Initializing database...\n")
 	db.Init()
 
+	// TODO: reasonable timeout parameters? don't want to have too
+	// many dead connections, also not sure how it will interact
+	// with sockets streaming...
 	const httpPort = ":8080"
 	log.Printf("Starting http re-direct on port %s...\n", httpPort)
 	go func() {
 		log.Fatal(http.ListenAndServe(httpPort, http.HandlerFunc(redirect)))
 	}()
 
+	// TODO: reasonable timeout parameters? don't want to have too
+	// many dead connections, also not sure how it will interact
+	// with sockets streaming...
 	log.Printf("Listening on port %s...\n", server.Addr)
 	log.Fatal(server.ListenAndServeTLS("server.crt", "server.key"))
 }
