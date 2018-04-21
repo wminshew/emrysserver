@@ -23,8 +23,8 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("Error decoding json:\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -34,19 +34,19 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	err = result.Scan(&storedCreds.Email, &storedCreds.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			w.WriteHeader(http.StatusUnauthorized)
 			log.Printf("Unauthorized user: %s\n", creds.Email)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("Internal error:\n", err)
+		log.Printf("Database error during sign in:\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
 		log.Printf("Unauthorized user: %s\n", creds.Email)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -60,8 +60,9 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Internal error:\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	response := SignInResponse{

@@ -15,14 +15,19 @@ import (
 	"path/filepath"
 )
 
+// JobUpload handles python job posted by user
 func JobUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		fw := newFlushWriter(w)
-		fw.Write([]byte("Unpacking request...\n"))
+		_, err := fw.Write([]byte("Unpacking request...\n"))
+		if err != nil {
+			log.Printf("Error writing to flushWriter: %v\n", err)
+		}
 		maxMemory := int64(1) << 31
-		err := r.ParseMultipartForm(maxMemory)
+		err = r.ParseMultipartForm(maxMemory)
 		if err != nil {
 			log.Printf("Error parsing request: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -34,12 +39,14 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		userDir := filepath.Join("user-upload", username)
 		if err = os.MkdirAll(userDir, 0755); err != nil {
 			log.Printf("Error creating user directory %s: %v\n", userDir, err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		requirementsTempFile, requirementsHeader, err := r.FormFile("requirements")
 		if err != nil {
 			log.Printf("Error reading requirements form file: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer requirementsTempFile.Close()
@@ -47,18 +54,21 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		requirementsFile, err := os.OpenFile(requirementsPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			log.Printf("Error opening requirements file: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer requirementsFile.Close()
 		_, err = io.Copy(requirementsFile, requirementsTempFile)
 		if err != nil {
 			log.Printf("Error copying requirements file to disk: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		trainTempFile, trainHeader, err := r.FormFile("train")
 		if err != nil {
 			log.Printf("Error reading train form file: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer trainTempFile.Close()
@@ -66,18 +76,21 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			log.Printf("Error opening train file: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer trainFile.Close()
 		_, err = io.Copy(trainFile, trainTempFile)
 		if err != nil {
 			log.Printf("Error copying train file to disk: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		dataTempFile, dataHeader, err := r.FormFile("data")
 		if err != nil {
 			log.Printf("Error reading data form file: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer dataTempFile.Close()
@@ -85,6 +98,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			log.Printf("Error opening data file: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer dataFile.Close()
@@ -92,6 +106,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		_, err = io.Copy(dataFile, dataTempFile)
 		if err != nil {
 			log.Printf("Error copying data file to disk: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		// TODO: need to remove old data dir contents / properly manage data update from
@@ -99,15 +114,20 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		err = archiver.TarGz.Open(dataPath, userDir)
 		if err != nil {
 			log.Printf("Error unzipping data dir: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		fw.Write([]byte("Building image...\n"))
+		_, err = fw.Write([]byte("Building image...\n"))
+		if err != nil {
+			log.Printf("Error writing to flushWriter: %v\n", err)
+		}
 
 		ctx := context.Background()
 		cli, err := docker.NewEnvClient()
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error creating new docker client: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -115,25 +135,29 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		userDockerfile := filepath.Join("Dockerfiles", "Dockerfile.user")
 		err = os.Link(userDockerfile, linkedDocker)
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error linking dockerfile into user directory: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer os.Remove(linkedDocker)
 		buildCtxPath := filepath.Join(userDir + ".tar.gz")
 		ctxFiles, err := filepath.Glob(filepath.Join(userDir, "/*"))
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error collecting docker context files: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		err = archiver.TarGz.Make(buildCtxPath, ctxFiles)
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error archiving docker context files: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer os.Remove(buildCtxPath)
 		buildCtx, err := os.Open(buildCtxPath)
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error opening archived docker context files: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer buildCtx.Close()
@@ -149,13 +173,17 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			Tags: []string{username},
 		})
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error building image: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer buildResp.Body.Close()
 
 		printBuildStream(buildResp.Body)
-		fw.Write([]byte("Running image...\n"))
+		_, err = fw.Write([]byte("Running image...\n"))
+		if err != nil {
+			log.Printf("Error writing to flushWriter: %v\n", err)
+		}
 
 		// TODO: consider if there's an issue here... I don't think
 		// I'm preserving the users' file structure, which might
@@ -164,7 +192,8 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		// between train.py and path/to/data/)
 		wd, err := os.Getwd()
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error getting working directory: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		hostDataPath := filepath.Join(wd, userDir, "data")
@@ -179,12 +208,14 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			Runtime: "nvidia",
 		}, nil, "")
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error creating container: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-			log.Print(err)
+			log.Printf("Error starting container: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
@@ -194,14 +225,16 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			ShowStdout: true,
 		})
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error logging container: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		tee := io.TeeReader(out, fw)
 		_, err = io.Copy(os.Stdout, tee)
 		if err != nil && err != io.EOF {
-			log.Print(err)
+			log.Printf("Error copying to stdout: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -218,7 +251,10 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Printf("Upload received non-POST method.\n")
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Upload only receives POST.\n"))
+		_, err := w.Write([]byte("Upload only receives POST.\n"))
+		if err != nil {
+			log.Printf("Error writing to http.ResponseWriter: %v\n", err)
+		}
 	}
 }
 
@@ -231,7 +267,7 @@ func printBuildStream(r io.Reader) {
 		var s Stream
 		err := dec.Decode(&s)
 		if err != nil {
-			log.Print(err)
+			log.Printf("Error decoding json build stream: %v\n", err)
 		}
 
 		fmt.Printf("%v", s.Stream)

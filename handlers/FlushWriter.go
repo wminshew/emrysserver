@@ -24,7 +24,7 @@ func (fw flushWriter) Write(p []byte) (n int, err error) {
 	if fw.flusher != nil {
 		fw.flusher.Flush()
 	}
-	return
+	return n, err
 }
 
 // newflushWriter creates a flushWriter using the io.Writer provided as the
