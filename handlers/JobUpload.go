@@ -214,6 +214,9 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			},
 			// ReadonlyRootfs: true,
 			Runtime: "nvidia",
+			SecurityOpt: []string{
+				"no-new-privileges",
+			},
 		}, nil, "")
 		if err != nil {
 			log.Printf("Error creating container: %v\n", err)
