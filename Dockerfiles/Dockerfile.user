@@ -1,7 +1,7 @@
 FROM wminshew/emrys:cuda9.0-base-ubuntu16.04
 LABEL maintainer="William Minshew <w@emrys.io>"
 
-ENV HOME /home/user
+ARG HOME
 RUN useradd --create-home --home-dir $HOME user \
   && chown -R user:user $HOME
 
@@ -9,8 +9,8 @@ WORKDIR $HOME
 User user
 
 RUN virtualenv venv
-COPY requirements.txt requirements.txt
+COPY --chown=user:user requirements.txt requirements.txt
 RUN venv/bin/pip install -r requirements.txt
 
-COPY train.py train.py
+COPY --chown=user:user train.py train.py
 CMD ["venv/bin/python", "train.py"]

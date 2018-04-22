@@ -161,16 +161,15 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		userHome := "/home/user"
 		buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
-			// TODO: explore Isolation: types.Isolation.IsHyperV
-			// BuildArgs: map[string]*string{
-			// 	"USER": &username,
-			// },
-			// NoCache: true,
-			// PullParent: true,
-			Remove: true,
-			// TODO: add tags or labels for emrys / project / job?
+			BuildArgs: map[string]*string{
+				"HOME": &userHome,
+			},
+			ForceRemove: true,
+			// TODO: add more tags or labels for emrys / project / job?
 			Tags: []string{username},
+			// Labels: map[string]string{}
 		})
 		if err != nil {
 			log.Printf("Error building image: %v\n", err)
@@ -178,6 +177,13 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer check.Err(buildResp.Body.Close)
+		// removing the image immediately after run means no caching
+		// defer check.Err(func() error {
+		// 	_, err := cli.ImageRemove(ctx, username, types.ImageRemoveOptions{
+		// 		Force: true,
+		// 	})
+		// 	return err
+		// })
 
 		printBuildStream(buildResp.Body)
 		_, err = fw.Write([]byte("Running image...\n"))
@@ -185,11 +191,8 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error writing to flushWriter: %v\n", err)
 		}
 
-		// TODO: consider if there's an issue here... I don't think
-		// I'm preserving the users' file structure, which might
-		// be really annoying for said user (should preserve the
-		// inner data folder structure and the relative pathing
-		// between train.py and path/to/data/)
+		// TODO: do I need to preserve users' file structure?
+		// [relative pathing between train.py and path/to/data/]
 		wd, err := os.Getwd()
 		if err != nil {
 			log.Printf("Error getting working directory: %v\n", err)
@@ -197,11 +200,12 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		hostDataPath := filepath.Join(wd, userDir, "data")
-		dockerDataPath := filepath.Join("/user", "data")
+		dockerDataPath := filepath.Join(userHome, "data")
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image: username,
 			Tty:   true,
 		}, &container.HostConfig{
+			AutoRemove: true,
 			Binds: []string{
 				fmt.Sprintf("%s:%s", hostDataPath, dockerDataPath),
 			},
@@ -213,12 +217,12 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// TODO: how do I balance long jobs & container timeout?
 		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 			log.Printf("Error starting container: %v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer check.Err(func() error { return cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{}) })
 
 		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{
 			Follow:     true,
