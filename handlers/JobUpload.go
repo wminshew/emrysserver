@@ -207,8 +207,12 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		}, &container.HostConfig{
 			AutoRemove: true,
 			Binds: []string{
-				fmt.Sprintf("%s:%s", hostDataPath, dockerDataPath),
+				fmt.Sprintf("%s:%s:ro", hostDataPath, dockerDataPath),
 			},
+			CapDrop: []string{
+				"ALL",
+			},
+			// ReadonlyRootfs: true,
 			Runtime: "nvidia",
 		}, nil, "")
 		if err != nil {
