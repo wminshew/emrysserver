@@ -161,12 +161,11 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer check.Err(buildCtx.Close)
 		buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
 			// TODO: explore Isolation: types.Isolation.IsHyperV
-			BuildArgs: map[string]*string{
-				"USER": &username,
-			},
+			// BuildArgs: map[string]*string{
+			// 	"USER": &username,
+			// },
 			// NoCache: true,
 			// PullParent: true,
 			Remove: true,
@@ -198,7 +197,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		hostDataPath := filepath.Join(wd, userDir, "data")
-		dockerDataPath := filepath.Join("/"+username, "data")
+		dockerDataPath := filepath.Join("/user", "data")
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image: username,
 			Tty:   true,
