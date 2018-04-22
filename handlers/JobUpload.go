@@ -162,6 +162,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		userHome := "/home/user"
+		// TODO: ImageBuild isn't throwing an error if it can't find its FROM img?
 		buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
 			BuildArgs: map[string]*string{
 				"HOME": &userHome,
