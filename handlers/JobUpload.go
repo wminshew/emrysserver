@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/mholt/archiver"
+	"github.com/wminshew/check"
 	"io"
 	"log"
 	"net/http"
@@ -49,7 +50,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer requirementsTempFile.Close()
+		defer check.Err(requirementsTempFile.Close)
 		requirementsPath := filepath.Join(userDir, filepath.Base(requirementsHeader.Filename))
 		requirementsFile, err := os.OpenFile(requirementsPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
@@ -57,7 +58,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer requirementsFile.Close()
+		defer check.Err(requirementsFile.Close)
 		_, err = io.Copy(requirementsFile, requirementsTempFile)
 		if err != nil {
 			log.Printf("Error copying requirements file to disk: %v\n", err)
@@ -71,7 +72,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer trainTempFile.Close()
+		defer check.Err(trainTempFile.Close)
 		trainPath := filepath.Join(userDir, filepath.Base(trainHeader.Filename))
 		trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
@@ -79,7 +80,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer trainFile.Close()
+		defer check.Err(trainFile.Close)
 		_, err = io.Copy(trainFile, trainTempFile)
 		if err != nil {
 			log.Printf("Error copying train file to disk: %v\n", err)
@@ -93,7 +94,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer dataTempFile.Close()
+		defer check.Err(dataTempFile.Close)
 		dataPath := filepath.Join(userDir, filepath.Base(dataHeader.Filename))
 		dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
@@ -101,8 +102,8 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer dataFile.Close()
-		defer os.Remove(dataPath)
+		defer check.Err(dataFile.Close)
+		defer check.Err(func() error { return os.Remove(dataPath) })
 		_, err = io.Copy(dataFile, dataTempFile)
 		if err != nil {
 			log.Printf("Error copying data file to disk: %v\n", err)
@@ -139,7 +140,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer os.Remove(linkedDocker)
+		defer check.Err(func() error { return os.Remove(linkedDocker) })
 		buildCtxPath := filepath.Join(userDir + ".tar.gz")
 		ctxFiles, err := filepath.Glob(filepath.Join(userDir, "/*"))
 		if err != nil {
@@ -153,14 +154,14 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer os.Remove(buildCtxPath)
+		defer check.Err(func() error { return os.Remove(buildCtxPath) })
 		buildCtx, err := os.Open(buildCtxPath)
 		if err != nil {
 			log.Printf("Error opening archived docker context files: %v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer buildCtx.Close()
+		defer check.Err(buildCtx.Close)
 		buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
 			// TODO: explore Isolation: types.Isolation.IsHyperV
 			BuildArgs: map[string]*string{
@@ -177,7 +178,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer buildResp.Body.Close()
+		defer check.Err(buildResp.Body.Close)
 
 		printBuildStream(buildResp.Body)
 		_, err = fw.Write([]byte("Running image...\n"))
@@ -218,7 +219,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+		defer check.Err(func() error { return cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{}) })
 
 		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{
 			Follow:     true,

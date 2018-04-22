@@ -138,6 +138,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/wminshew/check"
+  packages = ["."]
+  revision = "5dadfebe7fe111ab81a87ac715f1aefbd47e583b"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
@@ -165,6 +171,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "95ee8b86655b7137af3ddf7063b3684d3d7f769f1699ac9b7f2221ece092f22b"
+  inputs-digest = "538f6dab21c7795b4db5acd0b64f1824d8ae39fd12d9c8e1ae74c6f8d011271e"
   solver-name = "gps-cdcl"
   solver-version = 1
