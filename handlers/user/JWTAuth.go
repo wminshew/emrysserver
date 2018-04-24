@@ -26,10 +26,9 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 			}, request.WithClaims(&UserClaims{}))
 
 		if claims, ok := token.Claims.(*UserClaims); ok && token.Valid {
-			log.Printf("Valid token: ", token.Valid)
-			log.Printf(" Email: ", claims.Email)
+			log.Printf("Valid login: %v", claims.Email)
 		} else {
-			log.Printf("Error validating JWT: ", err)
+			log.Printf("Unauthorized login: %v", claims.Email)
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
