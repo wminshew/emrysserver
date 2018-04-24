@@ -32,7 +32,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: add uuid or some other unique identifier for users [emails can't be used in paths safely]
+		// TODO: add uuid
 		username := "test2"
 
 		// TODO: re-factor job processing; take out file saving, add relevant paths to r.context
@@ -213,6 +213,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			CapDrop: []string{
 				"ALL",
 			},
+			// if I mount a rw drive, I should be able to use the below
 			// ReadonlyRootfs: true,
 			Runtime: "nvidia",
 			SecurityOpt: []string{
