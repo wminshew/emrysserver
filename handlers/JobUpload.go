@@ -19,17 +19,17 @@ import (
 // JobUpload handles python job posted by user
 func JobUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		fw := newFlushWriter(w)
-		_, err := fw.Write([]byte("Unpacking request...\n"))
-		if err != nil {
-			log.Printf("Error writing to flushWriter: %v\n", err)
-		}
 		maxMemory := int64(1) << 31
-		err = r.ParseMultipartForm(maxMemory)
+		err := r.ParseMultipartForm(maxMemory)
 		if err != nil {
 			log.Printf("Error parsing request: %v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+		fw := newFlushWriter(w)
+		_, err = fw.Write([]byte("Unpacking request...\n"))
+		if err != nil {
+			log.Printf("Error writing to flushWriter: %v\n", err)
 		}
 
 		// TODO: add uuid
