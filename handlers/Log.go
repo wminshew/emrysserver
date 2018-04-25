@@ -4,7 +4,7 @@ package handlers
 import (
 	"log"
 	"net/http"
-	// "net/http/httputil"
+	"net/http/httputil"
 )
 
 // Log logs request method, URL, & address
@@ -13,12 +13,12 @@ func Log(handler http.Handler) http.Handler {
 		log.Printf("%s %s %s\n", r.Method, r.URL, r.RemoteAddr)
 		// TODO: printing RequestDump shows passwords in cleartext on server log...
 		// doesn't seem like a best practice
-		// Save a copy of this request for debugging.
-		// requestDump, err := httputil.DumpRequest(r, true)
-		// if err != nil {
-		// 	log.Println(err)
-		// }
-		// log.Println(string(requestDump))
+		// Save copy of request for debugging
+		requestDump, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println(string(requestDump))
 		handler.ServeHTTP(w, r)
 	})
 }

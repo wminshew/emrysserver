@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers"
+	"github.com/wminshew/emrysserver/handlers/miner"
 	"github.com/wminshew/emrysserver/handlers/user"
 	"log"
 	"net/http"
@@ -14,6 +15,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/user/signup", user.SignUp)
 	mux.HandleFunc("/user/signin", user.SignIn)
+	mux.HandleFunc("/miner/signup", miner.SignUp)
+	mux.HandleFunc("/miner/signin", miner.SignIn)
 
 	// mux.HandleFunc("/job/upload", handlers.JobUpload)
 	mux.HandleFunc("/job/upload", user.JWTAuth(handlers.JobUpload))
