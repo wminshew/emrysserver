@@ -141,7 +141,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer check.Err(func() error { return os.Remove(linkedDocker) })
-		buildCtxPath := filepath.Join(userDir + ".tar.gz")
+		buildCtxPath := userDir + ".tar.gz"
 		ctxFiles, err := filepath.Glob(filepath.Join(userDir, "/*"))
 		if err != nil {
 			log.Printf("Error collecting docker context files: %v\n", err)
