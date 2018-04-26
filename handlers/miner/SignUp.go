@@ -10,7 +10,7 @@ import (
 
 const Cost = 14
 
-// creates new miners entry in database if successful
+// creates new miner entry in database if successful
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	creds := &Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
@@ -30,7 +30,5 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	log.Printf("User %s successfully added!", creds.Email)
-
-	// TODO: should we redirect new miner to SignUpUser (auto login?)?
+	log.Printf("Miner %s successfully added!", creds.Email)
 }

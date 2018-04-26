@@ -31,6 +31,4 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	log.Printf("User %s successfully added!", creds.Email)
-
-	// TODO: should we redirect new user to SignUpUser (auto login?)?
 }
