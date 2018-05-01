@@ -15,12 +15,12 @@ import (
 
 var secret = os.Getenv("SECRET")
 
-type signInResponse struct {
+type loginResponse struct {
 	Token string `json:"token"`
 }
 
-// SignIn takes credentials from the request and, if valid, returns a token
-func SignIn(w http.ResponseWriter, r *http.Request) {
+// Login takes miner credentials from the request and, if valid, returns a token
+func Login(w http.ResponseWriter, r *http.Request) {
 	creds := &handlers.Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
@@ -40,7 +40,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Printf("Database error during sign in: %v\n", err)
+		log.Printf("Database error during login: %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -66,7 +66,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := signInResponse{
+	response := loginResponse{
 		Token: tokenString,
 	}
 	if err = json.NewEncoder(w).Encode(response); err != nil {

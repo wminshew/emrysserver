@@ -1,4 +1,4 @@
-// package user
+// Package user ...
 package user
 
 import (
@@ -14,7 +14,7 @@ type userClaims struct {
 	jwt.StandardClaims
 }
 
-// authenticates user JWT
+// JWTAuth authenticates user JWT
 func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,

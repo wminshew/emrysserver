@@ -26,12 +26,12 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/user/signup", user.SignUp)
-	mux.HandleFunc("/user/signin", user.SignIn)
-	mux.HandleFunc("/job/upload", user.JWTAuth(handlers.JobUpload))
+	mux.HandleFunc("/user/new", user.New)
+	mux.HandleFunc("/user/login", user.Login)
+	mux.HandleFunc("/user/job/new", user.JWTAuth(user.JobUpload))
 
-	mux.HandleFunc("/miner/signup", miner.SignUp)
-	mux.HandleFunc("/miner/signin", miner.SignIn)
+	mux.HandleFunc("/miner/new", miner.New)
+	mux.HandleFunc("/miner/login", miner.Login)
 	mux.HandleFunc("/miner/connect", miner.JWTAuth(miner.Connect(pool)))
 
 	server := http.Server{

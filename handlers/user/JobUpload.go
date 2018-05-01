@@ -1,4 +1,4 @@
-package handlers
+package user
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/mholt/archiver"
 	"github.com/wminshew/check"
+	"github.com/wminshew/emrysserver/handlers"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 	"path/filepath"
 )
 
-// JobUpload handles python job posted by user
+// JobUpload handles job posted by user
 func JobUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		maxMemory := int64(1) << 31
@@ -26,7 +27,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fw := newFlushWriter(w)
+		fw := handlers.NewFlushWriter(w)
 		_, err = fw.Write([]byte("Unpacking request...\n"))
 		if err != nil {
 			log.Printf("Error writing to flushWriter: %v\n", err)
