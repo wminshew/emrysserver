@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"github.com/wminshew/emrysserver/db"
+	"github.com/wminshew/emrysserver/handlers"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
@@ -12,7 +13,7 @@ const Cost = 14
 
 // creates new users entry in database if successful
 func SignUp(w http.ResponseWriter, r *http.Request) {
-	creds := &Credentials{}
+	creds := &handlers.Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
 		log.Printf("Error decoding json:\n", err)

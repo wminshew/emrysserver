@@ -1,5 +1,4 @@
-// package user
-package user
+package miner
 
 import (
 	"fmt"
@@ -9,12 +8,12 @@ import (
 	"net/http"
 )
 
-type userClaims struct {
+type minerClaims struct {
 	Email string `json:"email"`
 	jwt.StandardClaims
 }
 
-// authenticates user JWT
+// JWTAuth authenticates miner tokens
 func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
@@ -23,12 +22,12 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 				}
 				return []byte(secret), nil
-			}, request.WithClaims(&userClaims{}))
+			}, request.WithClaims(&minerClaims{}))
 
-		if claims, ok := token.Claims.(*userClaims); ok && token.Valid {
-			log.Printf("Valid user login: %v", claims.Email)
+		if claims, ok := token.Claims.(*minerClaims); ok && token.Valid {
+			log.Printf("Valid miner login: %v", claims.Email)
 		} else {
-			log.Printf("Unauthorized user JWT")
+			log.Printf("Unauthorized miner JWT")
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}

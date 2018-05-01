@@ -10,38 +10,37 @@ import (
 )
 
 func main() {
-	server := http.Server{}
+	log.Printf("Initializing database...\n")
+	db.Init()
+
+	log.Printf("Initializing miner pool...\n")
+	pool := miner.NewPool()
+	go pool.Run()
+
+	const httpRedirectPort = ":8080"
+	log.Printf("Re-directing port %s...\n", httpRedirectPort)
+	go func() {
+		for {
+			log.Fatal(http.ListenAndServe(httpRedirectPort, http.HandlerFunc(redirect)))
+		}
+	}()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/user/signup", user.SignUp)
 	mux.HandleFunc("/user/signin", user.SignIn)
-	mux.HandleFunc("/miner/signup", miner.SignUp)
-	mux.HandleFunc("/miner/signin", miner.SignIn)
-
-	// mux.HandleFunc("/job/upload", handlers.JobUpload)
 	mux.HandleFunc("/job/upload", user.JWTAuth(handlers.JobUpload))
 
-	server.Addr = ":4430"
-	// server.Handler = handlers.Log(handlers.AuthUser(mux))
-	server.Handler = handlers.Log(mux)
+	mux.HandleFunc("/miner/signup", miner.SignUp)
+	mux.HandleFunc("/miner/signin", miner.SignIn)
+	mux.HandleFunc("/miner/connect", miner.JWTAuth(miner.Connect(pool)))
 
-	log.Printf("Initializing database...\n")
-	db.Init()
+	server := http.Server{
+		Addr:    ":4430",
+		Handler: handlers.Log(mux),
+	}
 
-	// TODO: reasonable timeout parameters? don't want to have too
-	// many dead connections, also not sure how it will interact
-	// with sockets streaming...
-	const httpPort = ":8080"
-	log.Printf("Starting http re-direct on port %s...\n", httpPort)
-	go func() {
-		log.Fatal(http.ListenAndServe(httpPort, http.HandlerFunc(redirect)))
-	}()
-
-	// TODO: reasonable timeout parameters? don't want to have too
-	// many dead connections, also not sure how it will interact
-	// with sockets streaming...
 	log.Printf("Listening on port %s...\n", server.Addr)
-	log.Fatal(server.ListenAndServeTLS("server.crt", "server.key"))
+	go log.Fatal(server.ListenAndServeTLS("server.crt", "server.key"))
 }
 
 func redirect(w http.ResponseWriter, r *http.Request) {

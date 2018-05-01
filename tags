@@ -139,6 +139,7 @@ Begin	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) Begin() (_ driver.Tx, e
 BeginTx	vendor/github.com/lib/pq/conn_go18.go	/^func (cn *conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {$/;"	f
 BestCompression	vendor/github.com/dsnet/compress/bzip2/common.go	/^	BestCompression    = 9$/;"	c
 BestSpeed	vendor/github.com/dsnet/compress/bzip2/common.go	/^	BestSpeed          = 1$/;"	c
+BinaryMessage	vendor/github.com/gorilla/websocket/conn.go	/^	BinaryMessage = 2$/;"	c
 BinaryTree	vendor/github.com/ulikunitz/xz/lzma/matchalgorithm.go	/^	BinaryTree$/;"	c
 Bind	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func Bind(fd Handle, sa Sockaddr) (err error) {$/;"	f
 BindOptions	vendor/docker.io/go-docker/api/types/mount/mount.go	/^type BindOptions struct {$/;"	t
@@ -310,6 +311,11 @@ Close	vendor/github.com/Microsoft/go-winio/pipe.go	/^func (l *win32PipeListener)
 Close	vendor/github.com/docker/go-connections/sockets/inmem_socket.go	/^func (s *InmemSocket) Close() error {$/;"	f
 Close	vendor/github.com/dsnet/compress/bzip2/reader.go	/^func (zr *Reader) Close() error {$/;"	f
 Close	vendor/github.com/dsnet/compress/bzip2/writer.go	/^func (zw *Writer) Close() error {$/;"	f
+Close	vendor/github.com/gorilla/websocket/compression.go	/^func (r *flateReadWrapper) Close() error {$/;"	f
+Close	vendor/github.com/gorilla/websocket/compression.go	/^func (w *flateWriteWrapper) Close() error {$/;"	f
+Close	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) Close() error {$/;"	f
+Close	vendor/github.com/gorilla/websocket/conn.go	/^func (r *messageReader) Close() error {$/;"	f
+Close	vendor/github.com/gorilla/websocket/conn.go	/^func (w *messageWriter) Close() error {$/;"	f
 Close	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) Close() (err error) {$/;"	f
 Close	vendor/github.com/lib/pq/conn.go	/^func (rs *rows) Close() error {$/;"	f
 Close	vendor/github.com/lib/pq/conn.go	/^func (st *stmt) Close() (err error) {$/;"	f
@@ -328,9 +334,26 @@ Close	vendor/github.com/ulikunitz/xz/writer.go	/^func (w *Writer) Close() error 
 Close	vendor/golang.org/x/net/context/ctxhttp/ctxhttp_pre17.go	/^func (r *notifyingReader) Close() error {$/;"	f
 Close	vendor/golang.org/x/sys/windows/security_windows.go	/^func (t Token) Close() error {$/;"	f
 Close	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func Close(fd Handle) (err error) {$/;"	f
+CloseAbnormalClosure	vendor/github.com/gorilla/websocket/conn.go	/^	CloseAbnormalClosure         = 1006$/;"	c
+CloseError	vendor/github.com/gorilla/websocket/conn.go	/^type CloseError struct {$/;"	t
+CloseGoingAway	vendor/github.com/gorilla/websocket/conn.go	/^	CloseGoingAway               = 1001$/;"	c
 CloseHandle	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func CloseHandle(handle Handle) (err error) {$/;"	f
+CloseHandler	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) CloseHandler() func(code int, text string) error {$/;"	f
+CloseInternalServerErr	vendor/github.com/gorilla/websocket/conn.go	/^	CloseInternalServerErr       = 1011$/;"	c
+CloseInvalidFramePayloadData	vendor/github.com/gorilla/websocket/conn.go	/^	CloseInvalidFramePayloadData = 1007$/;"	c
+CloseMandatoryExtension	vendor/github.com/gorilla/websocket/conn.go	/^	CloseMandatoryExtension      = 1010$/;"	c
+CloseMessage	vendor/github.com/gorilla/websocket/conn.go	/^	CloseMessage = 8$/;"	c
+CloseMessageTooBig	vendor/github.com/gorilla/websocket/conn.go	/^	CloseMessageTooBig           = 1009$/;"	c
+CloseNoStatusReceived	vendor/github.com/gorilla/websocket/conn.go	/^	CloseNoStatusReceived        = 1005$/;"	c
+CloseNormalClosure	vendor/github.com/gorilla/websocket/conn.go	/^	CloseNormalClosure           = 1000$/;"	c
 CloseOnExec	vendor/golang.org/x/sys/windows/exec_windows.go	/^func CloseOnExec(fd Handle) {$/;"	f
+ClosePolicyViolation	vendor/github.com/gorilla/websocket/conn.go	/^	ClosePolicyViolation         = 1008$/;"	c
+CloseProtocolError	vendor/github.com/gorilla/websocket/conn.go	/^	CloseProtocolError           = 1002$/;"	c
 CloseServiceHandle	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func CloseServiceHandle(handle Handle) (err error) {$/;"	f
+CloseServiceRestart	vendor/github.com/gorilla/websocket/conn.go	/^	CloseServiceRestart          = 1012$/;"	c
+CloseTLSHandshake	vendor/github.com/gorilla/websocket/conn.go	/^	CloseTLSHandshake            = 1015$/;"	c
+CloseTryAgainLater	vendor/github.com/gorilla/websocket/conn.go	/^	CloseTryAgainLater           = 1013$/;"	c
+CloseUnsupportedData	vendor/github.com/gorilla/websocket/conn.go	/^	CloseUnsupportedData         = 1003$/;"	c
 CloseWrite	vendor/docker.io/go-docker/api/types/client.go	/^func (h *HijackedResponse) CloseWrite() error {$/;"	f
 CloseWrite	vendor/docker.io/go-docker/hijack.go	/^func (c *tlsClientCon) CloseWrite() error {$/;"	f
 CloseWrite	vendor/github.com/Microsoft/go-winio/pipe.go	/^func (f *win32MessageBytePipe) CloseWrite() error {$/;"	f
@@ -383,7 +406,9 @@ ConfigRemove	vendor/docker.io/go-docker/config_remove.go	/^func (cli *Client) Co
 ConfigSpec	vendor/docker.io/go-docker/api/types/swarm/config.go	/^type ConfigSpec struct {$/;"	t
 ConfigUpdate	vendor/docker.io/go-docker/config_update.go	/^func (cli *Client) ConfigUpdate(ctx context.Context, id string, version swarm.Version, config swarm.ConfigSpec) error {$/;"	f
 ConfigureTransport	vendor/github.com/docker/go-connections/sockets/sockets.go	/^func ConfigureTransport(tr *http.Transport, proto, addr string) error {$/;"	f
+Conn	vendor/github.com/gorilla/websocket/conn.go	/^type Conn struct {$/;"	t
 Conn	vendor/golang.org/x/net/internal/socks/socks.go	/^type Conn struct {$/;"	t
+Connect	handlers/miner/Connect.go	/^func Connect(p *Pool) func(w http.ResponseWriter, r *http.Request) {$/;"	f
 Connect	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func Connect(fd Handle, sa Sockaddr) (err error) {$/;"	f
 ConnectEx	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func ConnectEx(fd Handle, sa Sockaddr, sendBuf *byte, sendDataLen uint32, bytesSent *uint32, overlapped *Overlapped) error {$/;"	f
 ConnectedContainer	vendor/docker.io/go-docker/api/types/container/host_config.go	/^func (n NetworkMode) ConnectedContainer() string {$/;"	f
@@ -488,7 +513,7 @@ CreateService	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func CreateS
 CreateSymbolicLink	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func CreateSymbolicLink(symlinkfilename *uint16, targetfilename *uint16, flags uint32) (err error) {$/;"	f
 CreateToolhelp32Snapshot	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func CreateToolhelp32Snapshot(flags uint32, processId uint32) (handle Handle, err error) {$/;"	f
 CredentialSpec	vendor/docker.io/go-docker/api/types/swarm/container.go	/^type CredentialSpec struct {$/;"	t
-Credentials	handlers/user/Credentials.go	/^type Credentials struct {$/;"	t
+Credentials	handlers/Credentials.go	/^type Credentials struct {$/;"	t
 CryptAcquireContext	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func CryptAcquireContext(provhandle *Handle, container *uint16, provider *uint16, provtype uint32, flags uint32) (err error) {$/;"	f
 CryptGenRandom	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func CryptGenRandom(provhandle Handle, buflen uint32, buf *byte) (err error) {$/;"	f
 CryptReleaseContext	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func CryptReleaseContext(provhandle Handle, flags uint32) (err error) {$/;"	f
@@ -657,6 +682,7 @@ Decompressed	vendor/github.com/ulikunitz/xz/lzma/decoder.go	/^func (d *decoder) 
 Decrypt	vendor/golang.org/x/crypto/blowfish/cipher.go	/^func (c *Cipher) Decrypt(dst, src []byte) {$/;"	f
 DefaultCompression	vendor/github.com/dsnet/compress/bzip2/common.go	/^	DefaultCompression = 6$/;"	c
 DefaultCost	vendor/golang.org/x/crypto/bcrypt/bcrypt.go	/^	DefaultCost int = 10 \/\/ the cost that will actually be set if a cost below MinCost is passed into GenerateFromPassword$/;"	c
+DefaultDialer	vendor/github.com/gorilla/websocket/client.go	/^var DefaultDialer = &Dialer{$/;"	v
 DefaultDockerHost	vendor/docker.io/go-docker/client_unix.go	/^const DefaultDockerHost = "unix:\/\/\/var\/run\/docker.sock"$/;"	c
 DefaultDockerHost	vendor/docker.io/go-docker/client_windows.go	/^const DefaultDockerHost = "npipe:\/\/\/\/.\/pipe\/docker_engine"$/;"	c
 DefaultNetworkSettings	vendor/docker.io/go-docker/api/types/types.go	/^type DefaultNetworkSettings struct {$/;"	t
@@ -675,6 +701,7 @@ Descriptor	vendor/github.com/opencontainers/image-spec/specs-go/v1/descriptor.go
 DeviceIoControl	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func DeviceIoControl(handle Handle, ioControlCode uint32, inBuffer *byte, inBufferSize uint32, outBuffer *byte, outBufferSize uint32, bytesReturned *uint32, overlapped *Overlapped) (err error) {$/;"	f
 DeviceMapping	vendor/docker.io/go-docker/api/types/container/host_config.go	/^type DeviceMapping struct {$/;"	t
 Dial	vendor/github.com/docker/go-connections/sockets/inmem_socket.go	/^func (s *InmemSocket) Dial(network, addr string) (net.Conn, error) {$/;"	f
+Dial	vendor/github.com/gorilla/websocket/client.go	/^func (d *Dialer) Dial(urlStr string, requestHeader http.Header) (*Conn, *http.Response, error) {$/;"	f
 Dial	vendor/github.com/lib/pq/conn.go	/^func (d defaultDialer) Dial(ntw, addr string) (net.Conn, error) {$/;"	f
 Dial	vendor/golang.org/x/net/internal/socks/socks.go	/^func (d *Dialer) Dial(network, address string) (net.Conn, error) {$/;"	f
 Dial	vendor/golang.org/x/net/proxy/direct.go	/^func (direct) Dial(network, addr string) (net.Conn, error) {$/;"	f
@@ -686,6 +713,7 @@ DialPipe	vendor/github.com/docker/go-connections/sockets/sockets_unix.go	/^func 
 DialPipe	vendor/github.com/docker/go-connections/sockets/sockets_windows.go	/^func DialPipe(addr string, timeout time.Duration) (net.Conn, error) {$/;"	f
 DialSession	vendor/docker.io/go-docker/session.go	/^func (cli *Client) DialSession(ctx context.Context, proto string, meta map[string][]string) (net.Conn, error) {$/;"	f
 DialTimeout	vendor/github.com/lib/pq/conn.go	/^func (d defaultDialer) DialTimeout(ntw, addr string, timeout time.Duration) (net.Conn, error) {$/;"	f
+Dialer	vendor/github.com/gorilla/websocket/client.go	/^type Dialer struct {$/;"	t
 Dialer	vendor/github.com/lib/pq/conn.go	/^type Dialer interface {$/;"	t
 Dialer	vendor/golang.org/x/net/internal/socks/socks.go	/^type Dialer struct {$/;"	t
 Dialer	vendor/golang.org/x/net/proxy/proxy.go	/^type Dialer interface {$/;"	t
@@ -788,6 +816,7 @@ Einfo	vendor/github.com/lib/pq/error.go	/^	Einfo    = "INFO"$/;"	c
 Elog	vendor/github.com/lib/pq/error.go	/^	Elog     = "LOG"$/;"	c
 EnableInfinityTs	vendor/github.com/lib/pq/encode.go	/^func EnableInfinityTs(negative time.Time, positive time.Time) {$/;"	f
 EnableProcessPrivileges	vendor/github.com/Microsoft/go-winio/privilege.go	/^func EnableProcessPrivileges(names []string) error {$/;"	f
+EnableWriteCompression	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) EnableWriteCompression(enable bool) {$/;"	f
 Encode	vendor/github.com/dsnet/compress/bzip2/bwt.go	/^func (bwt *burrowsWheelerTransform) Encode(buf []byte) (ptr int) {$/;"	f
 Encode	vendor/github.com/dsnet/compress/bzip2/mtf_rle2.go	/^func (mtf *moveToFront) Encode(vals []byte) (syms []uint16) {$/;"	f
 Encode	vendor/github.com/dsnet/compress/internal/common.go	/^func (m *MoveToFront) Encode(vals []uint8) {$/;"	f
@@ -844,8 +873,10 @@ Err	vendor/github.com/wminshew/check/err.go	/^func Err(deferredFunc func() error
 Err	vendor/golang.org/x/net/context/pre_go17.go	/^func (*emptyCtx) Err() error {$/;"	f
 Err	vendor/golang.org/x/net/context/pre_go17.go	/^func (c *cancelCtx) Err() error {$/;"	f
 ErrBadFormat	vendor/docker.io/go-docker/api/types/filters/parse.go	/^var ErrBadFormat = errors.New("bad format of filter (expected name=value)")$/;"	v
+ErrBadHandshake	vendor/github.com/gorilla/websocket/client.go	/^var ErrBadHandshake = errors.New("websocket: bad handshake")$/;"	v
 ErrChannelAlreadyOpen	vendor/github.com/lib/pq/notify.go	/^var ErrChannelAlreadyOpen = errors.New("pq: channel is already open")$/;"	v
 ErrChannelNotOpen	vendor/github.com/lib/pq/notify.go	/^var ErrChannelNotOpen = errors.New("pq: channel is not open")$/;"	v
+ErrCloseSent	vendor/github.com/gorilla/websocket/conn.go	/^var ErrCloseSent = errors.New("websocket: close sent")$/;"	v
 ErrCouldNotDetectUsername	vendor/github.com/lib/pq/conn.go	/^	ErrCouldNotDetectUsername    = errors.New("pq: Could not detect default username. Please provide one explicitly")$/;"	v
 ErrDigestAmbiguous	vendor/github.com/docker/distribution/digestset/set.go	/^	ErrDigestAmbiguous = errors.New("ambiguous digest string")$/;"	v
 ErrDigestInvalidFormat	vendor/github.com/docker/distribution/reference/reference.go	/^	ErrDigestInvalidFormat = errors.New("invalid digest format")$/;"	v
@@ -881,6 +912,7 @@ ErrNotRSAPublicKey	vendor/github.com/dgrijalva/jwt-go/rsa_utils.go	/^	ErrNotRSAP
 ErrNotSupported	vendor/github.com/lib/pq/conn.go	/^	ErrNotSupported              = errors.New("pq: Unsupported command")$/;"	v
 ErrPipeListenerClosed	vendor/github.com/Microsoft/go-winio/pipe.go	/^	ErrPipeListenerClosed = errors.New("use of closed network connection")$/;"	v
 ErrProtocolNotAvailable	vendor/github.com/docker/go-connections/sockets/sockets.go	/^var ErrProtocolNotAvailable = errors.New("protocol not available")$/;"	v
+ErrReadLimit	vendor/github.com/gorilla/websocket/conn.go	/^var ErrReadLimit = errors.New("websocket: read limit exceeded")$/;"	v
 ErrRedirect	vendor/docker.io/go-docker/client.go	/^var ErrRedirect = errors.New("unexpected redirect in response")$/;"	v
 ErrReferenceInvalidFormat	vendor/github.com/docker/distribution/reference/reference.go	/^	ErrReferenceInvalidFormat = errors.New("invalid reference format")$/;"	v
 ErrSSLKeyHasWorldPermissions	vendor/github.com/lib/pq/conn.go	/^	ErrSSLKeyHasWorldPermissions = errors.New("pq: Private key file has group or world access. Permissions should be u=rw (0600) or less")$/;"	v
@@ -906,6 +938,9 @@ Error	vendor/github.com/dsnet/compress/internal/errors/errors.go	/^func (e Error
 Error	vendor/github.com/dsnet/compress/internal/errors/errors.go	/^type Error struct {$/;"	t
 Error	vendor/github.com/gogo/protobuf/proto/encode.go	/^func (e *RequiredNotSetError) Error() string {$/;"	f
 Error	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func (p *ParseError) Error() string {$/;"	f
+Error	vendor/github.com/gorilla/websocket/conn.go	/^func (e *CloseError) Error() string {$/;"	f
+Error	vendor/github.com/gorilla/websocket/conn.go	/^func (e *netError) Error() string   { return e.msg }$/;"	f
+Error	vendor/github.com/gorilla/websocket/server.go	/^func (e HandshakeError) Error() string { return e.message }$/;"	f
 Error	vendor/github.com/lib/pq/error.go	/^func (err Error) Error() string {$/;"	f
 Error	vendor/github.com/lib/pq/error.go	/^type Error struct {$/;"	t
 Error	vendor/github.com/pkg/errors/errors.go	/^func (f *fundamental) Error() string { return f.msg }$/;"	f
@@ -1076,6 +1111,7 @@ Format	vendor/github.com/pkg/errors/errors.go	/^func (w *withStack) Format(s fmt
 Format	vendor/github.com/pkg/errors/stack.go	/^func (f Frame) Format(s fmt.State, verb rune) {$/;"	f
 Format	vendor/github.com/pkg/errors/stack.go	/^func (s *stack) Format(st fmt.State, verb rune) {$/;"	f
 Format	vendor/github.com/pkg/errors/stack.go	/^func (st StackTrace) Format(s fmt.State, verb rune) {$/;"	f
+FormatCloseMessage	vendor/github.com/gorilla/websocket/conn.go	/^func FormatCloseMessage(closeCode int, text string) []byte {$/;"	f
 FormatMessage	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func FormatMessage(flags uint32, msgsrc uintptr, msgid uint32, langid uint32, buf []uint16, args *byte) (n uint32, err error) {$/;"	f
 FormatTimestamp	vendor/github.com/lib/pq/encode.go	/^func FormatTimestamp(t time.Time) []byte {$/;"	f
 ForwardBWT	vendor/github.com/dsnet/compress/bzip2/fuzz_on.go	/^func ForwardBWT(buf []byte) (ptr int) {$/;"	f
@@ -1230,6 +1266,7 @@ HKEY_PERFORMANCE_DATA	vendor/golang.org/x/sys/windows/types_windows.go	/^	HKEY_P
 HKEY_USERS	vendor/golang.org/x/sys/windows/types_windows.go	/^	HKEY_USERS$/;"	c
 Handle	vendor/golang.org/x/sys/windows/dll_windows.go	/^func (d *LazyDLL) Handle() uintptr {$/;"	f
 Handle	vendor/golang.org/x/sys/windows/syscall_windows.go	/^type Handle uintptr$/;"	t
+HandshakeError	vendor/github.com/gorilla/websocket/server.go	/^type HandshakeError struct {$/;"	t
 Has	vendor/github.com/gogo/protobuf/proto/message_set.go	/^func (ms *messageSet) Has(pb Message) bool {$/;"	f
 HasExtension	vendor/github.com/gogo/protobuf/proto/extensions.go	/^func HasExtension(pb Message, extension *ExtensionDesc) bool {$/;"	f
 HasNextResultSet	vendor/github.com/lib/pq/conn.go	/^func (rs *rows) HasNextResultSet() bool {$/;"	f
@@ -1415,6 +1452,7 @@ IsAlways	vendor/docker.io/go-docker/api/types/container/host_config.go	/^func (r
 IsBridge	vendor/docker.io/go-docker/api/types/container/hostconfig_unix.go	/^func (n NetworkMode) IsBridge() bool {$/;"	f
 IsBridge	vendor/docker.io/go-docker/api/types/container/hostconfig_windows.go	/^func (n NetworkMode) IsBridge() bool {$/;"	f
 IsBufferedReader	vendor/github.com/dsnet/compress/internal/prefix/reader.go	/^func (pr *Reader) IsBufferedReader() bool {$/;"	f
+IsCloseError	vendor/github.com/gorilla/websocket/conn.go	/^func IsCloseError(err error, codes ...int) bool {$/;"	f
 IsClosed	vendor/github.com/dsnet/compress/internal/errors/errors.go	/^func (e Error) IsClosed() bool     { return e.Code == Closed }$/;"	f
 IsClosed	vendor/github.com/dsnet/compress/internal/errors/errors.go	/^func IsClosed(err error) bool     { return isCode(err, Closed) }$/;"	f
 IsContainer	vendor/docker.io/go-docker/api/types/container/host_config.go	/^func (c CgroupSpec) IsContainer() bool {$/;"	f
@@ -1469,6 +1507,7 @@ IsPrivate	vendor/docker.io/go-docker/api/types/container/host_config.go	/^func (
 IsProcess	vendor/docker.io/go-docker/api/types/container/hostconfig_windows.go	/^func (i Isolation) IsProcess() bool {$/;"	f
 IsSame	vendor/docker.io/go-docker/api/types/container/host_config.go	/^func (rp *RestartPolicy) IsSame(tp *RestartPolicy) bool {$/;"	f
 IsShareable	vendor/docker.io/go-docker/api/types/container/host_config.go	/^func (n IpcMode) IsShareable() bool {$/;"	f
+IsUnexpectedCloseError	vendor/github.com/gorilla/websocket/conn.go	/^func IsUnexpectedCloseError(err error, expectedCodes ...int) bool {$/;"	f
 IsUnlessStopped	vendor/docker.io/go-docker/api/types/container/host_config.go	/^func (rp *RestartPolicy) IsUnlessStopped() bool {$/;"	f
 IsUserDefined	vendor/docker.io/go-docker/api/types/container/hostconfig_unix.go	/^func (n NetworkMode) IsUserDefined() bool {$/;"	f
 IsUserDefined	vendor/docker.io/go-docker/api/types/container/hostconfig_windows.go	/^func (n NetworkMode) IsUserDefined() bool {$/;"	f
@@ -1476,7 +1515,9 @@ IsValid	vendor/docker.io/go-docker/api/types/container/hostconfig_unix.go	/^func
 IsValid	vendor/docker.io/go-docker/api/types/container/hostconfig_windows.go	/^func (i Isolation) IsValid() bool {$/;"	f
 IsValid	vendor/github.com/gogo/protobuf/proto/pointer_reflect.go	/^func (f field) IsValid() bool { return f != nil }$/;"	f
 IsValid	vendor/github.com/gogo/protobuf/proto/pointer_unsafe.go	/^func (f field) IsValid() bool {$/;"	f
+IsWebSocketUpgrade	vendor/github.com/gorilla/websocket/server.go	/^func IsWebSocketUpgrade(r *http.Request) bool {$/;"	f
 Isolation	vendor/docker.io/go-docker/api/types/container/host_config.go	/^type Isolation string$/;"	t
+JWTAuth	handlers/miner/JWTAuth.go	/^func JWTAuth(h http.HandlerFunc) http.HandlerFunc {$/;"	f
 JWTAuth	handlers/user/JWTAuth.go	/^func JWTAuth(h http.HandlerFunc) http.HandlerFunc {$/;"	f
 JobUpload	handlers/JobUpload.go	/^func JobUpload(w http.ResponseWriter, r *http.Request) {$/;"	f
 JoinRequest	vendor/docker.io/go-docker/api/types/swarm/swarm.go	/^type JoinRequest struct {$/;"	t
@@ -1577,6 +1618,7 @@ LoadLibrary	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func LoadLibra
 LoadLibraryEx	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func LoadLibraryEx(libname string, zero Handle, flags uintptr) (handle Handle, err error) {$/;"	f
 LoadSetFileCompletionNotificationModes	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func LoadSetFileCompletionNotificationModes() error {$/;"	f
 LocalAddr	vendor/github.com/Microsoft/go-winio/pipe.go	/^func (f *win32Pipe) LocalAddr() net.Addr {$/;"	f
+LocalAddr	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) LocalAddr() net.Addr {$/;"	f
 LocalFree	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func LocalFree(hmem Handle) (handle Handle, err error) {$/;"	f
 LocalNodeState	vendor/docker.io/go-docker/api/types/swarm/swarm.go	/^type LocalNodeState string$/;"	t
 LocalNodeStateActive	vendor/docker.io/go-docker/api/types/swarm/swarm.go	/^	LocalNodeStateActive LocalNodeState = "active"$/;"	c
@@ -1801,6 +1843,7 @@ NewCallback	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func NewCallbac
 NewCallbackCDecl	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func NewCallbackCDecl(fn interface{}) uintptr {$/;"	f
 NewCipher	vendor/golang.org/x/crypto/blowfish/cipher.go	/^func NewCipher(key []byte) (*Cipher, error) {$/;"	f
 NewClient	vendor/docker.io/go-docker/client.go	/^func NewClient(host string, version string, client *http.Client, httpHeaders map[string]string) (*Client, error) {$/;"	f
+NewClient	vendor/github.com/gorilla/websocket/client.go	/^func NewClient(netConn net.Conn, u *url.URL, requestHeader http.Header, readBufSize, writeBufSize int) (c *Conn, response *http.Response, err error) {$/;"	f
 NewCyclicPoly	vendor/github.com/ulikunitz/xz/internal/hash/cyclic_poly.go	/^func NewCyclicPoly(n int) *CyclicPoly {$/;"	f
 NewDialListener	vendor/github.com/lib/pq/notify.go	/^func NewDialListener(d Dialer,$/;"	f
 NewDialer	vendor/golang.org/x/net/internal/socks/socks.go	/^func NewDialer(network, address string) *Dialer {$/;"	f
@@ -1816,7 +1859,9 @@ NewLazySystemDLL	vendor/golang.org/x/sys/windows/dll_windows.go	/^func NewLazySy
 NewListener	vendor/github.com/lib/pq/notify.go	/^func NewListener(name string,$/;"	f
 NewListenerConn	vendor/github.com/lib/pq/notify.go	/^func NewListenerConn(name string, notificationChan chan<- *Notification) (*ListenerConn, error) {$/;"	f
 NewPerHost	vendor/golang.org/x/net/proxy/per_host.go	/^func NewPerHost(defaultDialer, bypass Dialer) *PerHost {$/;"	f
+NewPool	handlers/miner/Pool.go	/^func NewPool() *Pool {$/;"	f
 NewPort	vendor/github.com/docker/go-connections/nat/nat.go	/^func NewPort(proto, port string) (Port, error) {$/;"	f
+NewPreparedMessage	vendor/github.com/gorilla/websocket/prepared.go	/^func NewPreparedMessage(messageType int, data []byte) (*PreparedMessage, error) {$/;"	f
 NewProc	vendor/golang.org/x/sys/windows/dll_windows.go	/^func (d *LazyDLL) NewProc(name string) *LazyProc {$/;"	f
 NewRabinKarp	vendor/github.com/ulikunitz/xz/internal/hash/rabin_karp.go	/^func NewRabinKarp(n int) *RabinKarp {$/;"	f
 NewRabinKarpConst	vendor/github.com/ulikunitz/xz/internal/hash/rabin_karp.go	/^func NewRabinKarpConst(n int, a uint64) *RabinKarp {$/;"	f
@@ -1850,7 +1895,9 @@ Next	vendor/github.com/lib/pq/conn.go	/^func (s *scanner) Next() (rune, bool) {$
 Next	vendor/github.com/nwaples/rardecode/reader.go	/^func (r *Reader) Next() (*FileHeader, error) {$/;"	f
 NextOp	vendor/github.com/ulikunitz/xz/lzma/bintree.go	/^func (t *binTree) NextOp(rep [4]uint32) operation {$/;"	f
 NextOp	vendor/github.com/ulikunitz/xz/lzma/hashtable.go	/^func (t *hashTable) NextOp(rep [4]uint32) operation {$/;"	f
+NextReader	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) NextReader() (messageType int, r io.Reader, err error) {$/;"	f
 NextResultSet	vendor/github.com/lib/pq/conn.go	/^func (rs *rows) NextResultSet() error {$/;"	f
+NextWriter	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) NextWriter(messageType int) (io.WriteCloser, error) {$/;"	f
 NoBaseImageSpecifier	vendor/docker.io/go-docker/api/common.go	/^	NoBaseImageSpecifier string = "scratch"$/;"	c
 NoHealthcheck	vendor/docker.io/go-docker/api/types/types.go	/^	NoHealthcheck = "none"      \/\/ Indicates there is no healthcheck$/;"	c
 Node	vendor/docker.io/go-docker/api/types/swarm/node.go	/^type Node struct {$/;"	t
@@ -2034,6 +2081,8 @@ Ping	vendor/docker.io/go-docker/api/types/types.go	/^type Ping struct {$/;"	t
 Ping	vendor/docker.io/go-docker/ping.go	/^func (cli *Client) Ping(ctx context.Context) (types.Ping, error) {$/;"	f
 Ping	vendor/github.com/lib/pq/notify.go	/^func (l *Listener) Ping() error {$/;"	f
 Ping	vendor/github.com/lib/pq/notify.go	/^func (l *ListenerConn) Ping() error {$/;"	f
+PingHandler	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) PingHandler() func(appData string) error {$/;"	f
+PingMessage	vendor/github.com/gorilla/websocket/conn.go	/^	PingMessage = 9$/;"	c
 Pipe	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func Pipe(p []Handle) (err error) {$/;"	f
 PipeConfig	vendor/github.com/Microsoft/go-winio/pipe.go	/^type PipeConfig struct {$/;"	t
 Placement	vendor/docker.io/go-docker/api/types/swarm/task.go	/^type Placement struct {$/;"	t
@@ -2080,6 +2129,9 @@ PluginSpec	vendor/docker.io/go-docker/api/types/swarm/runtime/plugin.pb.go	/^typ
 PluginUpgrade	vendor/docker.io/go-docker/plugin_upgrade.go	/^func (cli *Client) PluginUpgrade(ctx context.Context, name string, options types.PluginInstallOptions) (rc io.ReadCloser, err error) {$/;"	f
 PluginsInfo	vendor/docker.io/go-docker/api/types/types.go	/^type PluginsInfo struct {$/;"	t
 PluginsListResponse	vendor/docker.io/go-docker/api/types/plugin_responses.go	/^type PluginsListResponse []*Plugin$/;"	t
+PongHandler	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) PongHandler() func(appData string) error {$/;"	f
+PongMessage	vendor/github.com/gorilla/websocket/conn.go	/^	PongMessage = 10$/;"	c
+Pool	handlers/miner/Pool.go	/^type Pool struct {$/;"	t
 Port	vendor/docker.io/go-docker/api/types/port.go	/^type Port struct {$/;"	t
 Port	vendor/github.com/docker/go-connections/nat/nat.go	/^func (p Port) Port() string {$/;"	f
 Port	vendor/github.com/docker/go-connections/nat/nat.go	/^type Port string$/;"	t
@@ -2108,6 +2160,7 @@ Prefix	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func Prefix() stri
 PrefixCode	vendor/github.com/dsnet/compress/internal/prefix/prefix.go	/^type PrefixCode struct {$/;"	t
 PrefixCodes	vendor/github.com/dsnet/compress/internal/prefix/prefix.go	/^type PrefixCodes []PrefixCode$/;"	t
 Prepare	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) Prepare(q string) (_ driver.Stmt, err error) {$/;"	f
+PreparedMessage	vendor/github.com/gorilla/websocket/prepared.go	/^type PreparedMessage struct {$/;"	t
 Print	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func (l *Logger) Print(v ...interface{}) {$/;"	f
 Print	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func Print(v ...interface{}) {$/;"	f
 Printf	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func (l *Logger) Printf(format string, v ...interface{}) {$/;"	f
@@ -2191,6 +2244,8 @@ Read	vendor/github.com/Microsoft/go-winio/pipe.go	/^func (f *win32MessageBytePip
 Read	vendor/github.com/dsnet/compress/bzip2/reader.go	/^func (zr *Reader) Read(buf []byte) (int, error) {$/;"	f
 Read	vendor/github.com/dsnet/compress/bzip2/rle1.go	/^func (rle *runLengthEncoding) Read(buf []byte) (int, error) {$/;"	f
 Read	vendor/github.com/dsnet/compress/internal/prefix/reader.go	/^func (pr *Reader) Read(buf []byte) (cnt int, err error) {$/;"	f
+Read	vendor/github.com/gorilla/websocket/compression.go	/^func (r *flateReadWrapper) Read(p []byte) (int, error) {$/;"	f
+Read	vendor/github.com/gorilla/websocket/conn.go	/^func (r *messageReader) Read(b []byte) (int, error) {$/;"	f
 Read	vendor/github.com/nwaples/rardecode/decode_reader.go	/^func (d *decodeReader) Read(p []byte) (n int, err error) {$/;"	f
 Read	vendor/github.com/nwaples/rardecode/decrypt_reader.go	/^func (cr *cipherBlockReader) Read(p []byte) (n int, err error) {$/;"	f
 Read	vendor/github.com/nwaples/rardecode/reader.go	/^func (f *packedFileReader) Read(p []byte) (int, error) {$/;"	f
@@ -2220,6 +2275,10 @@ ReadCloser	vendor/github.com/nwaples/rardecode/reader.go	/^type ReadCloser struc
 ReadConsole	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func ReadConsole(console Handle, buf *uint16, toread uint32, read *uint32, inputControl *byte) (err error) {$/;"	f
 ReadDirectoryChanges	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func ReadDirectoryChanges(handle Handle, buf *byte, buflen uint32, watchSubTree bool, mask uint32, retlen *uint32, overlapped *Overlapped, completionRoutine uintptr) (err error) {$/;"	f
 ReadFile	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func ReadFile(handle Handle, buf []byte, done *uint32, overlapped *Overlapped) (err error) {$/;"	f
+ReadFrom	vendor/github.com/gorilla/websocket/conn.go	/^func (w *messageWriter) ReadFrom(r io.Reader) (nn int64, err error) {$/;"	f
+ReadJSON	vendor/github.com/gorilla/websocket/json.go	/^func (c *Conn) ReadJSON(v interface{}) error {$/;"	f
+ReadJSON	vendor/github.com/gorilla/websocket/json.go	/^func ReadJSON(c *Conn, v interface{}) error {$/;"	f
+ReadMessage	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) ReadMessage() (messageType int, p []byte, err error) {$/;"	f
 ReadOffset	vendor/github.com/dsnet/compress/internal/prefix/reader.go	/^func (pr *Reader) ReadOffset(pd *Decoder, rcs RangeCodes) uint {$/;"	f
 ReadPads	vendor/github.com/dsnet/compress/internal/prefix/reader.go	/^func (pr *Reader) ReadPads() uint {$/;"	f
 ReadPrefixCodes	vendor/github.com/dsnet/compress/bzip2/prefix.go	/^func (pr *prefixReader) ReadPrefixCodes(codes []prefix.PrefixCodes, trees []prefix.Decoder) {$/;"	f
@@ -2260,6 +2319,7 @@ RegistryAuthFromSpec	vendor/docker.io/go-docker/api/types/client.go	/^	RegistryA
 RegistryLogin	vendor/docker.io/go-docker/login.go	/^func (cli *Client) RegistryLogin(ctx context.Context, auth types.AuthConfig) (registry.AuthenticateOKBody, error) {$/;"	f
 Release	vendor/golang.org/x/sys/windows/dll_windows.go	/^func (d *DLL) Release() (err error) {$/;"	f
 RemoteAddr	vendor/github.com/Microsoft/go-winio/pipe.go	/^func (f *win32Pipe) RemoteAddr() net.Addr {$/;"	f
+RemoteAddr	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) RemoteAddr() net.Addr {$/;"	f
 Remove	vendor/github.com/docker/distribution/digestset/set.go	/^func (dst *Set) Remove(d digest.Digest) error {$/;"	f
 RemoveDirectory	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func RemoveDirectory(path *uint16) (err error) {$/;"	f
 Rename	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func Rename(oldpath, newpath string) (err error) {$/;"	f
@@ -2313,6 +2373,7 @@ Roller	vendor/github.com/ulikunitz/xz/internal/hash/roller.go	/^type Roller inte
 RootFS	vendor/docker.io/go-docker/api/types/types.go	/^type RootFS struct {$/;"	t
 RootFS	vendor/github.com/opencontainers/image-spec/specs-go/v1/config.go	/^type RootFS struct {$/;"	t
 RowsAffected	vendor/github.com/lib/pq/conn.go	/^func (noRows) RowsAffected() (int64, error) {$/;"	f
+Run	handlers/miner/Pool.go	/^func (p *Pool) Run() {$/;"	f
 RunWithPrivilege	vendor/github.com/Microsoft/go-winio/privilege.go	/^func RunWithPrivilege(name string, fn func() error) error {$/;"	f
 RunWithPrivileges	vendor/github.com/Microsoft/go-winio/privilege.go	/^func RunWithPrivileges(names []string, fn func() error) error {$/;"	f
 Runtime	vendor/docker.io/go-docker/api/types/types.go	/^type Runtime struct {$/;"	t
@@ -2578,6 +2639,8 @@ ServiceUpdateResponse	vendor/docker.io/go-docker/api/types/service_update_respon
 Set	vendor/github.com/docker/distribution/digestset/set.go	/^type Set struct {$/;"	t
 Set	vendor/github.com/opencontainers/go-digest/algorithm.go	/^func (a *Algorithm) Set(value string) error {$/;"	f
 SetBuf	vendor/github.com/gogo/protobuf/proto/lib.go	/^func (p *Buffer) SetBuf(s []byte) {$/;"	f
+SetCloseHandler	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) SetCloseHandler(h func(code int, text string) error) {$/;"	f
+SetCompressionLevel	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) SetCompressionLevel(level int) error {$/;"	f
 SetConsoleMode	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func SetConsoleMode(console Handle, mode uint32) (err error) {$/;"	f
 SetCurrentDirectory	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func SetCurrentDirectory(path *uint16) (err error) {$/;"	f
 SetCustomHTTPHeaders	vendor/docker.io/go-docker/client.go	/^func (cli *Client) SetCustomHTTPHeaders(headers map[string]string) {$/;"	f
@@ -2599,16 +2662,22 @@ SetFlags	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func SetFlags(fl
 SetHandleInformation	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func SetHandleInformation(handle Handle, mask uint32, flags uint32) (err error) {$/;"	f
 SetOutput	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func (l *Logger) SetOutput(w io.Writer) {$/;"	f
 SetOutput	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func SetOutput(w io.Writer) {$/;"	f
+SetPingHandler	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) SetPingHandler(h func(appData string) error) {$/;"	f
+SetPongHandler	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) SetPongHandler(h func(appData string) error) {$/;"	f
 SetPrefix	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func (l *Logger) SetPrefix(prefix string) {$/;"	f
 SetPrefix	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func SetPrefix(prefix string) {$/;"	f
 SetRawExtension	vendor/github.com/gogo/protobuf/proto/extensions.go	/^func SetRawExtension(base Message, id int32, b []byte) {$/;"	f
 SetReadDeadline	vendor/github.com/Microsoft/go-winio/file.go	/^func (f *win32File) SetReadDeadline(deadline time.Time) error {$/;"	f
+SetReadDeadline	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) SetReadDeadline(t time.Time) error {$/;"	f
+SetReadLimit	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) SetReadLimit(limit int64) {$/;"	f
 SetServiceStatus	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func SetServiceStatus(service Handle, serviceStatus *SERVICE_STATUS) (err error) {$/;"	f
 SetStdHandle	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func SetStdHandle(stdhandle uint32, handle Handle) (err error) {$/;"	f
 SetUnsafeExtension	vendor/github.com/gogo/protobuf/proto/extensions_gogo.go	/^func SetUnsafeExtension(pb Message, fieldNum int32, value interface{}) error {$/;"	f
 SetVolumeLabel	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func SetVolumeLabel(rootPathName *uint16, volumeName *uint16) (err error) {$/;"	f
 SetVolumeMountPoint	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func SetVolumeMountPoint(volumeMountPoint *uint16, volumeName *uint16) (err error) {$/;"	f
 SetWriteDeadline	vendor/github.com/Microsoft/go-winio/file.go	/^func (f *win32File) SetWriteDeadline(deadline time.Time) error {$/;"	f
+SetWriteDeadline	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) SetWriteDeadline(t time.Time) error {$/;"	f
+SetWriteDeadline	vendor/github.com/gorilla/websocket/prepared.go	/^func (pc *prepareConn) SetWriteDeadline(t time.Time) error { return nil }$/;"	f
 Setenv	vendor/golang.org/x/sys/windows/env_windows.go	/^func Setenv(key, value string) error {$/;"	f
 Setsockopt	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func Setsockopt(s Handle, level int32, optname int32, optval *byte, optlen int32) (err error) {$/;"	f
 SetsockoptIPMreq	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func SetsockoptIPMreq(fd Handle, level, opt int, mreq *IPMreq) (err error) {$/;"	f
@@ -2636,8 +2705,9 @@ Sign	vendor/github.com/dgrijalva/jwt-go/hmac.go	/^func (m *SigningMethodHMAC) Si
 Sign	vendor/github.com/dgrijalva/jwt-go/none.go	/^func (m *signingMethodNone) Sign(signingString string, key interface{}) (string, error) {$/;"	f
 Sign	vendor/github.com/dgrijalva/jwt-go/rsa.go	/^func (m *SigningMethodRSA) Sign(signingString string, key interface{}) (string, error) {$/;"	f
 Sign	vendor/github.com/dgrijalva/jwt-go/rsa_pss.go	/^func (m *SigningMethodRSAPSS) Sign(signingString string, key interface{}) (string, error) {$/;"	f
+SignIn	handlers/miner/SignIn.go	/^func SignIn(w http.ResponseWriter, r *http.Request) {$/;"	f
 SignIn	handlers/user/SignIn.go	/^func SignIn(w http.ResponseWriter, r *http.Request) {$/;"	f
-SignInResponse	handlers/user/SignIn.go	/^type SignInResponse struct {$/;"	t
+SignUp	handlers/miner/SignUp.go	/^func SignUp(w http.ResponseWriter, r *http.Request) {$/;"	f
 SignUp	handlers/user/SignUp.go	/^func SignUp(w http.ResponseWriter, r *http.Request) {$/;"	f
 Signal	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func (s Signal) Signal() {}$/;"	f
 Signal	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func (w WaitStatus) Signal() Signal { return -1 }$/;"	f
@@ -2766,6 +2836,8 @@ StringToSid	vendor/golang.org/x/sys/windows/security_windows.go	/^func StringToS
 StringToUTF16	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func StringToUTF16(s string) []uint16 {$/;"	f
 StringToUTF16Ptr	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func StringToUTF16Ptr(s string) *uint16 { return &StringToUTF16(s)[0] }$/;"	f
 StructProperties	vendor/github.com/gogo/protobuf/proto/properties.go	/^type StructProperties struct {$/;"	t
+Subprotocol	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) Subprotocol() string {$/;"	f
+Subprotocols	vendor/github.com/gorilla/websocket/server.go	/^func Subprotocols(r *http.Request) []string {$/;"	f
 Sum	vendor/github.com/nwaples/rardecode/archive50.go	/^func (h leHash32) Sum(b []byte) []byte {$/;"	f
 Sum	vendor/github.com/ulikunitz/xz/crc.go	/^func (h crc32Hash) Sum(b []byte) []byte {$/;"	f
 Sum	vendor/github.com/ulikunitz/xz/crc.go	/^func (h crc64Hash) Sum(b []byte) []byte {$/;"	f
@@ -3044,14 +3116,17 @@ TaskStateShutdown	vendor/docker.io/go-docker/api/types/swarm/task.go	/^	TaskStat
 TaskStateStarting	vendor/docker.io/go-docker/api/types/swarm/task.go	/^	TaskStateStarting TaskState = "starting"$/;"	c
 TaskStatus	vendor/docker.io/go-docker/api/types/swarm/task.go	/^type TaskStatus struct {$/;"	t
 Temporary	vendor/github.com/Microsoft/go-winio/file.go	/^func (e *timeoutError) Temporary() bool { return true }$/;"	f
+Temporary	vendor/github.com/gorilla/websocket/conn.go	/^func (e *netError) Temporary() bool { return e.temporary }$/;"	f
 TerminateProcess	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func TerminateProcess(handle Handle, exitcode uint32) (err error) {$/;"	f
 Text	vendor/github.com/gogo/protobuf/proto/text.go	/^func (tm *TextMarshaler) Text(pb Message) string {$/;"	f
 TextMarshaler	vendor/github.com/gogo/protobuf/proto/text.go	/^type TextMarshaler struct {$/;"	t
+TextMessage	vendor/github.com/gorilla/websocket/conn.go	/^	TextMessage = 1$/;"	c
 ThrottleDevice	vendor/docker.io/go-docker/api/types/blkiodev/blkio.go	/^type ThrottleDevice struct {$/;"	t
 ThrottlingData	vendor/docker.io/go-docker/api/types/stats.go	/^type ThrottlingData struct {$/;"	t
 TiB	vendor/github.com/docker/go-units/size.go	/^	TiB = 1024 * GiB$/;"	c
 TimeFunc	vendor/github.com/dgrijalva/jwt-go/token.go	/^var TimeFunc = time.Now$/;"	v
 Timeout	vendor/github.com/Microsoft/go-winio/file.go	/^func (e *timeoutError) Timeout() bool   { return true }$/;"	f
+Timeout	vendor/github.com/gorilla/websocket/conn.go	/^func (e *netError) Timeout() bool   { return e.timeout }$/;"	f
 Timespec	vendor/golang.org/x/sys/windows/syscall_windows.go	/^type Timespec struct {$/;"	t
 TimespecToNsec	vendor/golang.org/x/sys/windows/syscall_windows.go	/^func TimespecToNsec(ts Timespec) int64 { return int64(ts.Sec)*1e9 + int64(ts.Nsec) }$/;"	f
 Timeval	vendor/golang.org/x/sys/windows/types_windows.go	/^type Timeval struct {$/;"	t
@@ -3119,6 +3194,7 @@ UTSMode	vendor/docker.io/go-docker/api/types/container/host_config.go	/^type UTS
 Uint32	vendor/github.com/gogo/protobuf/proto/lib.go	/^func Uint32(v uint32) *uint32 {$/;"	f
 Uint64	vendor/github.com/gogo/protobuf/proto/lib.go	/^func Uint64(v uint64) *uint64 {$/;"	f
 Ulimit	vendor/github.com/docker/go-units/ulimit.go	/^type Ulimit struct {$/;"	t
+UnderlyingConn	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) UnderlyingConn() net.Conn {$/;"	f
 Unhealthy	vendor/docker.io/go-docker/api/types/types.go	/^	Unhealthy     = "unhealthy" \/\/ Unhealthy indicates that the container has a problem$/;"	c
 UniqueExactMatch	vendor/docker.io/go-docker/api/types/filters/parse.go	/^func (args Args) UniqueExactMatch(key, source string) bool {$/;"	f
 Unix	vendor/golang.org/x/sys/windows/syscall.go	/^func (ts *Timespec) Unix() (sec int64, nsec int64) {$/;"	f
@@ -3172,7 +3248,9 @@ UpdateStateRollbackPaused	vendor/docker.io/go-docker/api/types/swarm/service.go	
 UpdateStateRollbackStarted	vendor/docker.io/go-docker/api/types/swarm/service.go	/^	UpdateStateRollbackStarted UpdateState = "rollback_started"$/;"	c
 UpdateStateUpdating	vendor/docker.io/go-docker/api/types/swarm/service.go	/^	UpdateStateUpdating UpdateState = "updating"$/;"	c
 UpdateStatus	vendor/docker.io/go-docker/api/types/swarm/service.go	/^type UpdateStatus struct {$/;"	t
-UserClaims	handlers/user/JWTAuth.go	/^type UserClaims struct {$/;"	t
+Upgrade	vendor/github.com/gorilla/websocket/server.go	/^func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (*Conn, error) {$/;"	f
+Upgrade	vendor/github.com/gorilla/websocket/server.go	/^func Upgrade(w http.ResponseWriter, r *http.Request, responseHeader http.Header, readBufSize, writeBufSize int) (*Conn, error) {$/;"	f
+Upgrader	vendor/github.com/gorilla/websocket/server.go	/^type Upgrader struct {$/;"	t
 UserDefined	vendor/docker.io/go-docker/api/types/container/host_config.go	/^func (n NetworkMode) UserDefined() string {$/;"	f
 UserInfo10	vendor/golang.org/x/sys/windows/security_windows.go	/^type UserInfo10 struct {$/;"	t
 UsernamePassword	vendor/golang.org/x/net/internal/socks/socks.go	/^type UsernamePassword struct {$/;"	t
@@ -3344,6 +3422,11 @@ Write	vendor/github.com/dsnet/compress/bzip2/rle1.go	/^func (rle *runLengthEncod
 Write	vendor/github.com/dsnet/compress/bzip2/writer.go	/^func (zw *Writer) Write(buf []byte) (int, error) {$/;"	f
 Write	vendor/github.com/dsnet/compress/internal/prefix/writer.go	/^func (pw *Writer) Write(buf []byte) (cnt int, err error) {$/;"	f
 Write	vendor/github.com/gogo/protobuf/proto/text.go	/^func (w *textWriter) Write(p []byte) (n int, err error) {$/;"	f
+Write	vendor/github.com/gorilla/websocket/compression.go	/^func (w *flateWriteWrapper) Write(p []byte) (int, error) {$/;"	f
+Write	vendor/github.com/gorilla/websocket/compression.go	/^func (w *truncWriter) Write(p []byte) (int, error) {$/;"	f
+Write	vendor/github.com/gorilla/websocket/conn.go	/^func (w *messageWriter) Write(p []byte) (int, error) {$/;"	f
+Write	vendor/github.com/gorilla/websocket/conn.go	/^func (wh *writeHook) Write(p []byte) (int, error) {$/;"	f
+Write	vendor/github.com/gorilla/websocket/prepared.go	/^func (pc *prepareConn) Write(p []byte) (int, error)        { return pc.buf.Write(p) }$/;"	f
 Write	vendor/github.com/opencontainers/go-digest/verifiers.go	/^func (hv hashVerifier) Write(p []byte) (n int, err error) {$/;"	f
 Write	vendor/github.com/ulikunitz/xz/lzma/bintree.go	/^func (t *binTree) Write(p []byte) (n int, err error) {$/;"	f
 Write	vendor/github.com/ulikunitz/xz/lzma/buffer.go	/^func (b *buffer) Write(p []byte) (n int, err error) {$/;"	f
@@ -3366,12 +3449,18 @@ WriteByte	vendor/github.com/ulikunitz/xz/lzma/bytewriter.go	/^func (l *LimitedBy
 WriteByte	vendor/github.com/ulikunitz/xz/lzma/decoderdict.go	/^func (d *decoderDict) WriteByte(c byte) error {$/;"	f
 WriteByte	vendor/github.com/ulikunitz/xz/lzma/hashtable.go	/^func (t *hashTable) WriteByte(b byte) error {$/;"	f
 WriteConsole	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func WriteConsole(console Handle, buf *uint16, towrite uint32, written *uint32, reserved *byte) (err error) {$/;"	f
+WriteControl	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) WriteControl(messageType int, data []byte, deadline time.Time) error {$/;"	f
 WriteFile	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func WriteFile(handle Handle, buf []byte, done *uint32, overlapped *Overlapped) (err error) {$/;"	f
 WriteHeader	vendor/github.com/Microsoft/go-winio/backup.go	/^func (w *BackupStreamWriter) WriteHeader(hdr *BackupHeader) error {$/;"	f
+WriteJSON	vendor/github.com/gorilla/websocket/json.go	/^func (c *Conn) WriteJSON(v interface{}) error {$/;"	f
+WriteJSON	vendor/github.com/gorilla/websocket/json.go	/^func WriteJSON(c *Conn, v interface{}) error {$/;"	f
+WriteMessage	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) WriteMessage(messageType int, data []byte) error {$/;"	f
 WriteOffset	vendor/github.com/dsnet/compress/internal/prefix/writer.go	/^func (pw *Writer) WriteOffset(ofs uint, pe *Encoder, re *RangeEncoder) {$/;"	f
 WritePads	vendor/github.com/dsnet/compress/internal/prefix/writer.go	/^func (pw *Writer) WritePads(v uint) {$/;"	f
 WritePrefixCodes	vendor/github.com/dsnet/compress/bzip2/prefix.go	/^func (pw *prefixWriter) WritePrefixCodes(codes []prefix.PrefixCodes, trees []prefix.Encoder) {$/;"	f
+WritePreparedMessage	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) WritePreparedMessage(pm *PreparedMessage) error {$/;"	f
 WriteString	vendor/github.com/gogo/protobuf/proto/text.go	/^func (w *textWriter) WriteString(s string) (n int, err error) {$/;"	f
+WriteString	vendor/github.com/gorilla/websocket/conn.go	/^func (w *messageWriter) WriteString(p string) (int, error) {$/;"	f
 WriteSymbol	vendor/github.com/dsnet/compress/internal/prefix/writer.go	/^func (pw *Writer) WriteSymbol(sym uint, pe *Encoder) {$/;"	f
 Writer	vendor/github.com/dsnet/compress/bzip2/writer.go	/^type Writer struct {$/;"	t
 Writer	vendor/github.com/dsnet/compress/internal/prefix/writer.go	/^type Writer struct {$/;"	t
@@ -3451,6 +3540,7 @@ adjustMinVersion	vendor/github.com/docker/go-connections/tlsconfig/config.go	/^f
 adjustPrivileges	vendor/github.com/Microsoft/go-winio/privilege.go	/^func adjustPrivileges(token windows.Token, privileges []uint64, action uint32) error {$/;"	f
 adjustTokenPrivileges	vendor/github.com/Microsoft/go-winio/zsyscall_windows.go	/^func adjustTokenPrivileges(token windows.Token, releaseAll bool, input *byte, outputSize uint32, output *byte, requiredSize *uint32) (success bool, err error) {$/;"	f
 advance	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func (p *textParser) advance() {$/;"	f
+advanceFrame	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) advanceFrame() (int, error) {$/;"	f
 algorithms	vendor/github.com/opencontainers/go-digest/algorithm.go	/^	algorithms = map[Algorithm]crypto.Hash{$/;"	v
 alignBits	vendor/github.com/ulikunitz/xz/lzma/distcodec.go	/^	alignBits = 4$/;"	c
 alignByte	vendor/github.com/nwaples/rardecode/bit_reader.go	/^func (r *rarBitReader) alignByte() {$/;"	f
@@ -3642,6 +3732,7 @@ checkPassword	vendor/github.com/nwaples/rardecode/archive50.go	/^func checkPassw
 checkPluginPermissions	vendor/docker.io/go-docker/plugin_install.go	/^func (cli *Client) checkPluginPermissions(ctx context.Context, query url.Values, options types.PluginInstallOptions) (types.PluginPrivileges, error) {$/;"	f
 checkPrefixes	vendor/github.com/dsnet/compress/internal/prefix/prefix.go	/^func (pc PrefixCodes) checkPrefixes() bool {$/;"	f
 checkResponseErr	vendor/docker.io/go-docker/request.go	/^func (cli *Client) checkResponseErr(serverResp serverResponse) error {$/;"	f
+checkSameOrigin	vendor/github.com/gorilla/websocket/server.go	/^func checkSameOrigin(r *http.Request) bool {$/;"	f
 checkShortMatch	vendor/github.com/docker/distribution/digestset/set.go	/^func checkShortMatch(alg digest.Algorithm, hex, shortAlg, shortHex string) bool {$/;"	f
 checkTokenMembership	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func checkTokenMembership(tokenHandle Token, sidToCheck *SID, isMember *int32) (err error) {$/;"	f
 checkValid	vendor/github.com/dsnet/compress/internal/prefix/range.go	/^func (rcs RangeCodes) checkValid() bool {$/;"	f
@@ -3657,6 +3748,8 @@ clientCipherSuites	vendor/github.com/docker/go-connections/tlsconfig/config_clie
 clientCipherSuites	vendor/github.com/docker/go-connections/tlsconfig/config_legacy_client_ciphers.go	/^var clientCipherSuites = []uint16{$/;"	v
 client_configure	vendor/github.com/lib/pq/.travis.sh	/^client_configure() {$/;"	f
 cloneState	vendor/github.com/ulikunitz/xz/lzma/state.go	/^func cloneState(src *state) *state {$/;"	f
+cloneTLSConfig	vendor/github.com/gorilla/websocket/client_clone.go	/^func cloneTLSConfig(cfg *tls.Config) *tls.Config {$/;"	f
+cloneTLSConfig	vendor/github.com/gorilla/websocket/client_clone_legacy.go	/^func cloneTLSConfig(cfg *tls.Config) *tls.Config {$/;"	f
 closeBlockWriter	vendor/github.com/ulikunitz/xz/writer.go	/^func (w *Writer) closeBlockWriter() error {$/;"	f
 closeHandle	vendor/github.com/Microsoft/go-winio/file.go	/^func (f *win32File) closeHandle() {$/;"	f
 closeTxn	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) closeTxn() {$/;"	f
@@ -3675,10 +3768,12 @@ compare	vendor/docker.io/go-docker/api/types/versions/compare.go	/^func compare(
 compress	vendor/github.com/dsnet/compress/api.go	/^package compress$/;"	p
 compress	vendor/github.com/ulikunitz/xz/lzma/encoder.go	/^func (e *encoder) compress(flags compressFlags) error {$/;"	f
 compressFlags	vendor/github.com/ulikunitz/xz/lzma/encoder.go	/^type compressFlags uint32$/;"	t
+compressNoContextTakeover	vendor/github.com/gorilla/websocket/compression.go	/^func compressNoContextTakeover(w io.WriteCloser, level int) io.WriteCloser {$/;"	f
 compressedFormats	vendor/github.com/mholt/archiver/zip.go	/^var compressedFormats = map[string]struct{}{$/;"	v
 compressedSize	vendor/github.com/ulikunitz/xz/reader.go	/^func (br *blockReader) compressedSize() int64 {$/;"	f
 compressedSize	vendor/github.com/ulikunitz/xz/writer.go	/^func (bw *blockWriter) compressedSize() int64 {$/;"	f
 compressedSizePresent	vendor/github.com/ulikunitz/xz/format.go	/^	compressedSizePresent   = 0x40$/;"	c
+computeAcceptKey	vendor/github.com/gorilla/websocket/util.go	/^func computeAcceptKey(challengeKey string) string {$/;"	f
 computeSA_byte	vendor/github.com/dsnet/compress/bzip2/internal/sais/sais_byte.go	/^func computeSA_byte(T []byte, SA []int, fs, n, k int) {$/;"	f
 computeSA_int	vendor/github.com/dsnet/compress/bzip2/internal/sais/sais_int.go	/^func computeSA_int(T []int, SA []int, fs, n, k int) {$/;"	f
 configWrapper	vendor/docker.io/go-docker/container_create.go	/^type configWrapper struct {$/;"	t
@@ -3716,6 +3811,7 @@ context	vendor/golang.org/x/net/context/go17.go	/^package context$/;"	p
 context	vendor/golang.org/x/net/context/go19.go	/^package context$/;"	p
 context	vendor/golang.org/x/net/context/pre_go17.go	/^package context$/;"	p
 context	vendor/golang.org/x/net/context/pre_go19.go	/^package context$/;"	p
+continuationFrame	vendor/github.com/gorilla/websocket/conn.go	/^	continuationFrame = 0$/;"	c
 convertArgsToSlice	vendor/docker.io/go-docker/api/types/filters/parse.go	/^func convertArgsToSlice(f map[string]map[string]bool) map[string][]string {$/;"	f
 convertSecurityDescriptorToStringSecurityDescriptor	vendor/github.com/Microsoft/go-winio/zsyscall_windows.go	/^func convertSecurityDescriptorToStringSecurityDescriptor(sd *byte, revision uint32, secInfo uint32, sddl **uint16, sddlSize *uint32) (err error) {$/;"	f
 convertSidToStringSid	vendor/github.com/Microsoft/go-winio/zsyscall_windows.go	/^func convertSidToStringSid(sid *byte, str **uint16) (err error) {$/;"	f
@@ -3727,6 +3823,7 @@ copyin	vendor/github.com/lib/pq/copy.go	/^type copyin struct {$/;"	t
 copyright	vendor/github.com/ulikunitz/xz/cmd/xb/copyright.go	/^func copyright() {$/;"	f
 copyrightText	vendor/github.com/ulikunitz/xz/cmd/xb/copyright.go	/^const copyrightText = `$/;"	c
 correct	user-upload/test2/train.py	/^correct = 0$/;"	v
+cost	handlers/miner/SignUp.go	/^const cost = 14$/;"	c
 countBits	vendor/github.com/dsnet/compress/internal/prefix/prefix.go	/^	countBits = 5  \/\/ Number of bits to store the bit-length of the code$/;"	c
 countMask	vendor/github.com/dsnet/compress/internal/prefix/prefix.go	/^	countMask = (1 << countBits) - 1$/;"	c
 countingReader	vendor/github.com/ulikunitz/xz/reader.go	/^type countingReader struct {$/;"	t
@@ -3827,6 +3924,7 @@ decoder29	vendor/github.com/nwaples/rardecode/decode29.go	/^type decoder29 struc
 decoder50	vendor/github.com/nwaples/rardecode/decode50.go	/^type decoder50 struct {$/;"	t
 decoderDict	vendor/github.com/ulikunitz/xz/lzma/decoderdict.go	/^type decoderDict struct {$/;"	t
 decompress	vendor/github.com/ulikunitz/xz/lzma/decoder.go	/^func (d *decoder) decompress() error {$/;"	f
+decompressNoContextTakeover	vendor/github.com/gorilla/websocket/compression.go	/^func decompressNoContextTakeover(r io.Reader) io.ReadCloser {$/;"	f
 decryptBlock	vendor/golang.org/x/crypto/blowfish/block.go	/^func decryptBlock(l, r uint32, c *Cipher) (uint32, uint32) {$/;"	f
 deepcopy	vendor/github.com/ulikunitz/xz/lzma/distcodec.go	/^func (dc *distCodec) deepcopy(src *distCodec) {$/;"	f
 deepcopy	vendor/github.com/ulikunitz/xz/lzma/lengthcodec.go	/^func (lc *lengthCodec) deepcopy(src *lengthCodec) {$/;"	f
@@ -3836,14 +3934,17 @@ deepcopy	vendor/github.com/ulikunitz/xz/lzma/treecodecs.go	/^func (t *probTree) 
 deepcopy	vendor/github.com/ulikunitz/xz/lzma/treecodecs.go	/^func (tc *treeCodec) deepcopy(src *treeCodec) {$/;"	f
 deepcopy	vendor/github.com/ulikunitz/xz/lzma/treecodecs.go	/^func (tc *treeReverseCodec) deepcopy(src *treeReverseCodec) {$/;"	f
 defaultChunkType	vendor/github.com/ulikunitz/xz/lzma/header2.go	/^func (c chunkState) defaultChunkType() chunkType {$/;"	f
+defaultCompressionLevel	vendor/github.com/gorilla/websocket/compression.go	/^	defaultCompressionLevel = 1$/;"	c
 defaultDialer	vendor/github.com/lib/pq/conn.go	/^type defaultDialer struct{}$/;"	t
 defaultDomain	vendor/github.com/docker/distribution/reference/normalize.go	/^	defaultDomain       = "docker.io"$/;"	v
 defaultExtensionValue	vendor/github.com/gogo/protobuf/proto/extensions.go	/^func defaultExtensionValue(extension *ExtensionDesc) (interface{}, error) {$/;"	f
 defaultMessage	vendor/github.com/gogo/protobuf/proto/lib.go	/^type defaultMessage struct {$/;"	t
 defaultMu	vendor/github.com/gogo/protobuf/proto/lib.go	/^	defaultMu sync.RWMutex$/;"	v
+defaultReadBufferSize	vendor/github.com/gorilla/websocket/conn.go	/^	defaultReadBufferSize  = 4096$/;"	c
 defaultTag	vendor/github.com/docker/distribution/reference/normalize.go	/^	defaultTag          = "latest"$/;"	v
 defaultTextMarshaler	vendor/github.com/gogo/protobuf/proto/text.go	/^	defaultTextMarshaler = TextMarshaler{}$/;"	v
 defaultTimeout	vendor/github.com/docker/go-connections/sockets/sockets.go	/^const defaultTimeout = 32 * time.Second$/;"	c
+defaultWriteBufferSize	vendor/github.com/gorilla/websocket/conn.go	/^	defaultWriteBufferSize = 4096$/;"	c
 defaults	vendor/github.com/gogo/protobuf/proto/lib.go	/^	defaults  = make(map[reflect.Type]defaultMessage)$/;"	v
 delete	vendor/docker.io/go-docker/request.go	/^func (cli *Client) delete(ctx context.Context, path string, query url.Values, headers map[string][]string) (serverResponse, error) {$/;"	f
 deleteExtension	vendor/github.com/gogo/protobuf/proto/extensions.go	/^func deleteExtension(pb extensionsBytes, theFieldNum int32, offset int) int {$/;"	f
@@ -4104,6 +4205,7 @@ errBadHeaderCrc	vendor/github.com/nwaples/rardecode/archive.go	/^	errBadHeaderCr
 errBadHex	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^	errBadHex  = errors.New("proto: bad hexadecimal")$/;"	v
 errBadPassword	vendor/github.com/nwaples/rardecode/archive50.go	/^	errBadPassword      = errors.New("rardecode: incorrect password")$/;"	v
 errBadUTF8	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^	errBadUTF8 = errors.New("proto: bad UTF-8")$/;"	v
+errBadWriteOpCode	vendor/github.com/gorilla/websocket/conn.go	/^	errBadWriteOpCode      = errors.New("websocket: bad write message type")$/;"	v
 errBinaryCopyNotSupported	vendor/github.com/lib/pq/copy.go	/^	errBinaryCopyNotSupported     = errors.New("pq: only text format supported for COPY")$/;"	v
 errBlockSize	vendor/github.com/ulikunitz/xz/reader.go	/^var errBlockSize = errors.New("xz: wrong uncompressed size for block")$/;"	v
 errChunkType	vendor/github.com/ulikunitz/xz/lzma/header2.go	/^	errChunkType = errors.New("lzma: unexpected chunk type")$/;"	v
@@ -4133,6 +4235,8 @@ errHeaderMagic	vendor/github.com/ulikunitz/xz/format.go	/^var errHeaderMagic = e
 errHuffDecodeFailed	vendor/github.com/nwaples/rardecode/huffman.go	/^	errHuffDecodeFailed   = errors.New("rardecode: huffman decode failed")$/;"	v
 errIndex	vendor/github.com/ulikunitz/xz/reader.go	/^var errIndex = errors.New("xz: error in xz file index")$/;"	v
 errIndexIndicator	vendor/github.com/ulikunitz/xz/format.go	/^var errIndexIndicator = errors.New("xz: found index indicator")$/;"	v
+errInvalidCompression	vendor/github.com/gorilla/websocket/client.go	/^var errInvalidCompression = errors.New("websocket: invalid compression negotiation")$/;"	v
+errInvalidControlFrame	vendor/github.com/gorilla/websocket/conn.go	/^	errInvalidControlFrame = errors.New("websocket: invalid control frame")$/;"	v
 errInvalidEaBuffer	vendor/github.com/Microsoft/go-winio/ea.go	/^	errInvalidEaBuffer = errors.New("invalid extended attribute buffer")$/;"	v
 errInvalidFileBlock	vendor/github.com/nwaples/rardecode/reader.go	/^	errInvalidFileBlock = errors.New("rardecode: invalid file block")$/;"	v
 errInvalidFilter	vendor/github.com/nwaples/rardecode/decode_reader.go	/^	errInvalidFilter  = errors.New("rardecode: invalid filter")$/;"	v
@@ -4142,6 +4246,7 @@ errInvalidTimestamp	vendor/github.com/lib/pq/encode.go	/^var errInvalidTimestamp
 errInvalidVMInstruction	vendor/github.com/nwaples/rardecode/vm.go	/^	errInvalidVMInstruction = errors.New("rardecode: invalid vm instruction")$/;"	v
 errListenerClosed	vendor/github.com/lib/pq/notify.go	/^var errListenerClosed = errors.New("pq: Listener has been closed")$/;"	v
 errListenerConnClosed	vendor/github.com/lib/pq/notify.go	/^var errListenerConnClosed = errors.New("pq: ListenerConn has been closed")$/;"	v
+errMalformedURL	vendor/github.com/gorilla/websocket/client.go	/^var errMalformedURL = errors.New("malformed ws or wss URL")$/;"	v
 errMultipleDecoders	vendor/github.com/nwaples/rardecode/archive15.go	/^	errMultipleDecoders = errors.New("rardecode: multiple decoders in a single archive not supported")$/;"	v
 errNoLastInsertID	vendor/github.com/lib/pq/conn.go	/^	errNoLastInsertID  = errors.New("no LastInsertId available after the empty statement")$/;"	v
 errNoMessageTypeID	vendor/github.com/gogo/protobuf/proto/message_set.go	/^var errNoMessageTypeID = errors.New("proto does not have a message type ID")$/;"	v
@@ -4163,6 +4268,7 @@ errString	vendor/golang.org/x/sys/windows/dll_windows.go	/^type errString string
 errTooManyFilters	vendor/github.com/nwaples/rardecode/decode_reader.go	/^	errTooManyFilters = errors.New("rardecode: too many filters")$/;"	v
 errUnexpectedArcEnd	vendor/github.com/nwaples/rardecode/reader.go	/^	errUnexpectedArcEnd = errors.New("rardecode: unexpected end of archive")$/;"	v
 errUnexpectedData	vendor/github.com/ulikunitz/xz/reader.go	/^var errUnexpectedData = errors.New("xz: unexpected data after stream")$/;"	v
+errUnexpectedEOF	vendor/github.com/gorilla/websocket/conn.go	/^	errUnexpectedEOF       = &CloseError{Code: CloseAbnormalClosure, Text: io.ErrUnexpectedEOF.Error()}$/;"	v
 errUnexpectedReady	vendor/github.com/lib/pq/conn.go	/^	errUnexpectedReady = errors.New("unexpected ReadyForQuery")$/;"	v
 errUnknownArc	vendor/github.com/nwaples/rardecode/archive.go	/^	errUnknownArc         = errors.New("rardecode: unknown archive version")$/;"	v
 errUnknownDecoder	vendor/github.com/nwaples/rardecode/archive.go	/^	errUnknownDecoder     = errors.New("rardecode: unknown decoder version")$/;"	v
@@ -4173,6 +4279,8 @@ errUnsupportedMatchAlgorithm	vendor/github.com/ulikunitz/xz/lzma/matchalgorithm.
 errVerMismatch	vendor/github.com/nwaples/rardecode/archive.go	/^	errVerMismatch        = errors.New("rardecode: volume version mistmatch")$/;"	v
 errWrap	vendor/github.com/dsnet/compress/bzip2/common.go	/^func errWrap(err error, replaceCode int) error {$/;"	f
 errWrap	vendor/github.com/dsnet/compress/internal/errors/errors.go	/^type errWrap struct{ e *error }$/;"	t
+errWriteClosed	vendor/github.com/gorilla/websocket/conn.go	/^	errWriteClosed         = errors.New("websocket: write closed")$/;"	v
+errWriteTimeout	vendor/github.com/gorilla/websocket/conn.go	/^	errWriteTimeout        = &netError{msg: "websocket: write timeout", timeout: true, temporary: true}$/;"	v
 errnoERROR_IO_PENDING	vendor/github.com/Microsoft/go-winio/zsyscall_windows.go	/^	errnoERROR_IO_PENDING = 997$/;"	c
 errnoERROR_IO_PENDING	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^	errnoERROR_IO_PENDING = 997$/;"	c
 errnoErr	vendor/github.com/Microsoft/go-winio/zsyscall_windows.go	/^func errnoErr(e syscall.Errno) error {$/;"	f
@@ -4220,6 +4328,7 @@ extensionsWrite	vendor/github.com/gogo/protobuf/proto/extensions.go	/^func (e *X
 extensionsWrite	vendor/github.com/gogo/protobuf/proto/extensions.go	/^func (e extensionAdapter) extensionsWrite() map[int32]Extension {$/;"	f
 extra	vendor/github.com/nwaples/rardecode/archive50.go	/^type extra struct {$/;"	t
 familiarizeName	vendor/github.com/docker/distribution/reference/normalize.go	/^func familiarizeName(named namedRepository) repository {$/;"	f
+fatal	vendor/github.com/gorilla/websocket/conn.go	/^func (w *messageWriter) fatal(err error) error {$/;"	f
 field	vendor/github.com/gogo/protobuf/proto/pointer_reflect.go	/^type field []int$/;"	t
 field	vendor/github.com/gogo/protobuf/proto/pointer_unsafe.go	/^type field uintptr$/;"	t
 fieldDefault	vendor/github.com/gogo/protobuf/proto/lib.go	/^func fieldDefault(ft reflect.Type, prop *Properties) (sf *scalarField, nestedMessage bool, err error) {$/;"	f
@@ -4274,6 +4383,7 @@ filterE8	vendor/github.com/nwaples/rardecode/filters.go	/^func filterE8(c byte, 
 filterRGBV3	vendor/github.com/nwaples/rardecode/filters.go	/^func filterRGBV3(r map[int]uint32, global, buf []byte, offset int64) ([]byte, error) {$/;"	f
 filters	vendor/docker.io/go-docker/api/types/filters/parse.go	/^package filters$/;"	p
 filters	vendor/github.com/ulikunitz/xz/writer.go	/^func (c *WriterConfig) filters() []filter {$/;"	f
+finalBit	vendor/github.com/gorilla/websocket/conn.go	/^	finalBit = 1 << 7$/;"	c
 find	vendor/github.com/gogo/protobuf/proto/message_set.go	/^func (ms *messageSet) find(pb Message) *_MessageSet_Item {$/;"	f
 findFirstFile1	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func findFirstFile1(name *uint16, data *win32finddata1) (handle Handle, err error) {$/;"	f
 findNextFile1	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func findNextFile1(handle Handle, data *win32finddata1) (err error) {$/;"	f
@@ -4285,11 +4395,16 @@ flagS	vendor/github.com/nwaples/rardecode/vm.go	/^	flagS = 0x80000000 \/\/ Sign$
 flagString	vendor/github.com/ulikunitz/xz/format.go	/^func flagString(flags byte) string {$/;"	f
 flagZ	vendor/github.com/nwaples/rardecode/vm.go	/^	flagZ = 2          \/\/ Zero$/;"	c
 flagstrings	vendor/github.com/ulikunitz/xz/format.go	/^var flagstrings = map[byte]string{$/;"	v
+flateReadWrapper	vendor/github.com/gorilla/websocket/compression.go	/^type flateReadWrapper struct {$/;"	t
+flateReaderPool	vendor/github.com/gorilla/websocket/compression.go	/^	flateReaderPool  = sync.Pool{New: func() interface{} {$/;"	v
+flateWriteWrapper	vendor/github.com/gorilla/websocket/compression.go	/^type flateWriteWrapper struct {$/;"	t
+flateWriterPools	vendor/github.com/gorilla/websocket/compression.go	/^	flateWriterPools [maxCompressionLevel - minCompressionLevel + 1]sync.Pool$/;"	v
 float32Type	vendor/github.com/gogo/protobuf/proto/pointer_reflect.go	/^	float32Type = reflect.TypeOf(float32(0))$/;"	v
 float64Type	vendor/github.com/gogo/protobuf/proto/pointer_reflect.go	/^	float64Type = reflect.TypeOf(float64(0))$/;"	v
 flush	vendor/github.com/dsnet/compress/bzip2/writer.go	/^func (zw *Writer) flush() error {$/;"	f
 flush	vendor/github.com/lib/pq/copy.go	/^func (ci *copyin) flush(buf []byte) {$/;"	f
 flushChunk	vendor/github.com/ulikunitz/xz/lzma/writer2.go	/^func (w *Writer2) flushChunk() error {$/;"	f
+flushFrame	vendor/github.com/gorilla/websocket/conn.go	/^func (w *messageWriter) flushFrame(final bool, extra []byte) error {$/;"	f
 flushWriter	handlers/FlushWriter.go	/^type flushWriter struct {$/;"	t
 fmterrorf	vendor/github.com/lib/pq/error.go	/^func fmterrorf(s string, args ...interface{}) error {$/;"	f
 footer	vendor/github.com/ulikunitz/xz/format.go	/^type footer struct {$/;"	t
@@ -4301,6 +4416,7 @@ formatHeader	vendor/github.com/ulikunitz/xz/internal/xlog/xlog.go	/^func (l *Log
 formatText	vendor/github.com/lib/pq/conn.go	/^const formatText format = 0$/;"	c
 formatTs	vendor/github.com/lib/pq/encode.go	/^func formatTs(t time.Time) []byte {$/;"	f
 forward	user-upload/test2/train.py	/^    def forward(self, x):$/;"	m	class:CNN
+frame	vendor/github.com/gorilla/websocket/prepared.go	/^func (pm *PreparedMessage) frame(key prepareKey) (int, []byte, error) {$/;"	f
 freeMark	vendor/github.com/nwaples/rardecode/ppm_model.go	/^	freeMark  = -1$/;"	c
 freeUnits	vendor/github.com/nwaples/rardecode/ppm_model.go	/^func (a *subAllocator) freeUnits(n, u int32) {$/;"	f
 fromRequestParser	vendor/github.com/dgrijalva/jwt-go/request/request.go	/^type fromRequestParser struct {$/;"	t
@@ -4308,6 +4424,7 @@ funcname	vendor/github.com/pkg/errors/stack.go	/^func funcname(name string) stri
 fundamental	vendor/github.com/pkg/errors/errors.go	/^type fundamental struct {$/;"	t
 fuzzReader	vendor/github.com/dsnet/compress/bzip2/fuzz_off.go	/^type fuzzReader struct{}$/;"	t
 fuzzReader	vendor/github.com/dsnet/compress/bzip2/fuzz_on.go	/^type fuzzReader struct {$/;"	t
+generateChallengeKey	vendor/github.com/gorilla/websocket/util.go	/^func generateChallengeKey() (string, error) {$/;"	f
 get	vendor/docker.io/go-docker/request.go	/^func (cli *Client) get(ctx context.Context, path string, query url.Values, headers map[string][]string) (serverResponse, error) {$/;"	f
 get	vendor/github.com/gogo/protobuf/proto/properties.go	/^func (p *tagMap) get(t int) (int, bool) {$/;"	f
 get	vendor/github.com/nwaples/rardecode/vm.go	/^func (op opBI) get(v *vm, byteMode bool) uint32 {$/;"	f
@@ -4371,6 +4488,8 @@ hUD	vendor/github.com/ulikunitz/xz/lzma/header2.go	/^	hUD   = 1$/;"	c
 handleDegenerateCodes	vendor/github.com/dsnet/compress/bzip2/prefix.go	/^func handleDegenerateCodes(codes prefix.PrefixCodes) prefix.PrefixCodes {$/;"	f
 handleDriverSettings	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) handleDriverSettings(o values) (err error) {$/;"	f
 handlePgpass	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) handlePgpass(o values) {$/;"	f
+handleProtocolError	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) handleProtocolError(message string) error {$/;"	f
+handlers	handlers/Credentials.go	/^package handlers$/;"	p
 handlers	handlers/FlushWriter.go	/^package handlers$/;"	p
 handlers	handlers/JobUpload.go	/^package handlers$/;"	p
 handlers	handlers/Log.go	/^package handlers$/;"	p
@@ -4397,7 +4516,9 @@ headerMagic	vendor/github.com/ulikunitz/xz/format.go	/^var headerMagic = []byte{
 headerRegexp	vendor/docker.io/go-docker/utils.go	/^var headerRegexp = regexp.MustCompile(`\\ADocker\/.+\\s\\((.+)\\)\\z`)$/;"	v
 headerSize	vendor/github.com/lib/pq/rows.go	/^const headerSize = 4$/;"	c
 headers	vendor/docker.io/go-docker/request.go	/^type headers map[string][]string$/;"	t
+hideTempErr	vendor/github.com/gorilla/websocket/conn.go	/^func hideTempErr(err error) error {$/;"	f
 hijackedConn	vendor/docker.io/go-docker/hijack.go	/^type hijackedConn struct {$/;"	t
+hostPortNoPort	vendor/github.com/gorilla/websocket/client.go	/^func hostPortNoPort(u *url.URL) (hostPort, hostNoPort string) {$/;"	f
 huffmanDecoder	vendor/github.com/nwaples/rardecode/huffman.go	/^type huffmanDecoder struct {$/;"	t
 id	vendor/github.com/ulikunitz/xz/lzmafilter.go	/^func (f lzmaFilter) id() uint64 { return lzmaFilterID }$/;"	f
 image	vendor/docker.io/go-docker/api/types/image/image_history.go	/^package image$/;"	p
@@ -4428,6 +4549,7 @@ init	vendor/github.com/dgrijalva/jwt-go/rsa_pss.go	/^func init() {$/;"	f
 init	vendor/github.com/gogo/protobuf/proto/duration_gogo.go	/^func init() {$/;"	f
 init	vendor/github.com/gogo/protobuf/proto/properties.go	/^func (p *Properties) init(typ reflect.Type, name, tag string, f *reflect.StructField, lockGetProp bool) {$/;"	f
 init	vendor/github.com/gogo/protobuf/proto/timestamp_gogo.go	/^func init() {$/;"	f
+init	vendor/github.com/gorilla/websocket/util.go	/^func init() {$/;"	f
 init	vendor/github.com/lib/pq/conn.go	/^func init() {$/;"	f
 init	vendor/github.com/mholt/archiver/rar.go	/^func init() {$/;"	f
 init	vendor/github.com/mholt/archiver/tar.go	/^func init() {$/;"	f
@@ -4484,6 +4606,8 @@ isAny	vendor/github.com/gogo/protobuf/proto/text.go	/^func isAny(sv reflect.Valu
 isBad	vendor/github.com/lib/pq/copy.go	/^func (ci *copyin) isBad() bool {$/;"	f
 isBaseName	vendor/golang.org/x/sys/windows/dll_windows.go	/^func isBaseName(name string) bool {$/;"	f
 isCode	vendor/github.com/dsnet/compress/internal/errors/errors.go	/^func isCode(err error, code int) bool {$/;"	f
+isControl	vendor/github.com/gorilla/websocket/conn.go	/^func isControl(frameType int) bool {$/;"	f
+isData	vendor/github.com/gorilla/websocket/conn.go	/^func isData(frameType int) bool {$/;"	f
 isDriveLetter	vendor/github.com/Microsoft/go-winio/reparse.go	/^func isDriveLetter(c byte) bool {$/;"	f
 isDriverSetting	vendor/github.com/lib/pq/conn.go	/^func isDriverSetting(key string) bool {$/;"	f
 isErrorSet	vendor/github.com/lib/pq/copy.go	/^func (ci *copyin) isErrorSet() bool {$/;"	f
@@ -4497,9 +4621,13 @@ isQuote	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func isQuote(c by
 isSet	vendor/github.com/Microsoft/go-winio/file.go	/^func (b *atomicBool) isSet() bool { return atomic.LoadInt32((*int32)(b)) != 0 }$/;"	f
 isSolid	vendor/github.com/nwaples/rardecode/archive15.go	/^func (a *archive15) isSolid() bool {$/;"	f
 isSolid	vendor/github.com/nwaples/rardecode/archive50.go	/^func (a *archive50) isSolid() bool {$/;"	f
+isSpaceOctet	vendor/github.com/gorilla/websocket/util.go	/^	isSpaceOctet$/;"	c
+isTokenOctet	vendor/github.com/gorilla/websocket/util.go	/^	isTokenOctet = 1 << iota$/;"	c
 isUTF8	vendor/github.com/lib/pq/conn.go	/^func isUTF8(name string) bool {$/;"	f
 isUnmarshaler	vendor/github.com/gogo/protobuf/proto/properties.go	/^func isUnmarshaler(t reflect.Type) bool {$/;"	f
+isValidCompressionLevel	vendor/github.com/gorilla/websocket/compression.go	/^func isValidCompressionLevel(level int) bool {$/;"	f
 isValidMinVersion	vendor/github.com/docker/go-connections/tlsconfig/config.go	/^func isValidMinVersion(version uint16) bool {$/;"	f
+isValidReceivedCloseCode	vendor/github.com/gorilla/websocket/conn.go	/^func isValidReceivedCloseCode(code int) bool {$/;"	f
 isWhitespace	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func isWhitespace(c byte) bool {$/;"	f
 isprint	vendor/github.com/gogo/protobuf/proto/text.go	/^func isprint(c byte) bool {$/;"	f
 itaniumFilterV3	vendor/github.com/nwaples/rardecode/filters.go	/^func itaniumFilterV3(r map[int]uint32, global, buf []byte, offset int64) ([]byte, error) {$/;"	f
@@ -4529,6 +4657,7 @@ jwt	vendor/github.com/dgrijalva/jwt-go/rsa_utils.go	/^package jwt$/;"	p
 jwt	vendor/github.com/dgrijalva/jwt-go/signing_method.go	/^package jwt$/;"	p
 jwt	vendor/github.com/dgrijalva/jwt-go/token.go	/^package jwt$/;"	p
 jz	vendor/github.com/nwaples/rardecode/vm.go	/^func jz(v *vm, bm bool, op []operand) {$/;"	f
+keyGUID	vendor/github.com/gorilla/websocket/util.go	/^var keyGUID = []byte("258EAFA5-E914-47DA-95CA-C5AB0DC85B11")$/;"	v
 l	vendor/github.com/ulikunitz/xz/lzma/operation.go	/^func (m match) l() uint32 {$/;"	f
 lBits	vendor/github.com/ulikunitz/xz/lzma/lengthcodec.go	/^func lBits(l uint32) int {$/;"	f
 last	vendor/github.com/ulikunitz/xz/lzmafilter.go	/^func (f lzmaFilter) last() bool { return true }$/;"	f
@@ -4636,6 +4765,9 @@ mapKeys	vendor/github.com/gogo/protobuf/proto/lib.go	/^func mapKeys(vs []reflect
 mapPrivileges	vendor/github.com/Microsoft/go-winio/privilege.go	/^func mapPrivileges(names []string) ([]uint64, error) {$/;"	f
 marshalBinary	vendor/github.com/ulikunitz/xz/lzma/header.go	/^func (h *header) marshalBinary() (data []byte, err error) {$/;"	f
 marshalerType	vendor/github.com/gogo/protobuf/proto/properties.go	/^	marshalerType   = reflect.TypeOf((*Marshaler)(nil)).Elem()$/;"	v
+maskBit	vendor/github.com/gorilla/websocket/conn.go	/^	maskBit = 1 << 7$/;"	c
+maskBytes	vendor/github.com/gorilla/websocket/mask.go	/^func maskBytes(key [4]byte, pos int, b []byte) int {$/;"	f
+maskBytes	vendor/github.com/gorilla/websocket/mask_safe.go	/^func maskBytes(key [4]byte, pos int, b []byte) int {$/;"	f
 match	vendor/github.com/docker/distribution/reference/regexp.go	/^var match = regexp.MustCompile$/;"	v
 match	vendor/github.com/ulikunitz/xz/lzma/bintree.go	/^func (t *binTree) match(m match, distIter func() (int, bool), p matchParams,$/;"	f
 match	vendor/github.com/ulikunitz/xz/lzma/operation.go	/^type match struct {$/;"	t
@@ -4648,11 +4780,14 @@ maxCodeLength	vendor/github.com/nwaples/rardecode/huffman.go	/^	maxCodeLength = 
 maxCodeSize	vendor/github.com/nwaples/rardecode/decode29.go	/^	maxCodeSize      = 0x10000$/;"	c
 maxCommands	vendor/github.com/nwaples/rardecode/vm.go	/^	maxCommands = 25000000 \/\/ maximum number of commands that can be run in a program$/;"	c
 maxCompressed	vendor/github.com/ulikunitz/xz/lzma/header2.go	/^	maxCompressed = 1 << 16$/;"	c
+maxCompressionLevel	vendor/github.com/gorilla/websocket/compression.go	/^	maxCompressionLevel     = flate.BestCompression$/;"	c
+maxControlFramePayloadSize	vendor/github.com/gorilla/websocket/conn.go	/^	maxControlFramePayloadSize = 125$/;"	c
 maxCryptedHashSize	vendor/golang.org/x/crypto/bcrypt/bcrypt.go	/^	maxCryptedHashSize = 23$/;"	c
 maxDictCap	vendor/github.com/ulikunitz/xz/lzma/header2.go	/^const maxDictCap = 1<<32 - 1$/;"	c
 maxDictCapCode	vendor/github.com/ulikunitz/xz/lzma/header2.go	/^const maxDictCapCode = 40$/;"	c
 maxDistance	vendor/github.com/ulikunitz/xz/lzma/distcodec.go	/^	maxDistance = 1 << 32$/;"	c
 maxFilters	vendor/github.com/ulikunitz/xz/format.go	/^	maxFilters    = 4$/;"	c
+maxFrameHeaderSize	vendor/github.com/gorilla/websocket/conn.go	/^	maxFrameHeaderSize         = 2 + 8 + 4 \/\/ Fixed header + length + mask$/;"	c
 maxFreq	vendor/github.com/nwaples/rardecode/ppm_model.go	/^	maxFreq = 124$/;"	c
 maxIndexSize	vendor/github.com/ulikunitz/xz/format.go	/^	maxIndexSize = (1 << 32) * 4$/;"	c
 maxInt64	vendor/github.com/ulikunitz/xz/lzma/rangecodec.go	/^const maxInt64 = 1<<63 - 1$/;"	c
@@ -4663,6 +4798,7 @@ maxLP	vendor/github.com/ulikunitz/xz/lzma/literalcodec.go	/^	maxLP = 4$/;"	c
 maxMarshalSize	vendor/github.com/gogo/protobuf/proto/encode.go	/^const maxMarshalSize = 1<<31 - 1$/;"	c
 maxMatchLen	vendor/github.com/ulikunitz/xz/lzma/lengthcodec.go	/^	maxMatchLen = minMatchLen + 16 + 256 - 1$/;"	c
 maxMatches	vendor/github.com/ulikunitz/xz/lzma/hashtable.go	/^const maxMatches = 16$/;"	c
+maxMessageSize	handlers/miner/Miner.go	/^	maxMessageSize = 512$/;"	c
 maxNumSyms	vendor/github.com/dsnet/compress/bzip2/prefix.go	/^	maxNumSyms    = 256 + 2 \/\/ Maximum number of symbols in the alphabet$/;"	c
 maxNumTrees	vendor/github.com/dsnet/compress/bzip2/prefix.go	/^	maxNumTrees = 6$/;"	c
 maxPB	vendor/github.com/ulikunitz/xz/lzma/properties.go	/^	maxPB = 4$/;"	c
@@ -4694,11 +4830,14 @@ mergeAny	vendor/github.com/gogo/protobuf/proto/clone.go	/^func mergeAny(out, in 
 mergeExtension	vendor/github.com/gogo/protobuf/proto/clone.go	/^func mergeExtension(out, in map[int32]Extension) {$/;"	f
 mergeStruct	vendor/github.com/gogo/protobuf/proto/clone.go	/^func mergeStruct(out, in reflect.Value) {$/;"	f
 message	vendor/github.com/lib/pq/notify.go	/^type message struct {$/;"	t
+messageReader	vendor/github.com/gorilla/websocket/conn.go	/^type messageReader struct{ c *Conn }$/;"	t
 messageSet	vendor/github.com/gogo/protobuf/proto/message_set.go	/^type messageSet struct {$/;"	t
 messageSetDesc	vendor/github.com/gogo/protobuf/proto/message_set.go	/^type messageSetDesc struct {$/;"	t
 messageSetMap	vendor/github.com/gogo/protobuf/proto/message_set.go	/^var messageSetMap = make(map[int32]messageSetDesc)$/;"	v
 messageTypeIder	vendor/github.com/gogo/protobuf/proto/message_set.go	/^type messageTypeIder interface {$/;"	t
+messageWriter	vendor/github.com/gorilla/websocket/conn.go	/^type messageWriter struct {$/;"	t
 min	vendor/github.com/ulikunitz/xz/lzma/bintree.go	/^func (t *binTree) min(v uint32) uint32 {$/;"	f
+minCompressionLevel	vendor/github.com/gorilla/websocket/compression.go	/^	minCompressionLevel     = -2 \/\/ flate.HuffmanOnly not defined in Go < 1.6$/;"	c
 minDistance	vendor/github.com/ulikunitz/xz/lzma/distcodec.go	/^	minDistance = 1$/;"	c
 minFilters	vendor/github.com/ulikunitz/xz/format.go	/^	minFilters    = 1$/;"	c
 minHashSize	vendor/golang.org/x/crypto/bcrypt/bcrypt.go	/^	minHashSize        = 59$/;"	c
@@ -4715,6 +4854,14 @@ minState	vendor/github.com/ulikunitz/xz/lzma/literalcodec.go	/^	minState = 0$/;"
 minTableExponent	vendor/github.com/ulikunitz/xz/lzma/hashtable.go	/^	minTableExponent = 9$/;"	c
 minValidSeconds	vendor/github.com/gogo/protobuf/proto/timestamp.go	/^	minValidSeconds = -62135596800$/;"	c
 minWindowSize	vendor/github.com/nwaples/rardecode/decode_reader.go	/^	minWindowSize    = 0x40000$/;"	c
+miner	handlers/miner/Connect.go	/^package miner$/;"	p
+miner	handlers/miner/JWTAuth.go	/^package miner$/;"	p
+miner	handlers/miner/Miner.go	/^package miner$/;"	p
+miner	handlers/miner/Miner.go	/^type miner struct {$/;"	t
+miner	handlers/miner/Pool.go	/^package miner$/;"	p
+miner	handlers/miner/SignIn.go	/^package miner$/;"	p
+miner	handlers/miner/SignUp.go	/^package miner$/;"	p
+minerClaims	handlers/miner/JWTAuth.go	/^type minerClaims struct {$/;"	t
 minorVersion	vendor/golang.org/x/crypto/bcrypt/bcrypt.go	/^	minorVersion       = 'a'$/;"	c
 missingRequiredFieldError	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func (p *textParser) missingRequiredFieldError(sv reflect.Value) *RequiredNotSetError {$/;"	f
 mkdir	vendor/github.com/mholt/archiver/archiver.go	/^func mkdir(dirPath string) error {$/;"	f
@@ -4756,8 +4903,10 @@ nan	vendor/github.com/gogo/protobuf/proto/text.go	/^	nan             = []byte("n
 nat	vendor/github.com/docker/go-connections/nat/nat.go	/^package nat$/;"	p
 nat	vendor/github.com/docker/go-connections/nat/parse.go	/^package nat$/;"	p
 nat	vendor/github.com/docker/go-connections/nat/sort.go	/^package nat$/;"	p
+ncopy	vendor/github.com/gorilla/websocket/conn.go	/^func (w *messageWriter) ncopy(max int) (int, error) {$/;"	f
 neg	vendor/github.com/nwaples/rardecode/vm.go	/^func neg(v *vm, bm bool, op []operand) {$/;"	f
 negInf	vendor/github.com/gogo/protobuf/proto/text.go	/^	negInf          = []byte("-inf")$/;"	v
+netError	vendor/github.com/gorilla/websocket/conn.go	/^type netError struct {$/;"	t
 network	vendor/docker.io/go-docker/api/types/network/network.go	/^package network$/;"	p
 network	vendor/github.com/lib/pq/conn.go	/^func network(o values) (string, string) {$/;"	f
 new	vendor/github.com/ulikunitz/xz/lzma/matchalgorithm.go	/^func (a MatchAlgorithm) new(dictCap int) (m matcher, err error) {$/;"	f
@@ -4773,6 +4922,8 @@ newCRC32	vendor/github.com/ulikunitz/xz/crc.go	/^func newCRC32() hash.Hash {$/;"
 newCRC64	vendor/github.com/ulikunitz/xz/crc.go	/^func newCRC64() hash.Hash {$/;"	f
 newCancelCtx	vendor/golang.org/x/net/context/pre_go17.go	/^func newCancelCtx(parent Context) *cancelCtx {$/;"	f
 newCipherBlockReader	vendor/github.com/nwaples/rardecode/decrypt_reader.go	/^func newCipherBlockReader(r io.Reader, mode cipher.BlockMode) *cipherBlockReader {$/;"	f
+newConn	vendor/github.com/gorilla/websocket/conn.go	/^func newConn(conn net.Conn, isServer bool, readBufferSize, writeBufferSize int) *Conn {$/;"	f
+newConnBRW	vendor/github.com/gorilla/websocket/conn.go	/^func newConnBRW(conn net.Conn, isServer bool, readBufferSize, writeBufferSize int, brw *bufio.ReadWriter) *Conn {$/;"	f
 newContext	vendor/github.com/nwaples/rardecode/ppm_model.go	/^func (a *subAllocator) newContext(s state, suffix *context) *context {$/;"	f
 newContextSize	vendor/github.com/nwaples/rardecode/ppm_model.go	/^func (a *subAllocator) newContextSize(ns int) *context {$/;"	f
 newDecoder	vendor/github.com/ulikunitz/xz/lzma/decoder.go	/^func newDecoder(br io.ByteReader, state *state, dict *decoderDict, size int64) (d *decoder, err error) {$/;"	f
@@ -4790,6 +4941,7 @@ newHashFunc	vendor/github.com/ulikunitz/xz/format.go	/^func newHashFunc(flags by
 newHashTable	vendor/github.com/ulikunitz/xz/lzma/hashtable.go	/^func newHashTable(capacity int, wordLen int) (t *hashTable, err error) {$/;"	f
 newLittleEndianCRC32	vendor/github.com/nwaples/rardecode/archive50.go	/^func newLittleEndianCRC32() hash.Hash32 {$/;"	f
 newLocationCache	vendor/github.com/lib/pq/encode.go	/^func newLocationCache() *locationCache {$/;"	f
+newMaskKey	vendor/github.com/gorilla/websocket/conn.go	/^func newMaskKey() [4]byte {$/;"	f
 newRangeDecoder	vendor/github.com/ulikunitz/xz/lzma/rangecodec.go	/^func newRangeDecoder(br io.ByteReader) (d *rangeDecoder, err error) {$/;"	f
 newRangeEncoder	vendor/github.com/ulikunitz/xz/lzma/rangecodec.go	/^func newRangeEncoder(bw io.ByteWriter) (re *rangeEncoder, err error) {$/;"	f
 newRarBitReader	vendor/github.com/nwaples/rardecode/bit_reader.go	/^func newRarBitReader(r io.ByteReader) *rarBitReader {$/;"	f
@@ -4803,6 +4955,7 @@ newTextParser	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func newTex
 newThreadToken	vendor/github.com/Microsoft/go-winio/privilege.go	/^func newThreadToken() (windows.Token, error) {$/;"	f
 newUncompressedReader	vendor/github.com/ulikunitz/xz/lzma/reader2.go	/^func newUncompressedReader(r io.Reader, dict *decoderDict, size int64) *uncompressedReader {$/;"	f
 newVM	vendor/github.com/nwaples/rardecode/vm.go	/^func newVM(mem []byte) *vm {$/;"	f
+newline	handlers/miner/Miner.go	/^	newline = []byte{'\\n'}$/;"	v
 newline	vendor/github.com/gogo/protobuf/proto/text.go	/^	newline         = []byte("\\n")$/;"	v
 next	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func (p *textParser) next() *token {$/;"	f
 next	vendor/github.com/lib/pq/buf.go	/^func (b *readBuf) next(n int) (v []byte) {$/;"	f
@@ -4814,9 +4967,12 @@ next	vendor/github.com/nwaples/rardecode/reader.go	/^func (f *packedFileReader) 
 next	vendor/github.com/ulikunitz/xz/lzma/header2.go	/^func (c *chunkState) next(ctype chunkType) error {$/;"	f
 nextBlockInFile	vendor/github.com/nwaples/rardecode/reader.go	/^func (f *packedFileReader) nextBlockInFile() error {$/;"	f
 nextByteAddr	vendor/github.com/nwaples/rardecode/ppm_model.go	/^func (a *subAllocator) nextByteAddr(n int32) int32 { return n - 1 }$/;"	f
+nextToken	vendor/github.com/gorilla/websocket/util.go	/^func nextToken(s string) (token, rest string) {$/;"	f
+nextTokenOrQuoted	vendor/github.com/gorilla/websocket/util.go	/^func nextTokenOrQuoted(s string) (value string, rest string) {$/;"	f
 nextVolName	vendor/github.com/nwaples/rardecode/archive.go	/^func (v *volume) nextVolName() {$/;"	f
 nlz32	vendor/github.com/ulikunitz/xz/lzma/bitops.go	/^func nlz32(x uint32) int {$/;"	f
 noDeadline	vendor/golang.org/x/net/internal/socks/client.go	/^	noDeadline   = time.Time{}$/;"	v
+noFrame	vendor/github.com/gorilla/websocket/conn.go	/^	noFrame           = -1$/;"	c
 noHeaderSize	vendor/github.com/ulikunitz/xz/lzma/header.go	/^const noHeaderSize uint64 = 1<<64 - 1$/;"	c
 noProxyEnv	vendor/golang.org/x/net/proxy/proxy.go	/^	noProxyEnv = &envOnce{$/;"	v
 noRows	vendor/github.com/lib/pq/conn.go	/^type noRows struct{}$/;"	t
@@ -4842,6 +4998,7 @@ numBlockSyms	vendor/github.com/dsnet/compress/bzip2/prefix.go	/^	numBlockSyms  =
 numStates	vendor/github.com/nwaples/rardecode/ppm_model.go	/^func (c *context) numStates() int { return int(c.s[0].uint16()) }$/;"	f
 num_epochs	user-upload/test2/train.py	/^num_epochs = 1$/;"	v
 objectNotFoundError	vendor/docker.io/go-docker/errors.go	/^type objectNotFoundError struct {$/;"	t
+octetTypes	vendor/github.com/gorilla/websocket/util.go	/^var octetTypes [256]byte$/;"	v
 officialRepoName	vendor/github.com/docker/distribution/reference/normalize.go	/^	officialRepoName    = "library"$/;"	v
 offsetBase	vendor/github.com/nwaples/rardecode/decode29_lz.go	/^	offsetBase = [60]int{0, 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96,$/;"	v
 offsetExtraBits	vendor/github.com/nwaples/rardecode/decode29_lz.go	/^	offsetExtraBits = [60]uint{0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6,$/;"	v
@@ -4887,6 +5044,7 @@ parseEa	vendor/github.com/Microsoft/go-winio/ea.go	/^func parseEa(b []byte) (ea 
 parseEncryptionBlock	vendor/github.com/nwaples/rardecode/archive50.go	/^func (a *archive50) parseEncryptionBlock(b readBuf) error {$/;"	f
 parseEnviron	vendor/github.com/lib/pq/conn.go	/^func parseEnviron(env []string) (out map[string]string) {$/;"	f
 parseError	vendor/github.com/lib/pq/error.go	/^func parseError(r *readBuf) *Error {$/;"	f
+parseExtensions	vendor/github.com/gorilla/websocket/util.go	/^func parseExtensions(header http.Header) []map[string]string {$/;"	f
 parseFileEncryptionRecord	vendor/github.com/nwaples/rardecode/archive50.go	/^func (a *archive50) parseFileEncryptionRecord(b readBuf, f *fileBlockHeader) error {$/;"	f
 parseFileHeader	vendor/github.com/nwaples/rardecode/archive15.go	/^func (a *archive15) parseFileHeader(h *blockHeader15) (*fileBlockHeader, error) {$/;"	f
 parseFileHeader	vendor/github.com/nwaples/rardecode/archive50.go	/^func (a *archive50) parseFileHeader(h *blockHeader50) (*fileBlockHeader, error) {$/;"	f
@@ -4895,14 +5053,17 @@ parsePortalRowDescribe	vendor/github.com/lib/pq/conn.go	/^func parsePortalRowDes
 parseSize	vendor/github.com/docker/go-units/size.go	/^func parseSize(sizeStr string, uMap unitMap) (int64, error) {$/;"	f
 parseStatementRowDescribe	vendor/github.com/lib/pq/conn.go	/^func parseStatementRowDescribe(r *readBuf) (colNames []string, colTyps []fieldDesc) {$/;"	f
 parseTs	vendor/github.com/lib/pq/encode.go	/^func parseTs(currentLocation *time.Location, str string) interface{} {$/;"	f
+parseURL	vendor/github.com/gorilla/websocket/client.go	/^func parseURL(s string) (*url.URL, error) {$/;"	f
 parseVMFilter	vendor/github.com/nwaples/rardecode/decode29.go	/^func (d *decoder29) parseVMFilter(buf []byte) (*filterBlock, error) {$/;"	f
 pathAddrs	vendor/golang.org/x/net/internal/socks/socks.go	/^func (d *Dialer) pathAddrs(address string) (proxy, dst net.Addr, err error) {$/;"	f
 pc	vendor/github.com/pkg/errors/stack.go	/^func (f Frame) pc() uintptr { return uintptr(f) - 1 }$/;"	f
 peek	vendor/github.com/ulikunitz/xz/lzma/decoderdict.go	/^func (d *decoderDict) peek(p []byte) (n int, err error) { return d.buf.Peek(p) }$/;"	f
 periodBits	vendor/github.com/nwaples/rardecode/ppm_model.go	/^	periodBits = 7$/;"	c
 pgdg_repository	vendor/github.com/lib/pq/.travis.sh	/^pgdg_repository() {$/;"	f
+pingPeriod	handlers/miner/Miner.go	/^	pingPeriod     = (pongWait * 9) \/ 10$/;"	c
 pipeAddress	vendor/github.com/Microsoft/go-winio/pipe.go	/^type pipeAddress string$/;"	t
 pluginPermissionDenied	vendor/docker.io/go-docker/errors.go	/^type pluginPermissionDenied struct {$/;"	t
+pongWait	handlers/miner/Miner.go	/^	pongWait       = 60 * time.Second$/;"	c
 pop	vendor/github.com/nwaples/rardecode/vm.go	/^func pop(v *vm, bm bool, op []operand) {$/;"	f
 popByte	vendor/github.com/nwaples/rardecode/ppm_model.go	/^func (a *subAllocator) popByte() { a.heap1Lo-- }$/;"	f
 popa	vendor/github.com/nwaples/rardecode/vm.go	/^func popa(v *vm, bm bool, op []operand) {$/;"	f
@@ -4960,9 +5121,13 @@ prefixCodesBySymbol	vendor/github.com/dsnet/compress/internal/prefix/prefix.go	/
 prefixLen	vendor/github.com/ulikunitz/xz/lzma/buffer.go	/^func prefixLen(a, b []byte) int {$/;"	f
 prefixReader	vendor/github.com/dsnet/compress/bzip2/prefix.go	/^type prefixReader struct{ prefix.Reader }$/;"	t
 prefixWriter	vendor/github.com/dsnet/compress/bzip2/prefix.go	/^type prefixWriter struct{ prefix.Writer }$/;"	t
+prepWrite	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) prepWrite(messageType int) error {$/;"	f
+prepareConn	vendor/github.com/gorilla/websocket/prepared.go	/^type prepareConn struct {$/;"	t
 prepareCopyIn	vendor/github.com/lib/pq/copy.go	/^func (cn *conn) prepareCopyIn(q string) (_ driver.Stmt, err error) {$/;"	f
 prepareIo	vendor/github.com/Microsoft/go-winio/file.go	/^func (f *win32File) prepareIo() (*ioOperation, error) {$/;"	f
+prepareKey	vendor/github.com/gorilla/websocket/prepared.go	/^type prepareKey struct {$/;"	t
 prepareTo	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) prepareTo(q, stmtName string) *stmt {$/;"	f
+preparedFrame	vendor/github.com/gorilla/websocket/prepared.go	/^type preparedFrame struct {$/;"	t
 print	vendor/github.com/nwaples/rardecode/vm.go	/^func print(v *vm, bm bool, op []operand) {$/;"	f
 printBuildStream	handlers/JobUpload.go	/^func printBuildStream(r io.Reader) {$/;"	f
 privNameMutex	vendor/github.com/Microsoft/go-winio/privilege.go	/^	privNameMutex sync.Mutex$/;"	v
@@ -5298,6 +5463,8 @@ rardecode	vendor/github.com/nwaples/rardecode/reader.go	/^package rardecode$/;"	
 rardecode	vendor/github.com/nwaples/rardecode/vm.go	/^package rardecode$/;"	p
 raw	vendor/github.com/gogo/protobuf/proto/text.go	/^type raw interface {$/;"	t
 reDigits	vendor/github.com/nwaples/rardecode/archive.go	/^	reDigits = regexp.MustCompile(`\\d+`)$/;"	v
+read	vendor/github.com/gorilla/websocket/conn_read.go	/^func (c *Conn) read(n int) ([]byte, error) {$/;"	f
+read	vendor/github.com/gorilla/websocket/conn_read_legacy.go	/^func (c *Conn) read(n int) ([]byte, error) {$/;"	f
 read	vendor/github.com/nwaples/rardecode/decode_reader.go	/^func (w *window) read(p []byte) (n int) {$/;"	f
 read	vendor/github.com/nwaples/rardecode/decrypt_reader.go	/^func (cr *cipherBlockReader) read(p []byte) (n int, err error) {$/;"	f
 readAny	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func (p *textParser) readAny(v reflect.Value, props *Properties) error {$/;"	f
@@ -5330,6 +5497,7 @@ readIndexBody	vendor/github.com/ulikunitz/xz/format.go	/^func readIndexBody(r io
 readOp	vendor/github.com/ulikunitz/xz/lzma/decoder.go	/^func (d *decoder) readOp() (op operation, err error) {$/;"	f
 readParseResponse	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) readParseResponse() {$/;"	f
 readPortalDescribeResponse	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) readPortalDescribeResponse() (colNames []string, colFmts []format, colTyps []fieldDesc) {$/;"	f
+readPump	handlers/miner/Miner.go	/^func (m *miner) readPump() {$/;"	f
 readReadyForQuery	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) readReadyForQuery() {$/;"	f
 readRecord	vendor/github.com/ulikunitz/xz/format.go	/^func readRecord(r io.ByteReader) (rec record, n int, err error) {$/;"	f
 readSizeInBlockHeader	vendor/github.com/ulikunitz/xz/format.go	/^func readSizeInBlockHeader(r io.ByteReader, present bool) (n int64, err error) {$/;"	f
@@ -5390,6 +5558,7 @@ restart	vendor/github.com/nwaples/rardecode/ppm_model.go	/^func (a *subAllocator
 restart	vendor/github.com/nwaples/rardecode/ppm_model.go	/^func (m *model) restart() {$/;"	f
 resync	vendor/github.com/lib/pq/notify.go	/^func (l *Listener) resync(cn *ListenerConn, notificationChan <-chan *Notification) error {$/;"	f
 ret	vendor/github.com/nwaples/rardecode/vm.go	/^func ret(v *vm, bm bool, op []operand) {$/;"	f
+returnError	vendor/github.com/gorilla/websocket/server.go	/^func (u *Upgrader) returnError(w http.ResponseWriter, r *http.Request, status int, reason string) (*Conn, error) {$/;"	f
 revProtoTypes	vendor/github.com/gogo/protobuf/proto/properties.go	/^	revProtoTypes = make(map[reflect.Type]string)$/;"	v
 revertToSelf	vendor/github.com/Microsoft/go-winio/zsyscall_windows.go	/^func revertToSelf() (err error) {$/;"	f
 rleDone	vendor/github.com/dsnet/compress/bzip2/rle1.go	/^var rleDone = errorf(errors.Unknown, "RLE1 stage is completed")$/;"	v
@@ -5411,6 +5580,9 @@ rlimitSigpending	vendor/github.com/docker/go-units/ulimit.go	/^	rlimitSigpending
 rlimitStack	vendor/github.com/docker/go-units/ulimit.go	/^	rlimitStack      = 3$/;"	c
 ror	vendor/github.com/ulikunitz/xz/internal/hash/cyclic_poly.go	/^func ror(x uint64, s uint) uint64 {$/;"	f
 rows	vendor/github.com/lib/pq/conn.go	/^type rows struct {$/;"	t
+rsv1Bit	vendor/github.com/gorilla/websocket/conn.go	/^	rsv1Bit  = 1 << 6$/;"	c
+rsv2Bit	vendor/github.com/gorilla/websocket/conn.go	/^	rsv2Bit  = 1 << 5$/;"	c
+rsv3Bit	vendor/github.com/gorilla/websocket/conn.go	/^	rsv3Bit  = 1 << 4$/;"	c
 runLengthEncoding	vendor/github.com/dsnet/compress/bzip2/rle1.go	/^type runLengthEncoding struct {$/;"	t
 runtime	vendor/docker.io/go-docker/api/types/swarm/runtime/gen.go	/^package runtime$/;"	p
 runtime	vendor/docker.io/go-docker/api/types/swarm/runtime/plugin.pb.go	/^package runtime$/;"	p
@@ -5435,12 +5607,14 @@ scanBytes	vendor/github.com/lib/pq/array.go	/^func (a GenericArray) scanBytes(sr
 scanLinearArray	vendor/github.com/lib/pq/array.go	/^func scanLinearArray(src, del []byte, typ string) (elems [][]byte, err error) {$/;"	f
 scanner	vendor/github.com/lib/pq/conn.go	/^type scanner struct {$/;"	t
 search	vendor/github.com/ulikunitz/xz/lzma/bintree.go	/^func (t *binTree) search(v uint32, x uint32) (a, b uint32) {$/;"	f
+secret	handlers/miner/SignIn.go	/^var secret = os.Getenv("SECRET")$/;"	v
 secret	handlers/user/SignIn.go	/^var secret = os.Getenv("SECRET")$/;"	v
 securityAnonymous	vendor/github.com/Microsoft/go-winio/privilege.go	/^	securityAnonymous = iota$/;"	c
 securityDelegation	vendor/github.com/Microsoft/go-winio/privilege.go	/^	securityDelegation$/;"	c
 securityIdentification	vendor/github.com/Microsoft/go-winio/privilege.go	/^	securityIdentification$/;"	c
 securityImpersonation	vendor/github.com/Microsoft/go-winio/privilege.go	/^	securityImpersonation$/;"	c
 see2Context	vendor/github.com/nwaples/rardecode/ppm_model.go	/^type see2Context struct {$/;"	t
+selectSubprotocol	vendor/github.com/gorilla/websocket/server.go	/^func (u *Upgrader) selectSubprotocol(r *http.Request, responseHeader http.Header) string {$/;"	f
 send	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) send(m *writeBuf) {$/;"	f
 sendBinaryModeQuery	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) sendBinaryModeQuery(query string, args []driver.Value) {$/;"	f
 sendBinaryParameters	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) sendBinaryParameters(b *writeBuf, args []driver.Value) {$/;"	f
@@ -5495,6 +5669,8 @@ shuffle	user-upload/test2/train.py	/^                                           
 shuffle	user-upload/test2/train.py	/^                                          shuffle=False)$/;"	v
 shutdown	vendor/golang.org/x/sys/windows/zsyscall_windows.go	/^func shutdown(s Handle, how int32) (err error) {$/;"	f
 sigPrefix	vendor/github.com/nwaples/rardecode/archive.go	/^	sigPrefix  = "Rar!\\x1A\\x07"$/;"	c
+signInResponse	handlers/miner/SignIn.go	/^type signInResponse struct {$/;"	t
+signInResponse	handlers/user/SignIn.go	/^type signInResponse struct {$/;"	t
 signals	vendor/golang.org/x/sys/windows/types_windows.go	/^var signals = [...]string{$/;"	v
 signingMethodLock	vendor/github.com/dgrijalva/jwt-go/signing_method.go	/^var signingMethodLock = new(sync.RWMutex)$/;"	v
 signingMethodNone	vendor/github.com/dgrijalva/jwt-go/none.go	/^type signingMethodNone struct{}$/;"	t
@@ -5563,6 +5739,7 @@ sizer	vendor/github.com/gogo/protobuf/proto/properties.go	/^type sizer func(prop
 skip	vendor/github.com/gogo/protobuf/proto/decode.go	/^func (o *Buffer) skip(t reflect.Type, tag, wire int) error {$/;"	f
 skipAndSave	vendor/github.com/gogo/protobuf/proto/decode.go	/^func (o *Buffer) skipAndSave(t reflect.Type, tag, wire int, base structPointer, unrecField field) error {$/;"	f
 skipPlugin	vendor/docker.io/go-docker/api/types/swarm/runtime/plugin.pb.go	/^func skipPlugin(dAtA []byte) (n int, err error) {$/;"	f
+skipSpace	vendor/github.com/gorilla/websocket/util.go	/^func skipSpace(s string) (rest string) {$/;"	f
 skipVarint	vendor/github.com/gogo/protobuf/proto/message_set.go	/^func skipVarint(buf []byte) []byte {$/;"	f
 skipWhitespace	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^func (p *textParser) skipWhitespace() {$/;"	f
 slotToLength	vendor/github.com/nwaples/rardecode/decode50.go	/^func slotToLength(br bitReader, n int) (int, error) {$/;"	f
@@ -5768,6 +5945,7 @@ toStructPointer	vendor/github.com/gogo/protobuf/proto/pointer_unsafe.go	/^func t
 todo	vendor/golang.org/x/net/context/go17.go	/^	todo       = context.TODO()$/;"	v
 todo	vendor/golang.org/x/net/context/pre_go17.go	/^	todo       = new(emptyCtx)$/;"	v
 token	vendor/github.com/gogo/protobuf/proto/text_parser.go	/^type token struct {$/;"	t
+tokenListContainsValue	vendor/github.com/gorilla/websocket/util.go	/^func tokenListContainsValue(header http.Header, name string, value string) bool {$/;"	f
 total	user-upload/test2/train.py	/^total = 0$/;"	v
 train	user-upload/test2/train.py	/^                            train=True, $/;"	v
 train	user-upload/test2/train.py	/^                           train=False, $/;"	v
@@ -5779,6 +5957,7 @@ transform	user-upload/test2/train.py	/^                           transform=tran
 treeCodec	vendor/github.com/ulikunitz/xz/lzma/treecodecs.go	/^type treeCodec struct {$/;"	t
 treeReverseCodec	vendor/github.com/ulikunitz/xz/lzma/treecodecs.go	/^type treeReverseCodec struct {$/;"	t
 trimGOPATH	vendor/github.com/pkg/errors/stack.go	/^func trimGOPATH(name, file string) string {$/;"	f
+truncWriter	vendor/github.com/gorilla/websocket/compression.go	/^type truncWriter struct {$/;"	t
 tryImageCreate	vendor/docker.io/go-docker/image_create.go	/^func (cli *Client) tryImageCreate(ctx context.Context, query url.Values, registryAuth string) (serverResponse, error) {$/;"	f
 tryImagePush	vendor/docker.io/go-docker/image_push.go	/^func (cli *Client) tryImagePush(ctx context.Context, imageID string, query url.Values, registryAuth string) (serverResponse, error) {$/;"	f
 tryImageSearch	vendor/docker.io/go-docker/image_search.go	/^func (cli *Client) tryImageSearch(ctx context.Context, query url.Values, registryAuth string) (serverResponse, error) {$/;"	f
@@ -5863,10 +6042,11 @@ updateStateLiteral	vendor/github.com/ulikunitz/xz/lzma/state.go	/^func (s *state
 updateStateMatch	vendor/github.com/ulikunitz/xz/lzma/state.go	/^func (s *state) updateStateMatch() {$/;"	f
 updateStateRep	vendor/github.com/ulikunitz/xz/lzma/state.go	/^func (s *state) updateStateRep() {$/;"	f
 updateStateShortRep	vendor/github.com/ulikunitz/xz/lzma/state.go	/^func (s *state) updateStateShortRep() {$/;"	f
-user	handlers/user/Credentials.go	/^package user$/;"	p
+upgrader	handlers/miner/Connect.go	/^var upgrader = websocket.Upgrader{$/;"	v
 user	handlers/user/JWTAuth.go	/^package user$/;"	p
 user	handlers/user/SignIn.go	/^package user$/;"	p
 user	handlers/user/SignUp.go	/^package user$/;"	p
+userClaims	handlers/user/JWTAuth.go	/^type userClaims struct {$/;"	t
 userCurrent	vendor/github.com/lib/pq/user_posix.go	/^func userCurrent() (string, error) {$/;"	f
 userCurrent	vendor/github.com/lib/pq/user_windows.go	/^func userCurrent() (string, error) {$/;"	f
 uvarint	vendor/github.com/nwaples/rardecode/archive.go	/^func (b *readBuf) uvarint() uint64 {$/;"	f
@@ -5882,6 +6062,7 @@ valid	vendor/github.com/dgrijalva/jwt-go/errors.go	/^func (e *ValidationError) v
 valid	vendor/github.com/nwaples/rardecode/archive15.go	/^func (h *fileHash32) valid() bool {$/;"	f
 valid	vendor/github.com/nwaples/rardecode/archive50.go	/^func (h *hash50) valid() bool {$/;"	f
 validDictCap	vendor/github.com/ulikunitz/xz/lzma/header.go	/^func validDictCap(dictcap int) bool {$/;"	f
+validReceivedCloseCodes	vendor/github.com/gorilla/websocket/conn.go	/^var validReceivedCloseCodes = map[int]bool{$/;"	v
 validateDuration	vendor/github.com/gogo/protobuf/proto/duration.go	/^func validateDuration(d *duration) error {$/;"	f
 validateProto	vendor/github.com/docker/go-connections/nat/nat.go	/^func validateProto(proto string) bool {$/;"	f
 validateServiceSpec	vendor/docker.io/go-docker/service_create.go	/^func validateServiceSpec(s swarm.ServiceSpec) error {$/;"	f
@@ -5919,6 +6100,20 @@ volume	vendor/github.com/nwaples/rardecode/archive.go	/^type volume struct {$/;"
 waitNamedPipe	vendor/github.com/Microsoft/go-winio/zsyscall_windows.go	/^func waitNamedPipe(name string, timeout uint32) (err error) {$/;"	f
 walkCopyrights	vendor/github.com/ulikunitz/xz/cmd/xb/copyright.go	/^func walkCopyrights(path string, info os.FileInfo, err error) error {$/;"	f
 watchCancel	vendor/github.com/lib/pq/conn_go18.go	/^func (cn *conn) watchCancel(ctx context.Context) func() {$/;"	f
+websocket	vendor/github.com/gorilla/websocket/client.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/client_clone.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/client_clone_legacy.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/compression.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/conn.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/conn_read.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/conn_read_legacy.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/doc.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/json.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/mask.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/mask_safe.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/prepared.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/server.go	/^package websocket$/;"	p
+websocket	vendor/github.com/gorilla/websocket/util.go	/^package websocket$/;"	p
 win32File	vendor/github.com/Microsoft/go-winio/file.go	/^type win32File struct {$/;"	t
 win32MessageBytePipe	vendor/github.com/Microsoft/go-winio/pipe.go	/^type win32MessageBytePipe struct {$/;"	t
 win32Pipe	vendor/github.com/Microsoft/go-winio/pipe.go	/^type win32Pipe struct {$/;"	t
@@ -5988,8 +6183,10 @@ word64_IsNil	vendor/github.com/gogo/protobuf/proto/pointer_unsafe.go	/^func word
 word64_Set	vendor/github.com/gogo/protobuf/proto/pointer_reflect.go	/^func word64_Set(p word64, o *Buffer, x uint64) {$/;"	f
 word64_Set	vendor/github.com/gogo/protobuf/proto/pointer_unsafe.go	/^func word64_Set(p word64, o *Buffer, x uint64) {$/;"	f
 wordLen	vendor/github.com/ulikunitz/xz/lzma/bintree.go	/^const wordLen = 4$/;"	c
+wordSize	vendor/github.com/gorilla/websocket/mask.go	/^const wordSize = int(unsafe.Sizeof(uintptr(0)))$/;"	c
 wrap	vendor/github.com/lib/pq/buf.go	/^func (b *writeBuf) wrap() []byte {$/;"	f
 wrapResponseError	vendor/docker.io/go-docker/errors.go	/^func wrapResponseError(err error, resp serverResponse, object, id string) error {$/;"	f
+write	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) write(frameType int, deadline time.Time, bufs ...[]byte) error {$/;"	f
 writeAny	vendor/github.com/gogo/protobuf/proto/text.go	/^func (tm *TextMarshaler) writeAny(w *textWriter, v reflect.Value, props *Properties) error {$/;"	f
 writeBuf	vendor/github.com/lib/pq/buf.go	/^type writeBuf struct {$/;"	t
 writeBuf	vendor/github.com/lib/pq/conn.go	/^func (cn *conn) writeBuf(b byte) *writeBuf {$/;"	f
@@ -6002,9 +6199,11 @@ writeEa	vendor/github.com/Microsoft/go-winio/ea.go	/^func writeEa(buf *bytes.Buf
 writeEnum	vendor/github.com/gogo/protobuf/proto/text_gogo.go	/^func (tm *TextMarshaler) writeEnum(w *textWriter, v reflect.Value, props *Properties) error {$/;"	f
 writeExtension	vendor/github.com/gogo/protobuf/proto/text.go	/^func (tm *TextMarshaler) writeExtension(w *textWriter, name string, pb interface{}) error {$/;"	f
 writeExtensions	vendor/github.com/gogo/protobuf/proto/text.go	/^func (tm *TextMarshaler) writeExtensions(w *textWriter, pv reflect.Value) error {$/;"	f
+writeFatal	vendor/github.com/gorilla/websocket/conn.go	/^func (c *Conn) writeFatal(err error) error {$/;"	f
 writeFilters	vendor/github.com/ulikunitz/xz/format.go	/^func writeFilters(w io.Writer, filters []filter) (n int, err error) {$/;"	f
 writeHeader	vendor/github.com/ulikunitz/xz/lzma/writer.go	/^func (w *Writer) writeHeader() error {$/;"	f
 writeHeader	vendor/github.com/ulikunitz/xz/writer.go	/^func (bw *blockWriter) writeHeader(w io.Writer) error {$/;"	f
+writeHook	vendor/github.com/gorilla/websocket/conn.go	/^type writeHook struct {$/;"	t
 writeIndent	vendor/github.com/gogo/protobuf/proto/text.go	/^func (w *textWriter) writeIndent() {$/;"	f
 writeIndex	vendor/github.com/ulikunitz/xz/format.go	/^func writeIndex(w io.Writer, index []record) (n int64, err error) {$/;"	f
 writeLiteral	vendor/github.com/ulikunitz/xz/lzma/encoder.go	/^func (e *encoder) writeLiteral(l lit) error {$/;"	f
@@ -6015,12 +6214,15 @@ writeNewFile	vendor/github.com/mholt/archiver/archiver.go	/^func writeNewFile(fp
 writeNewSymbolicLink	vendor/github.com/mholt/archiver/archiver.go	/^func writeNewSymbolicLink(fpath string, target string) error {$/;"	f
 writeOp	vendor/github.com/ulikunitz/xz/lzma/encoder.go	/^func (e *encoder) writeOp(op operation) error {$/;"	f
 writeProto3Any	vendor/github.com/gogo/protobuf/proto/text.go	/^func (tm *TextMarshaler) writeProto3Any(w *textWriter, sv reflect.Value) (bool, error) {$/;"	f
+writePump	handlers/miner/Miner.go	/^func (m *miner) writePump() {$/;"	f
 writeRaw	vendor/github.com/gogo/protobuf/proto/text.go	/^func writeRaw(w *textWriter, b []byte) error {$/;"	f
 writeString	vendor/github.com/gogo/protobuf/proto/text.go	/^func writeString(w *textWriter, s string) error {$/;"	f
 writeStruct	vendor/github.com/gogo/protobuf/proto/text.go	/^func (tm *TextMarshaler) writeStruct(w *textWriter, sv reflect.Value) error {$/;"	f
 writeUncompressedChunk	vendor/github.com/ulikunitz/xz/lzma/writer2.go	/^func (w *Writer2) writeUncompressedChunk() error {$/;"	f
 writeUnknownInt	vendor/github.com/gogo/protobuf/proto/text.go	/^func writeUnknownInt(w *textWriter, x uint64, err error) error {$/;"	f
 writeUnknownStruct	vendor/github.com/gogo/protobuf/proto/text.go	/^func writeUnknownStruct(w *textWriter, data []byte) (err error) {$/;"	f
+writeWait	handlers/miner/Miner.go	/^	writeWait      = 10 * time.Second$/;"	c
+writeWait	vendor/github.com/gorilla/websocket/conn.go	/^	writeWait = time.Second$/;"	c
 writer	vendor/github.com/gogo/protobuf/proto/text.go	/^type writer interface {$/;"	t
 written	vendor/github.com/ulikunitz/xz/lzma/writer2.go	/^func (w *Writer2) written() int {$/;"	f
 xchg	vendor/github.com/nwaples/rardecode/vm.go	/^func xchg(v *vm, bm bool, op []operand) {$/;"	f

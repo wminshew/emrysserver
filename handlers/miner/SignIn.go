@@ -1,4 +1,3 @@
-// package miner
 package miner
 
 import (
@@ -6,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/wminshew/emrysserver/db"
+	"github.com/wminshew/emrysserver/handlers"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
@@ -15,20 +15,21 @@ import (
 
 var secret = os.Getenv("SECRET")
 
-type SignInResponse struct {
+type signInResponse struct {
 	Token string `json:"token"`
 }
 
+// SignIn takes credentials from the request and, if valid, returns a token
 func SignIn(w http.ResponseWriter, r *http.Request) {
-	creds := &Credentials{}
+	creds := &handlers.Credentials{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
-		log.Printf("Error decoding json:\n", err)
+		log.Printf("Error decoding json: %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	storedCreds := &Credentials{}
+	storedCreds := &handlers.Credentials{}
 	// errors from QueryRow are defered until Scan
 	result := db.Db.QueryRow("SELECT email, password FROM miners WHERE email=$1", creds.Email)
 	err = result.Scan(&storedCreds.Email, &storedCreds.Password)
@@ -39,7 +40,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Printf("Database error during sign in:\n", err)
+		log.Printf("Database error during sign in: %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -60,13 +61,17 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		log.Printf("Internal error:\n", err)
+		log.Printf("Internal error: %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	response := SignInResponse{
+	response := signInResponse{
 		Token: tokenString,
 	}
-	json.NewEncoder(w).Encode(response)
+	if err = json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding JSON response: %v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
