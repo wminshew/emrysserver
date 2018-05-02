@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	writeWait      = 10 * time.Second
-	pongWait       = 60 * time.Second
-	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 1024
+	writeWait  = 10 * time.Second
+	pongWait   = 60 * time.Second
+	pingPeriod = (pongWait * 9) / 10
+	// maxMessageSize = 1024
 )
 
 var (
@@ -36,7 +36,7 @@ func (m *miner) readPump() {
 		}
 	}()
 
-	m.conn.SetReadLimit(maxMessageSize)
+	// m.conn.SetReadLimit(maxMessageSize)
 	err := m.conn.SetReadDeadline(time.Now().Add(pongWait))
 	if err != nil {
 		log.Printf("Error setting websocket read deadline: %v\n", err)
