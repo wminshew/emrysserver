@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers"
 	"github.com/wminshew/emrysserver/handlers/miner"
@@ -25,18 +26,21 @@ func main() {
 		}
 	}()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/user/new", user.New)
-	mux.HandleFunc("/user/login", user.Login)
-	mux.HandleFunc("/user/job/new", user.JWTAuth(user.JobUpload))
+	r := mux.NewRouter()
 
-	mux.HandleFunc("/miner/new", miner.New)
-	mux.HandleFunc("/miner/login", miner.Login)
-	mux.HandleFunc("/miner/connect", miner.JWTAuth(miner.Connect(pool)))
+	userR := r.PathPrefix("/user").Subrouter()
+	userR.HandleFunc("/new", user.New).Methods("POST")
+	userR.HandleFunc("/login", user.Login).Methods("POST")
+	userR.HandleFunc("/job/new", user.JWTAuth(user.JobUpload)).Methods("POST")
+
+	minerR := r.PathPrefix("/miner").Subrouter()
+	minerR.HandleFunc("/new", miner.New).Methods("POST")
+	minerR.HandleFunc("/login", miner.Login).Methods("POST")
+	minerR.HandleFunc("/connect", miner.JWTAuth(miner.Connect(pool))).Methods("GET")
 
 	server := http.Server{
 		Addr:    ":4430",
-		Handler: handlers.Log(mux),
+		Handler: handlers.Log(r),
 	}
 
 	log.Printf("Listening on port %s...\n", server.Addr)
