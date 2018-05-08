@@ -17,22 +17,20 @@ var upgrader = websocket.Upgrader{
 // Connect handles miner client requests to /miner/connect,
 // establishing a websocket and moving connection into an
 // available worker Pool
-func Connect(p *Pool) func(w http.ResponseWriter, r *http.Request) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			log.Printf("Error upgrading connection to websocket: %v\n", err)
-			return
-		}
+func Connect(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("Error upgrading connection to websocket: %v\n", err)
+		return
+	}
 
-		miner := &miner{
-			pool: p,
-			conn: conn,
-			send: make(chan []byte, 256),
-		}
-		miner.pool.register <- miner
+	m := &miner{
+		pool: Pool,
+		conn: conn,
+		send: make(chan []byte, 256),
+	}
+	m.pool.register <- m
 
-		go miner.writePump()
-		go miner.readPump()
-	})
+	go m.writePump()
+	go m.readPump()
 }

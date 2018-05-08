@@ -10,6 +10,7 @@ import (
 	"github.com/mholt/archiver"
 	"github.com/wminshew/check"
 	"github.com/wminshew/emrysserver/handlers"
+	"github.com/wminshew/emrysserver/handlers/miner"
 	"io"
 	"log"
 	"net/http"
@@ -187,6 +188,23 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	// })
 
 	printBuildStream(buildResp.Body)
+
+	_, err = fw.Write([]byte("Sending job requirements to miners for bidding...\n"))
+	if err != nil {
+		log.Printf("Error writing to flushWriter: %v\n", err)
+	}
+	miner.Pool.NewJob([]byte("new job"))
+
+	_, err = fw.Write([]byte("Selecting winning bidder...\n"))
+	if err != nil {
+		log.Printf("Error writing to flushWriter: %v\n", err)
+	}
+
+	_, err = fw.Write([]byte("Sending image to winning bidder...\n"))
+	if err != nil {
+		log.Printf("Error writing to flushWriter: %v\n", err)
+	}
+
 	_, err = fw.Write([]byte("Running image...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)

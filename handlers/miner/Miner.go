@@ -18,8 +18,8 @@ var (
 )
 
 type miner struct {
-	// miner Pool
-	pool *Pool
+	// miner pool
+	pool *pool
 
 	// websocket connection
 	conn *websocket.Conn

@@ -1,8 +1,11 @@
 package miner
 
+// Pool manages the connections to non-working miners
+var Pool *pool
+
 // Pool maintains the set of active and available miners and
 // broadcasts jobs to the miners
-type Pool struct {
+type pool struct {
 	// registered miners
 	miners map[*miner]bool
 
@@ -16,9 +19,9 @@ type Pool struct {
 	unregister chan *miner
 }
 
-// NewPool creates a new Pool of miner connections
-func NewPool() *Pool {
-	return &Pool{
+// InitPool creates a new Pool of miner connections
+func InitPool() {
+	Pool = &pool{
 		miners:     make(map[*miner]bool),
 		jobs:       make(chan []byte),
 		register:   make(chan *miner),
@@ -26,26 +29,30 @@ func NewPool() *Pool {
 	}
 }
 
-// Run manages the Pool
-func (p *Pool) Run() {
+// RunPool manages the Pool
+func RunPool() {
 	for {
 		select {
-		case miner := <-p.register:
-			p.miners[miner] = true
-		case miner := <-p.unregister:
-			if _, ok := p.miners[miner]; ok {
-				delete(p.miners, miner)
+		case miner := <-Pool.register:
+			Pool.miners[miner] = true
+		case miner := <-Pool.unregister:
+			if _, ok := Pool.miners[miner]; ok {
+				delete(Pool.miners, miner)
 				close(miner.send)
 			}
-		case job := <-p.jobs:
-			for miner := range p.miners {
+		case job := <-Pool.jobs:
+			for miner := range Pool.miners {
 				select {
 				case miner.send <- job:
 				default:
 					close(miner.send)
-					delete(p.miners, miner)
+					delete(Pool.miners, miner)
 				}
 			}
 		}
 	}
+}
+
+func (p *pool) NewJob(newJob []byte) {
+	p.jobs <- newJob
 }
