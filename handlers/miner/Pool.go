@@ -1,5 +1,9 @@
 package miner
 
+import (
+	"github.com/wminshew/emrys/pkg/job"
+)
+
 // Pool manages the connections to non-working miners
 var Pool *pool
 
@@ -10,7 +14,7 @@ type pool struct {
 	miners map[*miner]bool
 
 	// inbound jobs from users
-	jobs chan []byte
+	jobs chan *job.Job
 
 	// register requests from miners
 	register chan *miner
@@ -23,7 +27,7 @@ type pool struct {
 func InitPool() {
 	Pool = &pool{
 		miners:     make(map[*miner]bool),
-		jobs:       make(chan []byte),
+		jobs:       make(chan *job.Job),
 		register:   make(chan *miner),
 		unregister: make(chan *miner),
 	}
@@ -38,14 +42,14 @@ func RunPool() {
 		case miner := <-Pool.unregister:
 			if _, ok := Pool.miners[miner]; ok {
 				delete(Pool.miners, miner)
-				close(miner.send)
+				close(miner.sendJob)
 			}
-		case job := <-Pool.jobs:
+		case j := <-Pool.jobs:
 			for miner := range Pool.miners {
 				select {
-				case miner.send <- job:
+				case miner.sendJob <- j:
 				default:
-					close(miner.send)
+					close(miner.sendJob)
 					delete(Pool.miners, miner)
 				}
 			}
@@ -53,6 +57,6 @@ func RunPool() {
 	}
 }
 
-func (p *pool) NewJob(newJob []byte) {
-	p.jobs <- newJob
+func (p *pool) BroadcastJob(j *job.Job) {
+	p.jobs <- j
 }

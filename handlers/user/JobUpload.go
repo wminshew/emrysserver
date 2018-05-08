@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/mholt/archiver"
 	"github.com/wminshew/check"
+	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/handlers"
 	"github.com/wminshew/emrysserver/handlers/miner"
 	"io"
@@ -179,6 +180,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(buildResp.Body.Close)
+	// TODO: figure out how to efficiently store & retrieve caches
 	// removing the image immediately after run means no caching
 	// defer check.Err(func() error {
 	// 	_, err := cli.ImageRemove(ctx, username, types.ImageRemoveOptions{
@@ -193,7 +195,11 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
-	miner.Pool.NewJob([]byte("new job"))
+	j := &job.Job{
+		Name: "test",
+	}
+	log.Printf("Sending job: %+v\n", j)
+	miner.Pool.BroadcastJob(j)
 
 	_, err = fw.Write([]byte("Selecting winning bidder...\n"))
 	if err != nil {
@@ -261,6 +267,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: log?
 	tee := io.TeeReader(out, fw)
 	_, err = io.Copy(os.Stdout, tee)
 	if err != nil && err != io.EOF {
@@ -268,16 +275,6 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
-	// select {
-	// case err := <-errCh:
-	// 	if err != nil {
-	// 		log.Print(err)
-	// 		return
-	// 	}
-	// case <-statusCh:
-	// }
 }
 
 func printBuildStream(r io.Reader) {

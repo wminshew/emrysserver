@@ -3,6 +3,7 @@ package miner
 
 import (
 	"github.com/gorilla/websocket"
+	"github.com/wminshew/emrys/pkg/job"
 	"log"
 	"net/http"
 	"time"
@@ -25,9 +26,9 @@ func Connect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m := &miner{
-		pool: Pool,
-		conn: conn,
-		send: make(chan []byte, 256),
+		pool:    Pool,
+		conn:    conn,
+		sendJob: make(chan *job.Job),
 	}
 	m.pool.register <- m
 

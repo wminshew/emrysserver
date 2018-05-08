@@ -1,7 +1,10 @@
 package miner
 
 import (
+	"compress/zlib"
+	"encoding/gob"
 	"github.com/gorilla/websocket"
+	"github.com/wminshew/emrys/pkg/job"
 	"log"
 	"time"
 )
@@ -24,8 +27,8 @@ type miner struct {
 	// websocket connection
 	conn *websocket.Conn
 
-	// buffered channel for outbound messages
-	send chan []byte
+	// buffered channel for outbound jobs
+	sendJob chan *job.Job
 }
 
 func (m *miner) readPump() {
@@ -71,7 +74,7 @@ func (m *miner) writePump() {
 
 	for {
 		select {
-		case message, ok := <-m.send:
+		case j, ok := <-m.sendJob:
 			err := m.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err != nil {
 				log.Printf("Error setting websocket write deadline: %v\n", err)
@@ -84,29 +87,35 @@ func (m *miner) writePump() {
 				return
 			}
 
-			w, err := m.conn.NextWriter(websocket.TextMessage)
+			w, err := m.conn.NextWriter(websocket.BinaryMessage)
 			if err != nil {
 				log.Printf("Error making next websocket writer: %v\n", err)
 				return
 			}
-			_, err = w.Write(message)
+			zw := zlib.NewWriter(w)
+			enc := gob.NewEncoder(zw)
+			err = enc.Encode(j)
 			if err != nil {
-				log.Printf("Error writing message to websocket: %v\n", err)
+				log.Printf("Error encoding, compressing, and sending job: %v\n", err)
 			}
 
-			// send any other queued messages
-			n := len(m.send)
+			// send any other queued jobs
+			n := len(m.sendJob)
 			for i := 0; i < n; i++ {
 				_, err = w.Write(newline)
 				if err != nil {
-					log.Printf("Error writing message to websocket: %v\n", err)
+					log.Printf("Error writing newline to websocket: %v\n", err)
 				}
-				_, err = w.Write(<-m.send)
+				err = enc.Encode(j)
 				if err != nil {
-					log.Printf("Error writing message to websocket: %v\n", err)
+					log.Printf("Error encoding, compressing, and sending job: %v\n", err)
 				}
 			}
 
+			if err := zw.Close(); err != nil {
+				log.Printf("Error closing websocket writer: %v\n", err)
+				return
+			}
 			if err := w.Close(); err != nil {
 				log.Printf("Error closing websocket writer: %v\n", err)
 				return
