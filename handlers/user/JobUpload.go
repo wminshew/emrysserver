@@ -121,6 +121,16 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = fw.Write([]byte("Sending job requirements to miners for bidding...\n"))
+	if err != nil {
+		log.Printf("Error writing to flushWriter: %v\n", err)
+	}
+	j := &job.Job{
+		ID: "test",
+	}
+	log.Printf("Sending job: %+v\n", j)
+	go miner.Pool.BroadcastJob(j)
+
 	_, err = fw.Write([]byte("Building image...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
@@ -180,26 +190,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(buildResp.Body.Close)
-	// TODO: figure out how to efficiently store & retrieve caches
-	// removing the image immediately after run means no caching
-	// defer check.Err(func() error {
-	// 	_, err := cli.ImageRemove(ctx, username, types.ImageRemoveOptions{
-	// 		Force: true,
-	// 	})
-	// 	return err
-	// })
-
 	printBuildStream(buildResp.Body)
-
-	_, err = fw.Write([]byte("Sending job requirements to miners for bidding...\n"))
-	if err != nil {
-		log.Printf("Error writing to flushWriter: %v\n", err)
-	}
-	j := &job.Job{
-		Name: "test",
-	}
-	log.Printf("Sending job: %+v\n", j)
-	miner.Pool.BroadcastJob(j)
 
 	_, err = fw.Write([]byte("Selecting winning bidder...\n"))
 	if err != nil {

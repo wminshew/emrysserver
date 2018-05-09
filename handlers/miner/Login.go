@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/db"
-	"github.com/wminshew/emrysserver/handlers"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
@@ -21,21 +21,21 @@ type loginResponse struct {
 
 // Login takes miner credentials from the request and, if valid, returns a token
 func Login(w http.ResponseWriter, r *http.Request) {
-	creds := &handlers.Credentials{}
-	err := json.NewDecoder(r.Body).Decode(creds)
+	c := &creds.Miner{}
+	err := json.NewDecoder(r.Body).Decode(c)
 	if err != nil {
 		log.Printf("Error decoding json: %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	storedCreds := &handlers.Credentials{}
+	storedC := &creds.Miner{}
 	// errors from QueryRow are defered until Scan
-	result := db.Db.QueryRow("SELECT email, password FROM miners WHERE email=$1", creds.Email)
-	err = result.Scan(&storedCreds.Email, &storedCreds.Password)
+	result := db.Db.QueryRow("SELECT email, password FROM miners WHERE email=$1", c.Email)
+	err = result.Scan(&storedC.Email, &storedC.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("Unauthorized miner: %s\n", creds.Email)
+			log.Printf("Unauthorized miner: %s\n", c.Email)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -45,8 +45,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
-		log.Printf("Unauthorized miner: %s\n", creds.Email)
+	if err = bcrypt.CompareHashAndPassword([]byte(storedC.Password), []byte(c.Password)); err != nil {
+		log.Printf("Unauthorized miner: %s\n", c.Email)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -55,8 +55,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 		"iss":   "auth.service",
 		"iat":   time.Now().Unix(),
-		"email": storedCreds.Email,
-		"sub":   storedCreds.Email,
+		"email": storedC.Email,
+		"sub":   storedC.Email,
 	})
 
 	tokenString, err := token.SignedString([]byte(secret))

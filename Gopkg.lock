@@ -164,7 +164,7 @@
   branch = "master"
   name = "github.com/wminshew/emrys"
   packages = ["pkg/job"]
-  revision = "30faa87ff64ad077a126834ec633f9e612a65f60"
+  revision = "0590747fdff3a908c88ae249a5f6457316b5330b"
 
 [[projects]]
   branch = "master"
@@ -195,6 +195,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bf4a8652c6510bf860a826ce8c50be2010b6308ba88d106588c813fbf7dc40f7"
+  inputs-digest = "2975616dda2e4b0d3c843bd54a01b9ef5f1021d326d5c618eded658f99878a77"
   solver-name = "gps-cdcl"
   solver-version = 1

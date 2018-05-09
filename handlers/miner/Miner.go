@@ -92,6 +92,8 @@ func (m *miner) writePump() {
 				log.Printf("Error making next websocket writer: %v\n", err)
 				return
 			}
+			// TODO: seems inefficient to do this for every miner individually? Need to refactor
+			// maybe put in BroadcastJob; write to buffer, then buffer.Bytes to send
 			zw := zlib.NewWriter(w)
 			enc := gob.NewEncoder(zw)
 			err = enc.Encode(j)
