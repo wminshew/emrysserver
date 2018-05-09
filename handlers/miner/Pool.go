@@ -1,7 +1,11 @@
 package miner
 
 import (
+	"bytes"
+	"compress/zlib"
+	"encoding/gob"
 	"github.com/wminshew/emrys/pkg/job"
+	"log"
 )
 
 // Pool manages the connections to non-working miners
@@ -14,7 +18,7 @@ type pool struct {
 	miners map[*miner]bool
 
 	// inbound jobs from users
-	jobs chan *job.Job
+	jobs chan []byte
 
 	// register requests from miners
 	register chan *miner
@@ -27,7 +31,7 @@ type pool struct {
 func InitPool() {
 	Pool = &pool{
 		miners:     make(map[*miner]bool),
-		jobs:       make(chan *job.Job),
+		jobs:       make(chan []byte),
 		register:   make(chan *miner),
 		unregister: make(chan *miner),
 	}
@@ -58,5 +62,22 @@ func RunPool() {
 }
 
 func (p *pool) BroadcastJob(j *job.Job) {
-	p.jobs <- j
+	var buf bytes.Buffer
+	zw := zlib.NewWriter(&buf)
+	enc := gob.NewEncoder(zw)
+	err := enc.Encode(j)
+	if err != nil {
+		log.Printf("Error encoding and compressing job: %v\n", err)
+		return
+	}
+	err = zw.Close()
+	if err != nil {
+		log.Printf("Error closing zlib job writer: %v\n", err)
+		return
+	}
+	// b := make([]byte, len(buf.Bytes()))
+	// _ = copy(b, buf.Bytes())
+	// log.Printf("Buffer: %v\n", b)
+	log.Printf("Buffer: %+v\n", buf)
+	p.jobs <- buf.Bytes()
 }

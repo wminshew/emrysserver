@@ -1,10 +1,7 @@
 package miner
 
 import (
-	"compress/zlib"
-	"encoding/gob"
 	"github.com/gorilla/websocket"
-	"github.com/wminshew/emrys/pkg/job"
 	"log"
 	"time"
 )
@@ -28,7 +25,7 @@ type miner struct {
 	conn *websocket.Conn
 
 	// buffered channel for outbound jobs
-	sendJob chan *job.Job
+	sendJob chan []byte
 }
 
 func (m *miner) readPump() {
@@ -87,41 +84,25 @@ func (m *miner) writePump() {
 				return
 			}
 
-			w, err := m.conn.NextWriter(websocket.BinaryMessage)
+			log.Printf("About to send: %v\n", j)
+			err = m.conn.WriteMessage(websocket.BinaryMessage, j)
 			if err != nil {
-				log.Printf("Error making next websocket writer: %v\n", err)
+				log.Printf("Error writing job to socket: %v\n", err)
 				return
 			}
-			// TODO: seems inefficient to do this for every miner individually? Need to refactor
-			// maybe put in BroadcastJob; write to buffer, then buffer.Bytes to send
-			zw := zlib.NewWriter(w)
-			enc := gob.NewEncoder(zw)
-			err = enc.Encode(j)
-			if err != nil {
-				log.Printf("Error encoding, compressing, and sending job: %v\n", err)
-			}
+			log.Printf("Sent!\n")
 
 			// send any other queued jobs
 			n := len(m.sendJob)
+			log.Printf("n: %v\n", n)
 			for i := 0; i < n; i++ {
-				_, err = w.Write(newline)
+				// _, err = w.Write(newline)
+				err = m.conn.WriteMessage(websocket.BinaryMessage, <-m.sendJob)
 				if err != nil {
 					log.Printf("Error writing newline to websocket: %v\n", err)
 				}
-				err = enc.Encode(j)
-				if err != nil {
-					log.Printf("Error encoding, compressing, and sending job: %v\n", err)
-				}
 			}
-
-			if err := zw.Close(); err != nil {
-				log.Printf("Error closing websocket writer: %v\n", err)
-				return
-			}
-			if err := w.Close(); err != nil {
-				log.Printf("Error closing websocket writer: %v\n", err)
-				return
-			}
+			log.Printf("Done")
 		case <-ticker.C:
 			err := m.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err != nil {
