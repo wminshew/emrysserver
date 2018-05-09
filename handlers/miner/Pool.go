@@ -75,9 +75,5 @@ func (p *pool) BroadcastJob(j *job.Job) {
 		log.Printf("Error closing zlib job writer: %v\n", err)
 		return
 	}
-	// b := make([]byte, len(buf.Bytes()))
-	// _ = copy(b, buf.Bytes())
-	// log.Printf("Buffer: %v\n", b)
-	log.Printf("Buffer: %+v\n", buf)
 	p.jobs <- buf.Bytes()
 }
