@@ -29,12 +29,14 @@ func main() {
 	r := mux.NewRouter()
 
 	userR := r.PathPrefix("/user").Subrouter()
-	userR.HandleFunc("/", user.New).Methods("POST")
+	userR.HandleFunc("", user.New).Methods("POST")
+	// userR.HandleFunc("/", user.New).Methods("POST")
 	userR.HandleFunc("/login", user.Login).Methods("POST")
 	userR.HandleFunc("/job", user.JWTAuth(user.JobUpload)).Methods("POST")
 
 	minerR := r.PathPrefix("/miner").Subrouter()
-	minerR.HandleFunc("/", miner.New).Methods("POST")
+	minerR.HandleFunc("", miner.New).Methods("POST")
+	// minerR.HandleFunc("/", miner.New).Methods("POST")
 	minerR.HandleFunc("/login", miner.Login).Methods("POST")
 	minerR.HandleFunc("/connect", miner.JWTAuth(miner.Connect)).Methods("GET")
 

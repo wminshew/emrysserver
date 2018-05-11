@@ -4,6 +4,7 @@ import (
 	"compress/zlib"
 	"encoding/gob"
 	"github.com/gorilla/websocket"
+	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
 	"io"
 	"log"
@@ -23,6 +24,9 @@ var (
 )
 
 type miner struct {
+	// miner ID
+	ID uuid.UUID
+
 	// miner pool
 	pool *pool
 
@@ -31,6 +35,8 @@ type miner struct {
 
 	// buffered channel for outbound jobs
 	sendJob chan []byte
+	// buffered channel for outbound websocket.TextMessages
+	sendText chan []byte
 }
 
 func (m *miner) readPump() {
@@ -53,6 +59,7 @@ func (m *miner) readPump() {
 		}
 		return nil
 	})
+
 	for {
 		msgType, r, err := m.conn.NextReader()
 		if err != nil {
@@ -80,8 +87,16 @@ func (m *miner) readPump() {
 				log.Printf("Error closing zlib reader: %v\n", err)
 				break
 			}
+			b.ID = uuid.NewV4()
+			b.MinerID = m.ID
 			log.Printf("Received bid: %+v\n", b)
-			// Add some kind of bids map for each job, then after you re-build bid, associate it with job bid pool based on ID
+			select {
+			case m.pool.Bids[b.JobID] <- b:
+			default:
+				// TODO: should this bid be saved in db still?
+				log.Printf("Late bid: %+v\n", b)
+				m.sendText <- []byte("Your bid was received after the auction closed. Please try again.")
+			}
 		case websocket.TextMessage:
 			log.Printf("Miner: %v TextMessage: \n", m)
 			_, err = io.Copy(os.Stdout, r)
@@ -118,20 +133,35 @@ func (m *miner) writePump() {
 				}
 				return
 			}
-
 			err = m.conn.WriteMessage(websocket.BinaryMessage, j)
 			if err != nil {
 				log.Printf("Error writing job to socket: %v\n", err)
 				return
 			}
-
-			// send any queued jobs
+			// send queued jobs
 			n := len(m.sendJob)
 			for i := 0; i < n; i++ {
 				err = m.conn.WriteMessage(websocket.BinaryMessage, <-m.sendJob)
 				if err != nil {
 					log.Printf("Error writing newline to websocket: %v\n", err)
 				}
+			}
+		case msg, ok := <-m.sendText:
+			err := m.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err != nil {
+				log.Printf("Error setting websocket write deadline: %v\n", err)
+			}
+			if !ok {
+				err = m.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					log.Printf("Error writing close message to websocket: %v\n", err)
+				}
+				return
+			}
+			err = m.conn.WriteMessage(websocket.TextMessage, msg)
+			if err != nil {
+				log.Printf("Error writing msg to socket: %v\n", err)
+				return
 			}
 		case <-ticker.C:
 			err := m.conn.SetWriteDeadline(time.Now().Add(writeWait))

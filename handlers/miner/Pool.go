@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/gob"
+	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
+	"github.com/wminshew/emrysserver/db"
 	"log"
+	"math"
+	"time"
 )
 
 // Pool manages the connections to non-working miners
@@ -17,23 +21,31 @@ type pool struct {
 	// registered miners
 	miners map[*miner]bool
 
-	// inbound jobs from users
-	jobs chan []byte
+	// maps UUIDs to miners
+	miner map[uuid.UUID]*miner
 
 	// register requests from miners
 	register chan *miner
 
 	// unregister requests from miners
 	unregister chan *miner
+
+	// inbound jobs from users
+	jobs chan []byte
+
+	// inbound bids from miners
+	Bids map[uuid.UUID]chan *job.Bid
 }
 
 // InitPool creates a new Pool of miner connections
 func InitPool() {
 	Pool = &pool{
 		miners:     make(map[*miner]bool),
-		jobs:       make(chan []byte),
+		miner:      make(map[uuid.UUID]*miner),
 		register:   make(chan *miner),
 		unregister: make(chan *miner),
+		jobs:       make(chan []byte),
+		Bids:       make(map[uuid.UUID]chan *job.Bid),
 	}
 }
 
@@ -43,18 +55,23 @@ func RunPool() {
 		select {
 		case miner := <-Pool.register:
 			Pool.miners[miner] = true
+			Pool.miner[miner.ID] = miner
 		case miner := <-Pool.unregister:
 			if _, ok := Pool.miners[miner]; ok {
 				delete(Pool.miners, miner)
+				delete(Pool.miner, miner.ID)
 				close(miner.sendJob)
+				close(miner.sendText)
 			}
 		case j := <-Pool.jobs:
 			for miner := range Pool.miners {
 				select {
 				case miner.sendJob <- j:
 				default:
-					close(miner.sendJob)
 					delete(Pool.miners, miner)
+					delete(Pool.miner, miner.ID)
+					close(miner.sendJob)
+					close(miner.sendText)
 				}
 			}
 		}
@@ -75,5 +92,63 @@ func (p *pool) BroadcastJob(j *job.Job) {
 		log.Printf("Error closing zlib job writer: %v\n", err)
 		return
 	}
+	p.Bids[j.ID] = make(chan *job.Bid)
+	n := 0
 	p.jobs <- buf.Bytes()
+	// TODO: add cloud providers before to avoid nil issues? or are they just regular miners. Probably the latter..
+	var winBid *job.Bid
+	j.PayRate = math.Inf(1)
+
+auction:
+	for {
+		select {
+		// TODO: make sure no double bidding?
+		case b := <-p.Bids[j.ID]:
+			n++
+			b.ID = uuid.NewV4()
+			if winBid == nil {
+				winBid = b
+			} else if b.MinRate < winBid.MinRate {
+				j.PayRate = winBid.MinRate
+				winBid = b
+			} else if b.MinRate < j.PayRate {
+				j.PayRate = b.MinRate
+			}
+			go func() {
+				if _, err = db.Db.Query("INSERT INTO bids (bid_uuid, job_uuid, miner_uuid, min_rate) VALUES ($1, $2, $3, $4)",
+					b.ID, b.JobID, b.MinerID, b.MinRate); err != nil {
+					log.Printf("Error inserting bid into db: %v\n", err)
+					return
+				}
+			}()
+		case <-time.After(5 * time.Second):
+			// writing to a close channel causes a panic; instead set to nil
+			// close(p.Bids[j.ID])
+			p.Bids[j.ID] = nil
+			log.Printf("Bidding complete!\n")
+			break auction
+		}
+	}
+
+	if winBid == nil {
+		log.Printf("No bids received!\n")
+		return
+	}
+	if math.IsInf(j.PayRate, 1) {
+		j.PayRate = winBid.MinRate
+	}
+	log.Printf("%d bids received.\n", n)
+	log.Printf("Highest bid: %+v\n", winBid.ID)
+	log.Printf("Pay rate: %v\n", j.PayRate)
+	log.Printf("Notifying winner %v\n", winBid.MinerID)
+	p.miner[winBid.MinerID].sendText <- []byte("You won!\n")
+	// TODO: insert job into DB; maybe do in JobUpload
+	// go func() {
+	// 	if _, err = db.Db.Query("INSERT INTO bids (bids_uuid, job_uuid, miner_uuid, min_rate) VALUES ($1, $2, $3, $4)",
+	// 	b.ID, b.JobID, b.MinerID, b.MinRate); err != nil {
+	// 		log.Printf("Error inserting bid into db: %v\n", err)
+	// 		return
+	// 	}
+	// }()
+	// TODO: send image to miner for execution
 }

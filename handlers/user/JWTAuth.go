@@ -2,9 +2,11 @@
 package user
 
 import (
+	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
+	"github.com/satori/go.uuid"
 	"log"
 	"net/http"
 )
@@ -25,14 +27,25 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 				return []byte(secret), nil
 			}, request.WithClaims(&userClaims{}))
 
-		if claims, ok := token.Claims.(*userClaims); ok && token.Valid {
-			log.Printf("Valid user login: %v", claims.Email)
+		claims, ok := token.Claims.(*userClaims)
+		if ok && token.Valid {
+			log.Printf("Valid user login: %v\n", claims.Email)
 		} else {
-			log.Printf("Unauthorized user JWT")
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			log.Printf("Invalid or unauthorized user JWT\n")
+			http.Error(w, "Invalid or unauthorized JWT.", http.StatusUnauthorized)
 			return
 		}
 
+		u, err := uuid.FromString(claims.Subject)
+		if err != nil {
+			log.Printf("Unable to retrieve valid uuid from jwt\n")
+			http.Error(w, "Unable to retrieve valid uuid from jwt", http.StatusInternalServerError)
+			return
+		}
+		ctx := r.Context()
+		ctxKey := contextKey("user_uuid")
+		ctx = context.WithValue(ctx, ctxKey, u)
+		r = r.WithContext(ctx)
 		h(w, r)
 	})
 }

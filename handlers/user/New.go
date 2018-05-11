@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/db"
 	"golang.org/x/crypto/bcrypt"
@@ -23,9 +24,11 @@ func New(w http.ResponseWriter, r *http.Request) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), cost)
 
-	// TODO: Need to deliver clear error messages to user if possible (i.e. if email already exists, or if its invalid)
-	if _, err = db.Db.Query("INSERT INTO users VALUES ($1, $2)", c.Email, string(hashedPassword)); err != nil {
+	u := uuid.NewV4()
+	if _, err = db.Db.Query("INSERT INTO users (user_email, password, user_uuid) VALUES ($1, $2, $3)",
+		c.Email, string(hashedPassword), u); err != nil {
 		log.Printf("Error querying db: %v\n", err)
+		// TODO: Deliver clearer error messages when possible
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

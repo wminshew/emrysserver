@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/mholt/archiver"
+	"github.com/satori/go.uuid"
 	"github.com/wminshew/check"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/handlers"
@@ -34,12 +35,18 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
 
-	// TODO: add uuid
-	username := "test2"
+	ctxKey := contextKey("user_uuid")
+	uUUID, ok := r.Context().Value(ctxKey).(uuid.UUID)
+	if !ok {
+		log.Printf("user_uuid in request context corrupted\n")
+		http.Error(w, "Unable to retrieve valid uuid from jwt. Please login again.", http.StatusInternalServerError)
+		return
+	}
+	uname := uUUID.String()
 
 	// TODO: re-factor job processing; take out file saving, add relevant paths to r.context
 	// TODO: add extra directory layer for project/job number (git vcs?); return job number to client
-	userDir := filepath.Join("user-upload", username)
+	userDir := filepath.Join("user-upload", uname)
 	if err = os.MkdirAll(userDir, 0755); err != nil {
 		log.Printf("Error creating user directory %s: %v\n", userDir, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -125,10 +132,13 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
+	// TODO: add job requirements
+	jobID := uuid.NewV4()
 	j := &job.Job{
-		ID: "test",
+		ID: jobID,
 	}
-	log.Printf("Sending job: %+v\n", j)
+	log.Printf("Broadcasting job: %+v\n", j.ID)
+	// TODO: pass user uuid (but don't put into job before broadcasting to miners)
 	go miner.Pool.BroadcastJob(j)
 
 	_, err = fw.Write([]byte("Building image...\n"))
@@ -181,7 +191,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		},
 		ForceRemove: true,
 		// TODO: add more tags or labels for emrys / project / job?
-		Tags: []string{username},
+		Tags: []string{uname},
 		// Labels: map[string]string{}
 	})
 	if err != nil {
@@ -197,6 +207,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
 
+	// TODO: some sync via channel action !
 	_, err = fw.Write([]byte("Sending image to winning bidder...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
@@ -218,7 +229,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	hostDataPath := filepath.Join(wd, userDir, "data")
 	dockerDataPath := filepath.Join(userHome, "data")
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: username,
+		Image: uname,
 		Tty:   true,
 	}, &container.HostConfig{
 		AutoRemove: true,

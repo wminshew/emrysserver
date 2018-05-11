@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/db"
 	"golang.org/x/crypto/bcrypt"
@@ -30,9 +31,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	storedC := &creds.User{}
+	u := uuid.UUID{}
 	// errors from QueryRow are defered until Scan
-	result := db.Db.QueryRow("SELECT email, password FROM users WHERE email=$1", c.Email)
-	err = result.Scan(&storedC.Email, &storedC.Password)
+	result := db.Db.QueryRow("SELECT user_email, password, user_uuid FROM users WHERE user_email=$1", c.Email)
+	err = result.Scan(&storedC.Email, &storedC.Password, &u)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("Unauthorized user: %s\n", c.Email)
@@ -41,7 +43,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Printf("Database error during login: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error during login.", http.StatusInternalServerError)
 		return
 	}
 
@@ -56,7 +58,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"iss":   "auth.service",
 		"iat":   time.Now().Unix(),
 		"email": storedC.Email,
-		"sub":   storedC.Email,
+		"sub":   u,
 	})
 
 	tokenString, err := token.SignedString([]byte(secret))

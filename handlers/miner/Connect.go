@@ -3,6 +3,7 @@ package miner
 
 import (
 	"github.com/gorilla/websocket"
+	"github.com/satori/go.uuid"
 	"log"
 	"net/http"
 	"time"
@@ -24,10 +25,19 @@ func Connect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctxKey := contextKey("miner_uuid")
+	u, ok := r.Context().Value(ctxKey).(uuid.UUID)
+	if !ok {
+		log.Printf("miner_uuid in request context corrupted\n")
+		http.Error(w, "Unable to retrieve valid uuid from jwt. Please login again.", http.StatusInternalServerError)
+		return
+	}
 	m := &miner{
-		pool:    Pool,
-		conn:    conn,
-		sendJob: make(chan []byte),
+		ID:       u,
+		pool:     Pool,
+		conn:     conn,
+		sendJob:  make(chan []byte),
+		sendText: make(chan []byte),
 	}
 	m.pool.register <- m
 
