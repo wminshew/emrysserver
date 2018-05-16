@@ -16,7 +16,7 @@ type FlushWriter struct {
 
 // Write satisifies the io.Writer interface so that flushWriter can wrap the
 // supplied io.Writer with a Flusher.
-func (fw FlushWriter) Write(p []byte) (n int, err error) {
+func (fw *FlushWriter) Write(p []byte) (n int, err error) {
 	n, err = fw.writer.Write(p)
 	if fw.flusher != nil {
 		fw.flusher.Flush()
@@ -25,8 +25,8 @@ func (fw FlushWriter) Write(p []byte) (n int, err error) {
 }
 
 // NewFlushWriter creates a FlushWriter using the io.Writer provided as the writer and flusher.
-func NewFlushWriter(w io.Writer) FlushWriter {
-	fw := FlushWriter{writer: w}
+func NewFlushWriter(w io.Writer) *FlushWriter {
+	fw := &FlushWriter{writer: w}
 	if f, ok := w.(http.Flusher); ok {
 		fw.flusher = f
 	}

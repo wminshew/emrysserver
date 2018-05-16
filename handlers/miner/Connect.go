@@ -4,6 +4,7 @@ package miner
 import (
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -38,6 +39,7 @@ func Connect(w http.ResponseWriter, r *http.Request) {
 		conn:     conn,
 		sendJob:  make(chan []byte),
 		sendText: make(chan []byte),
+		sendImg:  make(chan *io.ReadCloser),
 	}
 	m.pool.register <- m
 

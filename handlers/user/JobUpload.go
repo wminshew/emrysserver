@@ -119,6 +119,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	// TODO: consider whether to save down data at all; maybe just proxy pipe to miner
 	// TODO: need to remove old data dir contents / properly manage data update from
 	// last job using git lfs or rsync or something
 	err = archiver.TarGz.Open(dataPath, userDir)
@@ -128,7 +129,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = fw.Write([]byte("Sending job requirements to miners for bidding...\n"))
+	_, err = fw.Write([]byte("Beginning miner auction for job...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
@@ -137,9 +138,20 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	j := &job.Job{
 		ID: jobID,
 	}
-	log.Printf("Broadcasting job: %+v\n", j.ID)
+	log.Printf("Auctioning job: %+v\n", j.ID)
 	// TODO: pass user uuid (but don't put into job before broadcasting to miners)
-	go miner.Pool.BroadcastJob(j)
+	finMsg := make(chan []byte)
+	finAuction := make(chan struct{})
+	sendImg := make(chan *io.ReadCloser)
+	go miner.Pool.AuctionJob(j, finMsg, sendImg)
+	go func() {
+		msg := <-finMsg
+		_, err = fw.Write(msg)
+		if err != nil {
+			log.Printf("Error writing to flushWriter: %v\n", err)
+		}
+		finAuction <- struct{}{}
+	}()
 
 	_, err = fw.Write([]byte("Building image...\n"))
 	if err != nil {
@@ -190,8 +202,8 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 			"HOME": &userHome,
 		},
 		ForceRemove: true,
-		// TODO: add more tags or labels for emrys / project / job?
-		Tags: []string{uname},
+		// TODO: tags/labels for emrys/project/job/user?
+		Tags: []string{j.ID.String()},
 		// Labels: map[string]string{}
 	})
 	if err != nil {
@@ -202,16 +214,24 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	defer check.Err(buildResp.Body.Close)
 	printBuildStream(buildResp.Body)
 
-	_, err = fw.Write([]byte("Selecting winning bidder...\n"))
+	_, err = fw.Write([]byte("Image built!\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
+	img, err := cli.ImageSave(ctx, []string{j.ID.String()})
 
-	// TODO: some sync via channel action !
+	// sync image build with job auction
+	<-finAuction
+
 	_, err = fw.Write([]byte("Sending image to winning bidder...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
+	sendImg <- &img
+
+	// CreateContainer
+	// Pipe output back to server
+	// Pipe output back to user
 
 	_, err = fw.Write([]byte("Running image...\n"))
 	if err != nil {
@@ -229,7 +249,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	hostDataPath := filepath.Join(wd, userDir, "data")
 	dockerDataPath := filepath.Join(userHome, "data")
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: uname,
+		Image: j.ID.String(),
 		Tty:   true,
 	}, &container.HostConfig{
 		AutoRemove: true,

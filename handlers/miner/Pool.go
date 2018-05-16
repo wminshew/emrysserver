@@ -7,6 +7,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
+	"io"
 	"log"
 	"math"
 	"time"
@@ -62,6 +63,7 @@ func RunPool() {
 				delete(Pool.miner, miner.ID)
 				close(miner.sendJob)
 				close(miner.sendText)
+				close(miner.sendImg)
 			}
 		case j := <-Pool.jobs:
 			for miner := range Pool.miners {
@@ -72,13 +74,19 @@ func RunPool() {
 					delete(Pool.miner, miner.ID)
 					close(miner.sendJob)
 					close(miner.sendText)
+					close(miner.sendImg)
 				}
 			}
 		}
 	}
 }
 
-func (p *pool) BroadcastJob(j *job.Job) {
+func (p *pool) AuctionJob(j *job.Job, finMsg chan []byte, sendImg chan *io.ReadCloser) {
+	defer func() {
+		if finMsg != nil {
+			finMsg <- []byte("Miner auction failed. Please try again.\n")
+		}
+	}()
 	var buf bytes.Buffer
 	zw := zlib.NewWriter(&buf)
 	enc := gob.NewEncoder(zw)
@@ -105,7 +113,6 @@ auction:
 		// TODO: make sure no double bidding?
 		case b := <-p.Bids[j.ID]:
 			n++
-			b.ID = uuid.NewV4()
 			if winBid == nil {
 				winBid = b
 			} else if b.MinRate < winBid.MinRate {
@@ -122,8 +129,6 @@ auction:
 				}
 			}()
 		case <-time.After(5 * time.Second):
-			// writing to a close channel causes a panic; instead set to nil
-			// close(p.Bids[j.ID])
 			p.Bids[j.ID] = nil
 			log.Printf("Bidding complete!\n")
 			break auction
@@ -137,11 +142,19 @@ auction:
 	if math.IsInf(j.PayRate, 1) {
 		j.PayRate = winBid.MinRate
 	}
-	log.Printf("%d bids received.\n", n)
+	log.Printf("%d bid(s) received.\n", n)
 	log.Printf("Highest bid: %+v\n", winBid.ID)
 	log.Printf("Pay rate: %v\n", j.PayRate)
 	log.Printf("Notifying winner %v\n", winBid.MinerID)
 	p.miner[winBid.MinerID].sendText <- []byte("You won!\n")
+	finMsg <- []byte("Miner auction success! Winning bidder selected.\n")
+	finMsg = nil
+	log.Printf("Sending image to winner\n")
+	p.miner[winBid.MinerID].sendText <- []byte("Image\n")
+	p.miner[winBid.MinerID].sendImg <- <-sendImg
+	log.Printf("Sending data to winner\n")
+	p.miner[winBid.MinerID].sendText <- []byte("Data\n")
+	// p.miner[winBid.MinerID].sendData <- &data
 	// TODO: insert job into DB; maybe do in JobUpload
 	// go func() {
 	// 	if _, err = db.Db.Query("INSERT INTO bids (bids_uuid, job_uuid, miner_uuid, min_rate) VALUES ($1, $2, $3, $4)",
@@ -150,5 +163,5 @@ auction:
 	// 		return
 	// 	}
 	// }()
-	// TODO: send image to miner for execution
+	// TODO: pass something back so image can be sent ???
 }

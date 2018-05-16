@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	writeWait  = 10 * time.Second
-	pongWait   = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
+	writeWait     = 10 * time.Second
+	longWriteWait = 5 * 60 * time.Second
+	pongWait      = 60 * time.Second
+	pingPeriod    = (pongWait * 9) / 10
 	// maxMessageSize = 1024
 )
 
@@ -37,6 +38,8 @@ type miner struct {
 	sendJob chan []byte
 	// buffered channel for outbound websocket.TextMessages
 	sendText chan []byte
+	// channel for outbound images
+	sendImg chan *io.ReadCloser
 }
 
 func (m *miner) readPump() {
@@ -145,6 +148,46 @@ func (m *miner) writePump() {
 				if err != nil {
 					log.Printf("Error writing newline to websocket: %v\n", err)
 				}
+			}
+		case rp, ok := <-m.sendImg:
+			r := *rp
+			err := m.conn.SetWriteDeadline(time.Now().Add(longWriteWait))
+			if err != nil {
+				log.Printf("Error setting websocket write deadline: %v\n", err)
+			}
+			if !ok {
+				err := m.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				if err != nil {
+					log.Printf("Error writing close message to websocket: %v\n", err)
+				}
+				return
+			}
+			w, err := m.conn.NextWriter(websocket.BinaryMessage)
+			if err != nil {
+				log.Printf("Error getting next socket writer: %v\n", err)
+				return
+			}
+			zw := zlib.NewWriter(w)
+			n, err := io.Copy(zw, r)
+			if err != nil {
+				log.Printf("Error copying image reader to zlib writer: %v\n", err)
+				log.Printf("n: %v\n", n)
+				break
+			}
+			err = r.Close()
+			if err != nil {
+				log.Printf("Error closing image reader: %v\n", err)
+				break
+			}
+			err = zw.Close()
+			if err != nil {
+				log.Printf("Error closing zlib writer: %v\n", err)
+				break
+			}
+			err = w.Close()
+			if err != nil {
+				log.Printf("Error closing websocket writer: %v\n", err)
+				break
 			}
 		case msg, ok := <-m.sendText:
 			err := m.conn.SetWriteDeadline(time.Now().Add(writeWait))
