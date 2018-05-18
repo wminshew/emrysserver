@@ -173,7 +173,7 @@
     "pkg/creds",
     "pkg/job"
   ]
-  revision = "266d010ba27923a307ac40d16108b482846c547d"
+  revision = "b5ca84fb2e2f0bb4e4882280dc7d2c5e149c14f0"
 
 [[projects]]
   branch = "master"
@@ -204,6 +204,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "baa34474cad784b738ef391d7f27ba920d322b1a0639c31f90ed9ae50e8bbc29"
+  inputs-digest = "50e4630d6512f5c27ab94b59a8b47cdb1c1fb7fcd146d0965014f45377250d42"
   solver-name = "gps-cdcl"
   solver-version = 1

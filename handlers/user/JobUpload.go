@@ -4,13 +4,14 @@ import (
 	"context"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
-	"docker.io/go-docker/api/types/container"
+	// "docker.io/go-docker/api/types/container"
 	"encoding/json"
 	"fmt"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/check"
 	"github.com/wminshew/emrys/pkg/job"
+	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers"
 	"github.com/wminshew/emrysserver/handlers/miner"
 	"io"
@@ -26,7 +27,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(maxMemory)
 	if err != nil {
 		log.Printf("Error parsing request: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	fw := handlers.NewFlushWriter(w)
@@ -49,14 +50,14 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	userDir := filepath.Join("user-upload", uname)
 	if err = os.MkdirAll(userDir, 0755); err != nil {
 		log.Printf("Error creating user directory %s: %v\n", userDir, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 
 	requirementsTempFile, requirementsHeader, err := r.FormFile("requirements")
 	if err != nil {
 		log.Printf("Error reading requirements form file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(requirementsTempFile.Close)
@@ -64,21 +65,21 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	requirementsFile, err := os.OpenFile(requirementsPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Printf("Error opening requirements file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(requirementsFile.Close)
 	_, err = io.Copy(requirementsFile, requirementsTempFile)
 	if err != nil {
 		log.Printf("Error copying requirements file to disk: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 
 	trainTempFile, trainHeader, err := r.FormFile("train")
 	if err != nil {
 		log.Printf("Error reading train form file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(trainTempFile.Close)
@@ -86,21 +87,21 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		log.Printf("Error opening train file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(trainFile.Close)
 	_, err = io.Copy(trainFile, trainTempFile)
 	if err != nil {
 		log.Printf("Error copying train file to disk: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 
 	dataTempFile, dataHeader, err := r.FormFile("data")
 	if err != nil {
 		log.Printf("Error reading data form file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(dataTempFile.Close)
@@ -108,7 +109,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Printf("Error opening data file: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(dataFile.Close)
@@ -116,7 +117,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	_, err = io.Copy(dataFile, dataTempFile)
 	if err != nil {
 		log.Printf("Error copying data file to disk: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	// TODO: consider whether to save down data at all; maybe just proxy pipe to miner
@@ -125,7 +126,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	err = archiver.TarGz.Open(dataPath, userDir)
 	if err != nil {
 		log.Printf("Error unzipping data dir: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 
@@ -136,23 +137,19 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	// TODO: add job requirements
 	jobID := uuid.NewV4()
 	j := &job.Job{
-		ID: jobID,
+		ID:     jobID,
+		UserID: uUUID,
 	}
-	log.Printf("Auctioning job: %+v\n", j.ID)
-	// TODO: pass user uuid (but don't put into job before broadcasting to miners)
-	finMsg := make(chan []byte)
-	finAuction := make(chan struct{})
-	sendImg := make(chan *io.ReadCloser)
-	go miner.Pool.AuctionJob(j, finMsg, sendImg)
-	go func() {
-		msg := <-finMsg
-		_, err = fw.Write(msg)
-		if err != nil {
-			log.Printf("Error writing to flushWriter: %v\n", err)
-		}
-		finAuction <- struct{}{}
-	}()
-
+	log.Printf("Auctioning job: %v\n", j.ID)
+	if _, err = db.Db.Query("INSERT INTO jobs (job_uuid, user_uuid) VALUES ($1, $2)",
+		j.ID, j.UserID); err != nil {
+		log.Printf("Error inserting job into db: %v\n", err)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
+		return
+	}
+	go miner.Pool.AuctionJob(&job.Job{
+		ID: j.ID,
+	})
 	_, err = fw.Write([]byte("Building image...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
@@ -162,7 +159,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	cli, err := docker.NewEnvClient()
 	if err != nil {
 		log.Printf("Error creating new docker client: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 
@@ -171,7 +168,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	err = os.Link(userDockerfile, linkedDocker)
 	if err != nil {
 		log.Printf("Error linking dockerfile into user directory: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(func() error { return os.Remove(linkedDocker) })
@@ -179,20 +176,20 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	ctxFiles, err := filepath.Glob(filepath.Join(userDir, "/*"))
 	if err != nil {
 		log.Printf("Error collecting docker context files: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	err = archiver.TarGz.Make(buildCtxPath, ctxFiles)
 	if err != nil {
 		log.Printf("Error archiving docker context files: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(func() error { return os.Remove(buildCtxPath) })
 	buildCtx, err := os.Open(buildCtxPath)
 	if err != nil {
 		log.Printf("Error opening archived docker context files: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	userHome := "/home/user"
@@ -208,109 +205,53 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("Error building image: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 	defer check.Err(buildResp.Body.Close)
-	printBuildStream(buildResp.Body)
+	printJSONStream(buildResp.Body)
 
 	_, err = fw.Write([]byte("Image built!\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
-	img, err := cli.ImageSave(ctx, []string{j.ID.String()})
+	// img, err := cli.ImageSave(ctx, []string{j.ID.String()})
 
 	// sync image build with job auction
-	<-finAuction
+	// TODO: wg?
 
-	_, err = fw.Write([]byte("Sending image to winning bidder...\n"))
+	// TODO: insert job into DB?
+	// j.UserID = uUUID
+
+	_, err = fw.Write([]byte("Sending image and data to winning bidder...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
-	sendImg <- &img
 
-	// CreateContainer
-	// Pipe output back to server
-	// Pipe output back to user
+	// TODO: Send data to miner
+	// TODO: CreateContainer with data
 
 	_, err = fw.Write([]byte("Running image...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
 
-	// TODO: do I need to preserve users' file structure?
-	// [relative pathing between train.py and path/to/data/]
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Printf("Error getting working directory: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	hostDataPath := filepath.Join(wd, userDir, "data")
-	dockerDataPath := filepath.Join(userHome, "data")
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: j.ID.String(),
-		Tty:   true,
-	}, &container.HostConfig{
-		AutoRemove: true,
-		Binds: []string{
-			fmt.Sprintf("%s:%s:ro", hostDataPath, dockerDataPath),
-		},
-		CapDrop: []string{
-			"ALL",
-		},
-		// if I mount a rw drive, I should be able to use the below
-		// ReadonlyRootfs: true,
-		Runtime: "nvidia",
-		SecurityOpt: []string{
-			"no-new-privileges",
-		},
-	}, nil, "")
-	if err != nil {
-		log.Printf("Error creating container: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// TODO: how do I balance long jobs & container timeout?
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		log.Printf("Error starting container: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{
-		Follow:     true,
-		ShowStdout: true,
-	})
-	if err != nil {
-		log.Printf("Error logging container: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// TODO: log?
-	tee := io.TeeReader(out, fw)
-	_, err = io.Copy(os.Stdout, tee)
-	if err != nil && err != io.EOF {
-		log.Printf("Error copying to stdout: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// TODO: Pipe output back to server
+	// TODO: Pipe output back to user
 }
 
-func printBuildStream(r io.Reader) {
-	type Stream struct {
-		Stream string
+func printJSONStream(r io.Reader) {
+	type stream struct {
+		stream string
 	}
 	dec := json.NewDecoder(r)
 	for dec.More() {
-		var s Stream
+		var s stream
 		err := dec.Decode(&s)
 		if err != nil {
 			log.Printf("Error decoding json build stream: %v\n", err)
 		}
 
-		fmt.Printf("%v", s.Stream)
+		fmt.Printf("%v", s.stream)
 	}
 }
