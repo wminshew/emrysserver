@@ -16,10 +16,6 @@ import (
 
 var secret = os.Getenv("SECRET")
 
-type loginResponse struct {
-	Token string `json:"token"`
-}
-
 // Login takes miner credentials from the request and, if valid, returns a token
 func Login(w http.ResponseWriter, r *http.Request) {
 	c := &creds.Miner{}
@@ -68,10 +64,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := loginResponse{
+	resp := creds.LoginResp{
 		Token: tokenString,
 	}
-	if err = json.NewEncoder(w).Encode(response); err != nil {
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
 		log.Printf("Error encoding JSON response: %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
