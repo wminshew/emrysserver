@@ -29,8 +29,8 @@ type pool struct {
 	// outbound messages to miners
 	messages chan []byte
 
-	// inbound bids from miners
-	Bids map[uuid.UUID]chan *job.Bid
+	// job auctions
+	auctions map[uuid.UUID]*auction
 }
 
 // InitPool creates a new Pool of miner connections
@@ -41,7 +41,7 @@ func InitPool() {
 		register:   make(chan *miner),
 		unregister: make(chan *miner),
 		messages:   make(chan []byte),
-		Bids:       make(map[uuid.UUID]chan *job.Bid),
+		auctions:   make(map[uuid.UUID]*auction),
 	}
 }
 
@@ -73,6 +73,9 @@ func RunPool() {
 }
 
 func (p *pool) AuctionJob(j *job.Job) {
+	a := newAuction(j.ID)
+	go a.run(p)
+
 	m := job.Message{
 		Message: "New job posted!",
 		Job:     j,
@@ -85,47 +88,6 @@ func (p *pool) AuctionJob(j *job.Job) {
 		return
 	}
 	p.messages <- buf.Bytes()
-	// 	var winBid *job.Bid
-	// 	j.PayRate = math.Inf(1)
-	// auction:
-	// 	for {
-	// 		select {
-	// 		// TODO: how to handle single miner bidding multiple times on single job? on multiple jobs?
-	// 		case b := <-p.Bids[j.ID]:
-	// 			n++
-	// 			if winBid == nil {
-	// 				winBid = b
-	// 			} else if b.MinRate < winBid.MinRate {
-	// 				j.PayRate = winBid.MinRate
-	// 				winBid = b
-	// 			} else if b.MinRate < j.PayRate {
-	// 				j.PayRate = b.MinRate
-	// 			}
-	// 			go func() {
-	// 				if _, err = db.Db.Query("INSERT INTO bids (bid_uuid, job_uuid, miner_uuid, min_rate, late) VALUES ($1, $2, $3, $4, $5)",
-	// 					b.ID, b.JobID, b.MinerID, b.MinRate, false); err != nil {
-	// 					log.Printf("Error inserting bid into db: %v\n", err)
-	// 					return
-	// 				}
-	// 			}()
-	// 		case <-time.After(5 * time.Second):
-	// 			p.Bids[j.ID] = nil
-	// 			log.Printf("Bidding complete!\n")
-	// 			break auction
-	// 		}
-	// 	}
-	//
-	// 	if winBid == nil {
-	// 		log.Printf("No bids received!\n")
-	// 		return
-	// 	}
-	// 	if math.IsInf(j.PayRate, 1) {
-	// 		j.PayRate = winBid.MinRate
-	// 	}
-	// 	log.Printf("%d bid(s) received.\n", n)
-	// 	log.Printf("Highest bid: %+v\n", winBid.ID)
-	// 	log.Printf("Pay rate: %v\n", j.PayRate)
-	// 	log.Printf("Notifying winner %v\n", winBid.MinerID)
-	// finMsg <- []byte("Miner auction success! Winning bidder selected.\n")
-	// finMsg = nil
+
+	// winBid := a.winner()
 }

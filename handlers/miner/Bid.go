@@ -1,22 +1,16 @@
 package miner
 
 import (
-	// "database/sql"
 	"encoding/json"
-	// "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
 	"log"
 	"net/http"
-	// "os"
-	// "time"
+	"time"
 )
-
-// type bidResponse struct {
-// 	Token string `json:"token"`
-// }
 
 // Bid accepts a job.Bid from miner and adds it to the bids table
 func Bid(w http.ResponseWriter, r *http.Request) {
@@ -47,36 +41,52 @@ func Bid(w http.ResponseWriter, r *http.Request) {
 	}
 	b.MinerID = mUUID
 
-	if _, err = db.Db.Query("INSERT INTO bids (bid_uuid, job_uuid, miner_uuid, min_rate) VALUES ($1, $2, $3, $4)",
-		b.ID, b.JobID, b.MinerID, b.MinRate); err != nil {
+	sqlStmt := `
+	INSERT INTO bids (bid_uuid, job_uuid, miner_uuid, min_rate)
+	VALUES ($1, $2, $3, $4)
+	RETURNING late
+	`
+	err = db.Db.QueryRow(sqlStmt, b.ID, b.JobID, b.MinerID, b.MinRate).Scan(&b.Late)
+	if err != nil {
 		log.Printf("Error inserting bid into db: %v\n", err)
 		http.Error(w, "Your bid was not accepted.", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("Bid: %+v\n", b)
 
-	return
-	// hold response until server decides which bid wins?
-	// token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-	// 	"exp":   time.Now().Add(time.Hour * 24).Unix(),
-	// 	"iss":   "auth.service",
-	// 	"iat":   time.Now().Unix(),
-	// 	"email": storedC.Email,
-	// 	"sub":   u,
-	// })
-	//
-	// tokenString, err := token.SignedString([]byte(secret))
-	// if err != nil {
-	// 	log.Printf("Internal error: %v\n", err)
-	// 	http.Error(w, "Internal error.", http.StatusInternalServerError)
-	// 	return
-	// }
-	//
-	// response := tokenResponse{
-	// 	Token: tokenString,
-	// }
-	// if err = json.NewEncoder(w).Encode(response); err != nil {
-	// 	log.Printf("Error encoding JSON response: %v\n", err)
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
+	if b.Late {
+		log.Printf("Late bid: %v\n", b.ID)
+		return
+	}
+
+	if Pool.auctions[b.JobID] == nil {
+		return
+	}
+	winbid := Pool.auctions[b.JobID].winner()
+	if !uuid.Equal(winbid, b.ID) {
+		return
+	}
+
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": time.Now().Add(time.Hour * 1).Unix(),
+		"iss": "bid.service",
+		"iat": time.Now().Unix(),
+		"sub": b.JobID,
+	})
+
+	tString, err := t.SignedString([]byte(secret))
+	if err != nil {
+		log.Printf("Internal error: %v\n", err)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
+		return
+	}
+
+	resp := job.BidResp{
+		Token: tString,
+	}
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
+		log.Printf("Error encoding JSON response: %v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

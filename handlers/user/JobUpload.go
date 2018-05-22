@@ -134,7 +134,6 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
 	}
-	// TODO: add job requirements
 	jobID := uuid.NewV4()
 	j := &job.Job{
 		ID:     jobID,
@@ -150,6 +149,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	go miner.Pool.AuctionJob(&job.Job{
 		ID: j.ID,
 	})
+
 	_, err = fw.Write([]byte("Building image...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
@@ -209,6 +209,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(buildResp.Body.Close)
+
 	printJSONStream(buildResp.Body)
 
 	_, err = fw.Write([]byte("Image built!\n"))

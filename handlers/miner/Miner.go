@@ -3,7 +3,6 @@ package miner
 import (
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
-	// "github.com/wminshew/emrys/pkg/job"
 	"log"
 	"time"
 )
@@ -13,7 +12,6 @@ const (
 	longWriteWait = 5 * 60 * time.Second
 	pongWait      = 5 * 60 * time.Second
 	pingPeriod    = (pongWait * 9) / 10
-	// maxMessageSize = 1024
 )
 
 var (
@@ -132,7 +130,8 @@ func (m *miner) writePump() {
 				log.Printf("Error writing message to socket: %v\n", err)
 				return
 			}
-			// send queued jobs
+
+			// send queued messages
 			n := len(m.sendMsg)
 			for i := 0; i < n; i++ {
 				err = m.conn.WriteMessage(websocket.BinaryMessage, <-m.sendMsg)
