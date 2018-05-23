@@ -1,4 +1,4 @@
-package miner
+package user
 
 import (
 	"fmt"
@@ -23,8 +23,8 @@ func JobAuth(h http.HandlerFunc) http.HandlerFunc {
 				return []byte(secret), nil
 			}, request.WithClaims(&jwt.StandardClaims{}))
 		if err != nil {
-			log.Printf("Unable to parse miner job JWT.\n")
-			http.Error(w, "Unable to parse miner job JWT.", http.StatusInternalServerError)
+			log.Printf("Unable to parse user job JWT.\n")
+			http.Error(w, "Unable to parse user job JWT. ", http.StatusInternalServerError)
 			return
 		}
 
@@ -32,15 +32,17 @@ func JobAuth(h http.HandlerFunc) http.HandlerFunc {
 		if ok && token.Valid {
 			vars := mux.Vars(r)
 			jID := vars["jID"]
+			log.Printf("jID: %v\n", jID)
+			log.Printf("token: %v\n", claims.Subject)
 			if jID != claims.Subject {
-				log.Printf("URL path job ID doesn't match miner request header Job-Authorization claim.\n")
-				http.Error(w, "URL path job ID doesn't match miner request header Job-Authorization claim.", http.StatusUnauthorized)
+				log.Printf("URL path job ID doesn't match user request header Job-Authorization claim.\n")
+				http.Error(w, "URL path job ID doesn't match user request header Job-Authorization claim.", http.StatusUnauthorized)
 				return
 			}
-			log.Printf("Valid miner job JWT: %v\n", claims.Subject)
+			log.Printf("Valid user job JWT: %v\n", claims.Subject)
 		} else {
-			log.Printf("Invalid or unauthorized job JWT.\n")
-			http.Error(w, "Invalid or unauthorized job JWT.", http.StatusUnauthorized)
+			log.Printf("Invalid or unauthorized user job JWT.\n")
+			http.Error(w, "Invalid or unauthorized user job JWT.", http.StatusUnauthorized)
 			return
 		}
 

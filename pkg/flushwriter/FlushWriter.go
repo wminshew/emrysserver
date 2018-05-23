@@ -1,4 +1,4 @@
-package handlers
+package flushwriter
 
 import (
 	"io"
@@ -25,7 +25,7 @@ func (fw *FlushWriter) Write(p []byte) (n int, err error) {
 }
 
 // NewFlushWriter creates a FlushWriter using the io.Writer provided as the writer and flusher.
-func NewFlushWriter(w io.Writer) *FlushWriter {
+func New(w io.Writer) *FlushWriter {
 	fw := &FlushWriter{writer: w}
 	if f, ok := w.(http.Flusher); ok {
 		fw.flusher = f

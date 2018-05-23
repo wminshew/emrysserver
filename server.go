@@ -18,12 +18,22 @@ func main() {
 	miner.InitPool()
 	go miner.RunPool()
 
-	const httpRedirectPort = ":8080"
-	log.Printf("Re-directing port %s...\n", httpRedirectPort)
 	go func() {
-		for {
-			log.Fatal(http.ListenAndServe(httpRedirectPort, http.HandlerFunc(redirect)))
-		}
+		const httpRedirectPort = ":8080"
+		log.Printf("Re-directing port %s...\n", httpRedirectPort)
+		log.Fatal(http.ListenAndServe(httpRedirectPort, http.HandlerFunc(redirect)))
+	}()
+
+	go func() {
+		const jobProxyPort = ":8081"
+
+		rProxy := mux.NewRouter()
+		jobR := rProxy.PathPrefix("/job").Subrouter()
+		jobR.HandleFunc("/{jID}", job.PostOutput).Methods("POST")
+		jobR.HandleFunc("/{jID}", job.GetOutput).Methods("GET")
+
+		log.Printf("Job proxy server listening on port %s...\n", jobProxyPort)
+		log.Fatal(http.ListenAndServe(jobProxyPort, http.HandlerFunc(redirect)))
 	}()
 
 	r := mux.NewRouter()
@@ -32,6 +42,7 @@ func main() {
 	userR.HandleFunc("", user.New).Methods("POST")
 	userR.HandleFunc("/login", user.Login).Methods("POST")
 	userR.HandleFunc("/job", user.JWTAuth(user.JobUpload)).Methods("POST")
+	userR.HandleFunc("/job/{jID}/run", user.JWTAuth(user.JobAuth(user.Run))).Methods("GET")
 
 	minerR := r.PathPrefix("/miner").Subrouter()
 	minerR.HandleFunc("", miner.New).Methods("POST")
@@ -40,6 +51,7 @@ func main() {
 	minerR.HandleFunc("/job/{jID}/bid", miner.JWTAuth(miner.Bid)).Methods("POST")
 	minerR.HandleFunc("/job/{jID}/image", miner.JWTAuth(miner.JobAuth(miner.Image))).Methods("GET")
 	minerR.HandleFunc("/job/{jID}/data", miner.JWTAuth(miner.JobAuth(miner.Data))).Methods("GET")
+	minerR.HandleFunc("/job/{jID}/run", miner.JWTAuth(miner.JobAuth(miner.Run))).Methods("POST")
 
 	server := http.Server{
 		Addr:    ":4430",

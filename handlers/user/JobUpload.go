@@ -4,7 +4,6 @@ import (
 	"context"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
-	// "docker.io/go-docker/api/types/container"
 	"encoding/json"
 	"fmt"
 	"github.com/mholt/archiver"
@@ -12,8 +11,8 @@ import (
 	"github.com/wminshew/check"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
-	"github.com/wminshew/emrysserver/handlers"
 	"github.com/wminshew/emrysserver/handlers/miner"
+	"github.com/wminshew/emrysserver/pkg/flushwriter"
 	"io"
 	"log"
 	"net/http"
@@ -30,7 +29,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
-	fw := handlers.NewFlushWriter(w)
+	fw := flushwriter.New(w)
 	_, err = fw.Write([]byte("Unpacking request...\n"))
 	if err != nil {
 		log.Printf("Error writing to flushWriter: %v\n", err)
@@ -47,6 +46,7 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: re-factor job processing; take out file saving, add relevant paths to r.context
 	// TODO: add extra directory layer for project/job number (git vcs?); return job number to client
+	// TODO: use s3 or something else?
 	userDir := filepath.Join("user-upload", uname)
 	if err = os.MkdirAll(userDir, 0755); err != nil {
 		log.Printf("Error creating user directory %s: %v\n", userDir, err)
@@ -230,15 +230,6 @@ func JobUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Send data to miner
-	// TODO: CreateContainer with data
-
-	_, err = fw.Write([]byte("Running image...\n"))
-	if err != nil {
-		log.Printf("Error writing to flushWriter: %v\n", err)
-	}
-
-	// TODO: Pipe output back to server
-	// TODO: Pipe output back to user
 }
 
 func printJSONStream(r io.Reader) {
