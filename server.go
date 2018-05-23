@@ -41,8 +41,8 @@ func main() {
 	userR := r.PathPrefix("/user").Subrouter()
 	userR.HandleFunc("", user.New).Methods("POST")
 	userR.HandleFunc("/login", user.Login).Methods("POST")
-	userR.HandleFunc("/job", user.JWTAuth(user.JobUpload)).Methods("POST")
-	userR.HandleFunc("/job/{jID}/run", user.JWTAuth(user.JobAuth(user.Run))).Methods("GET")
+	userR.HandleFunc("/job", user.JWTAuth(user.PostJob)).Methods("POST")
+	userR.HandleFunc("/job/{jID}/output", user.JWTAuth(user.JobAuth(user.GetOutput))).Methods("GET")
 
 	minerR := r.PathPrefix("/miner").Subrouter()
 	minerR.HandleFunc("", miner.New).Methods("POST")
@@ -51,7 +51,7 @@ func main() {
 	minerR.HandleFunc("/job/{jID}/bid", miner.JWTAuth(miner.Bid)).Methods("POST")
 	minerR.HandleFunc("/job/{jID}/image", miner.JWTAuth(miner.JobAuth(miner.Image))).Methods("GET")
 	minerR.HandleFunc("/job/{jID}/data", miner.JWTAuth(miner.JobAuth(miner.Data))).Methods("GET")
-	minerR.HandleFunc("/job/{jID}/run", miner.JWTAuth(miner.JobAuth(miner.Run))).Methods("POST")
+	minerR.HandleFunc("/job/{jID}/output", miner.JWTAuth(miner.JobAuth(miner.PostOutput))).Methods("POST")
 
 	server := http.Server{
 		Addr:    ":4430",

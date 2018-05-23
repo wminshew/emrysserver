@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 )
 
-// JobUpload handles job posted by user
-func JobUpload(w http.ResponseWriter, r *http.Request) {
+// PostJob handles job posted by user
+func PostJob(w http.ResponseWriter, r *http.Request) {
 	maxMemory := int64(1) << 31
 	err := r.ParseMultipartForm(maxMemory)
 	if err != nil {
