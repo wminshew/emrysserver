@@ -25,6 +25,11 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 				}
 				return []byte(secret), nil
 			}, request.WithClaims(&minerClaims{}))
+		if err != nil {
+			log.Printf("Unable to parse miner JWT\n")
+			http.Error(w, "Unable to parse miner JWT", http.StatusInternalServerError)
+			return
+		}
 
 		claims, ok := token.Claims.(*minerClaims)
 		if ok && token.Valid {

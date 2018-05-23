@@ -38,6 +38,8 @@ func main() {
 	minerR.HandleFunc("/login", miner.Login).Methods("POST")
 	minerR.HandleFunc("/connect", miner.JWTAuth(miner.Connect)).Methods("GET")
 	minerR.HandleFunc("/job/{jID}/bid", miner.JWTAuth(miner.Bid)).Methods("POST")
+	minerR.HandleFunc("/job/{jID}/image", miner.JWTAuth(miner.JobAuth(miner.Image))).Methods("GET")
+	minerR.HandleFunc("/job/{jID}/data", miner.JWTAuth(miner.JobAuth(miner.Data))).Methods("GET")
 
 	server := http.Server{
 		Addr:    ":4430",
