@@ -16,7 +16,6 @@ func Image(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
 
-	// TODO: sync timing
 	ctx := context.Background()
 	cli, err := docker.NewEnvClient()
 	if err != nil {

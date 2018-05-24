@@ -160,7 +160,6 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(dataFile.Close)
-	// defer check.Err(func() error { return os.Remove(dataPath) })
 	_, err = io.Copy(dataFile, dataTempFile)
 	if err != nil {
 		log.Printf("Error copying data file to disk: %v\n", err)
@@ -170,27 +169,6 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	// TODO: consider whether to save down data at all; maybe just proxy pipe to miner
-	// TODO: need to remove old data dir contents / properly manage data update from
-	// last job using git lfs or rsync or something
-	// err = archiver.TarGz.Open(dataPath, jobDir)
-	// if err != nil {
-	// 	log.Printf("Error unzipping data dir: %v\n", err)
-	// _, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-	// if err != nil {
-	// 	log.Printf("Error writing to flushwriter: %v\n", err)
-	// }
-	// 	return
-	// }
-
-	_, err = fw.Write([]byte("Beginning miner auction for job...\n"))
-	if err != nil {
-		log.Printf("Error writing to flushwriter: %v\n", err)
-	}
-	log.Printf("Auctioning job: %v\n", j.ID)
-	go miner.Pool.AuctionJob(&job.Job{
-		ID: j.ID,
-	})
 
 	_, err = fw.Write([]byte("Building image...\n"))
 	if err != nil {
@@ -277,14 +255,14 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 
-	// post to job.Image or something
-
-	// sync image build with job auction. wg? ch? mutex?
-
-	// _, err = fw.Write([]byte("Sending image and data to winning bidder...\n"))
-	// if err != nil {
-	// 	log.Printf("Error writing to flushwriter: %v\n", err)
-	// }
+	_, err = fw.Write([]byte("Beginning miner auction for job...\n"))
+	if err != nil {
+		log.Printf("Error writing to flushwriter: %v\n", err)
+	}
+	log.Printf("Auctioning job: %v\n", j.ID)
+	go miner.Pool.AuctionJob(&job.Job{
+		ID: j.ID,
+	})
 }
 
 func printJSONStream(r io.Reader) {
