@@ -88,6 +88,4 @@ func (p *pool) AuctionJob(j *job.Job) {
 		return
 	}
 	p.messages <- buf.Bytes()
-
-	// winBid := a.winner()
 }

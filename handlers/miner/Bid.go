@@ -56,14 +56,25 @@ func Bid(w http.ResponseWriter, r *http.Request) {
 
 	if b.Late {
 		log.Printf("Late bid: %v\n", b.ID)
+		_, err = w.Write([]byte("Your bid was late.\n"))
+		if err != nil {
+			log.Printf("Error writing response: %v\n", err)
+			http.Error(w, "Error writing response.", http.StatusInternalServerError)
+		}
 		return
 	}
 
 	if Pool.auctions[b.JobID] == nil {
+		log.Printf("Error: non-late bid has no Pool auction.\n")
+		http.Error(w, "There was an internal error with your bid.", http.StatusInternalServerError)
 		return
 	}
 	winbid := Pool.auctions[b.JobID].winner()
 	if !uuid.Equal(winbid, b.ID) {
+		_, err = w.Write([]byte("You did not win the job auction.\n"))
+		if err != nil {
+			log.Printf("Error writing bid response: %v\n", err)
+		}
 		return
 	}
 
@@ -76,17 +87,10 @@ func Bid(w http.ResponseWriter, r *http.Request) {
 
 	tString, err := t.SignedString([]byte(secret))
 	if err != nil {
-		log.Printf("Internal error: %v\n", err)
+		log.Printf("Error signing token string: %v\n", err)
 		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
 
-	resp := job.BidResp{
-		Token: tString,
-	}
-	if err = json.NewEncoder(w).Encode(resp); err != nil {
-		log.Printf("Error encoding JSON response: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("Set-Job-Authorization", tString)
 }

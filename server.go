@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers"
+	"github.com/wminshew/emrysserver/handlers/job"
 	"github.com/wminshew/emrysserver/handlers/miner"
 	"github.com/wminshew/emrysserver/handlers/user"
 	"log"
@@ -18,22 +19,21 @@ func main() {
 	miner.InitPool()
 	go miner.RunPool()
 
+	const httpRedirectPort = ":8080"
+	log.Printf("Re-directing port %s...\n", httpRedirectPort)
 	go func() {
-		const httpRedirectPort = ":8080"
-		log.Printf("Re-directing port %s...\n", httpRedirectPort)
-		log.Fatal(http.ListenAndServe(httpRedirectPort, http.HandlerFunc(redirect)))
+		log.Fatal(http.ListenAndServe(httpRedirectPort, handlers.Log(http.HandlerFunc(redirect))))
 	}()
 
+	const jobProxyPort = ":8081"
+	log.Printf("Job proxy server listening on port %s...\n", jobProxyPort)
 	go func() {
-		const jobProxyPort = ":8081"
-
 		rProxy := mux.NewRouter()
 		jobR := rProxy.PathPrefix("/job").Subrouter()
 		jobR.HandleFunc("/{jID}", job.PostOutput).Methods("POST")
 		jobR.HandleFunc("/{jID}", job.GetOutput).Methods("GET")
 
-		log.Printf("Job proxy server listening on port %s...\n", jobProxyPort)
-		log.Fatal(http.ListenAndServe(jobProxyPort, http.HandlerFunc(redirect)))
+		log.Fatal(http.ListenAndServe(jobProxyPort, handlers.Log(rProxy)))
 	}()
 
 	r := mux.NewRouter()
