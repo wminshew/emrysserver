@@ -1,7 +1,6 @@
 package user
 
 import (
-	"compress/gzip"
 	"context"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
@@ -278,29 +277,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 
-	// img, err := cli.ImageSave(ctx, []string{j.ID.String()})
-	// imgPath := filepath.Join(jobDir, "image.tar.gz")
-	// imgFile, err := os.OpenFile(imgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	// if err != nil {
-	// 	log.Printf("Error opening img file: %v\n", err)
-	// 	_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-	// 	if err != nil {
-	// 		log.Printf("Error writing to flushwriter: %v\n", err)
-	// 	}
-	// 	return
-	// }
-	// defer check.Err(imgFile.Close)
-	// imgGz := gzip.NewWriter(imgFile)
-	// defer check.Err(imgGz.Close)
-	// _, err = io.Copy(imgGz, img)
-	// if err != nil {
-	// 	log.Printf("Error copying img file to disk: %v\n", err)
-	// 	_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-	// 	if err != nil {
-	// 		log.Printf("Error writing to flushwriter: %v\n", err)
-	// 	}
-	// 	return
-	// }
+	// post to job.Image or something
 
 	// sync image build with job auction. wg? ch? mutex?
 
