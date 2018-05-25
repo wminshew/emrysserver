@@ -1,22 +1,41 @@
 package user
 
 import (
-	"github.com/wminshew/emrysserver/pkg/flushwriter"
+	// "github.com/wminshew/emrysserver/pkg/flushwriter"
+	"github.com/gorilla/mux"
+	"github.com/wminshew/check"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"path"
 )
 
 // GetOutputLog streams job output to user
 func GetOutputLog(w http.ResponseWriter, r *http.Request) {
-	log.Printf("user.GetOutputLog!\n")
+	// fw := flushwriter.New(w)
+	//
+	// _, err := fw.Write([]byte("Running image...\n"))
+	// if err != nil {
+	// 	log.Printf("Error writing to flushWriter: %v\n", err)
+	// }
 
-	fw := flushwriter.New(w)
+	vars := mux.Vars(r)
+	jID := vars["jID"]
 
-	_, err := fw.Write([]byte("Running image...\n"))
+	p := path.Join("job", jID)
+	u := url.URL{
+		Scheme: "http",
+		Host:   "localhost:8081",
+		Path:   p,
+	}
+	resp, err := http.Get(u.String())
 	if err != nil {
-		log.Printf("Error writing to flushWriter: %v\n", err)
+		log.Printf("Error GET %v: %v\n", u.String(), err)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
+		return
 	}
 
-	// TODO: Pipe output back to user
-	// TODO: use third 'job' server?
+	_, _ = io.Copy(w, resp.Body)
+	check.Err(resp.Body.Close)
 }

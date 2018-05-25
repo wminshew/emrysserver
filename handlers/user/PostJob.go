@@ -39,6 +39,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to retrive valid uuid from jwt. Please login again.", http.StatusBadRequest)
 		return
 	}
+
 	jobID := uuid.NewV4()
 	j := &job.Job{
 		ID:     jobID,
@@ -50,7 +51,6 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		"iat": time.Now().Unix(),
 		"sub": j.ID,
 	})
-
 	tString, err := t.SignedString([]byte(secret))
 	if err != nil {
 		log.Printf("Error signing token string: %v\n", err)
