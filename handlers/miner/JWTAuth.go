@@ -18,21 +18,21 @@ type minerClaims struct {
 // JWTAuth authenticates miner tokens
 func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims := &minerClaims{}
 		token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
 			func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 				}
 				return []byte(secret), nil
-			}, request.WithClaims(&minerClaims{}))
+			}, request.WithClaims(claims))
 		if err != nil {
 			log.Printf("Unable to parse miner JWT\n")
 			http.Error(w, "Unable to parse miner JWT", http.StatusInternalServerError)
 			return
 		}
 
-		claims, ok := token.Claims.(*minerClaims)
-		if ok && token.Valid {
+		if token.Valid {
 			log.Printf("Valid miner login: %v\n", claims.Email)
 		} else {
 			log.Printf("Invalid or unauthorized miner JWT\n")

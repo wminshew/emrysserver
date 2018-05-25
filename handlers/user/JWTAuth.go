@@ -19,16 +19,16 @@ type userClaims struct {
 // JWTAuth authenticates user JWT
 func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims := &userClaims{}
 		token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
 			func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 				}
 				return []byte(secret), nil
-			}, request.WithClaims(&userClaims{}))
+			}, request.WithClaims(claims))
 
-		claims, ok := token.Claims.(*userClaims)
-		if ok && token.Valid {
+		if token.Valid {
 			log.Printf("Valid user login: %v\n", claims.Email)
 		} else {
 			log.Printf("Invalid or unauthorized user JWT\n")
