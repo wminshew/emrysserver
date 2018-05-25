@@ -20,23 +20,20 @@ import (
 	"path/filepath"
 )
 
-// PostJob handles job posted by user
+// PostJob handles new jobs posted by users
 func PostJob(w http.ResponseWriter, r *http.Request) {
-	fw := flushwriter.New(w)
-	_, err := fw.Write([]byte("Unpacking request...\n"))
-	if err != nil {
-		log.Printf("Error writing to flushwriter: %v\n", err)
-	}
-
 	maxMemory := int64(1) << 31
-	err = r.ParseMultipartForm(maxMemory)
+	err := r.ParseMultipartForm(maxMemory)
 	if err != nil {
 		log.Printf("Error parsing request: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
+		http.Error(w, "Internal error! Please try again, and if the problem continues contact support.", http.StatusInternalServerError)
 		return
+	}
+
+	fw := flushwriter.New(w)
+	_, err = fw.Write([]byte("Unpacking request...\n"))
+	if err != nil {
+		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 
 	ctxKey := contextKey("user_uuid")
@@ -54,20 +51,12 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		ID:     jobID,
 		UserID: uUUID,
 	}
-	if _, err = db.Db.Query("INSERT INTO jobs (job_uuid, user_uuid) VALUES ($1, $2)",
-		j.ID, j.UserID); err != nil {
-		log.Printf("Error inserting job into db: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
 
 	// TODO: re-factor job processing; take out file saving, add relevant paths to r.context
 	// TODO: add extra directory layer for project/job number (git vcs?); return job number to client
 	// TODO: use s3 or something else?
-	jobDir := filepath.Join("user-upload", uUUID.String(), j.ID.String())
+	// jobDir := filepath.Join("job-upload", uUUID.String(), j.ID.String())
+	jobDir := filepath.Join("job-upload", j.ID.String())
 	if err = os.MkdirAll(jobDir, 0755); err != nil {
 		log.Printf("Error creating {user}/{job} directory %s: %v\n", jobDir, err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
@@ -149,6 +138,8 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(dataTempFile.Close)
+	// TODO: need to ... save filepathing somehow? could save with own stuff, and include Filename in response header
+	// or token claims or something? Figure it out when I move off disk...
 	dataPath := filepath.Join(jobDir, filepath.Base(dataHeader.Filename))
 	dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -260,6 +251,15 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 	log.Printf("Auctioning job: %v\n", j.ID)
+	if _, err = db.Db.Query("INSERT INTO jobs (job_uuid, user_uuid) VALUES ($1, $2)",
+		j.ID, j.UserID); err != nil {
+		log.Printf("Error inserting job into db: %v\n", err)
+		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+		if err != nil {
+			log.Printf("Error writing to flushwriter: %v\n", err)
+		}
+		return
+	}
 	go miner.Pool.AuctionJob(&job.Job{
 		ID: j.ID,
 	})
