@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-// GetOutput streams job output to user
-func GetOutput(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Run!\n")
+// GetOutputLog streams job output to user
+func GetOutputLog(w http.ResponseWriter, r *http.Request) {
+	log.Printf("user.GetOutputLog!\n")
 
 	fw := flushwriter.New(w)
 

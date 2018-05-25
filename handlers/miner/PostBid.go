@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-// Bid accepts a job.Bid from miner and adds it to the bids table
-func Bid(w http.ResponseWriter, r *http.Request) {
+// PostBid accepts a job.Bid from miner and adds it to the bids table
+func PostBid(w http.ResponseWriter, r *http.Request) {
 	b := &job.Bid{}
 	err := json.NewDecoder(r.Body).Decode(b)
 	if err != nil {

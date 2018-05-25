@@ -30,8 +30,8 @@ func main() {
 	go func() {
 		rProxy := mux.NewRouter()
 		jobR := rProxy.PathPrefix("/job").Subrouter()
-		jobR.HandleFunc("/{jID}", job.PostOutput).Methods("POST")
-		jobR.HandleFunc("/{jID}", job.GetOutput).Methods("GET")
+		jobR.HandleFunc("/{jID}", job.PostOutputLog).Methods("POST")
+		jobR.HandleFunc("/{jID}", job.GetOutputLog).Methods("GET")
 
 		log.Fatal(http.ListenAndServe(jobProxyPort, handlers.Log(rProxy)))
 	}()
@@ -42,16 +42,16 @@ func main() {
 	userR.HandleFunc("", user.New).Methods("POST")
 	userR.HandleFunc("/login", user.Login).Methods("POST")
 	userR.HandleFunc("/job", user.JWTAuth(user.PostJob)).Methods("POST")
-	userR.HandleFunc("/job/{jID}/output", user.JWTAuth(user.JobAuth(user.GetOutput))).Methods("GET")
+	userR.HandleFunc("/job/{jID}/output/log", user.JWTAuth(user.JobAuth(user.GetOutputLog))).Methods("GET")
 
 	minerR := r.PathPrefix("/miner").Subrouter()
 	minerR.HandleFunc("", miner.New).Methods("POST")
 	minerR.HandleFunc("/login", miner.Login).Methods("POST")
 	minerR.HandleFunc("/connect", miner.JWTAuth(miner.Connect)).Methods("GET")
-	minerR.HandleFunc("/job/{jID}/bid", miner.JWTAuth(miner.Bid)).Methods("POST")
+	minerR.HandleFunc("/job/{jID}/bid", miner.JWTAuth(miner.PostBid)).Methods("POST")
 	minerR.HandleFunc("/job/{jID}/image", miner.JWTAuth(miner.JobAuth(miner.Image))).Methods("GET")
 	minerR.HandleFunc("/job/{jID}/data", miner.JWTAuth(miner.JobAuth(miner.Data))).Methods("GET")
-	minerR.HandleFunc("/job/{jID}/output", miner.JWTAuth(miner.JobAuth(miner.PostOutput))).Methods("POST")
+	minerR.HandleFunc("/job/{jID}/output/log", miner.JWTAuth(miner.JobAuth(miner.PostOutputLog))).Methods("POST")
 
 	server := http.Server{
 		Addr:    ":4430",

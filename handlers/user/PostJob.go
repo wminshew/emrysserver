@@ -6,6 +6,7 @@ import (
 	"docker.io/go-docker/api/types"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/check"
@@ -18,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // PostJob handles new jobs posted by users
@@ -30,26 +32,37 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fw := flushwriter.New(w)
-	_, err = fw.Write([]byte("Unpacking request...\n"))
-	if err != nil {
-		log.Printf("Error writing to flushwriter: %v\n", err)
-	}
-
 	ctxKey := contextKey("user_uuid")
 	uUUID, ok := r.Context().Value(ctxKey).(uuid.UUID)
 	if !ok {
 		log.Printf("user_uuid in request context corrupted.\n")
-		_, err = fw.Write([]byte("Unable to retrieve valid uuid from jwt. Please login again.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
+		http.Error(w, "Unable to retrive valid uuid from jwt. Please login again.", http.StatusBadRequest)
 		return
 	}
 	jobID := uuid.NewV4()
 	j := &job.Job{
 		ID:     jobID,
 		UserID: uUUID,
+	}
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+		"iss": "job.service",
+		"iat": time.Now().Unix(),
+		"sub": j.ID,
+	})
+
+	tString, err := t.SignedString([]byte(secret))
+	if err != nil {
+		log.Printf("Error signing token string: %v\n", err)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Set-Job-Authorization", tString)
+
+	fw := flushwriter.New(w)
+	_, err = fw.Write([]byte("Unpacking request...\n"))
+	if err != nil {
+		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 
 	// TODO: re-factor job processing; take out file saving, add relevant paths to r.context
