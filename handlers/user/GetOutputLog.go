@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/wminshew/check"
+	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/flushwriter"
 	"io"
 	"log"

@@ -2,7 +2,7 @@ package miner
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/wminshew/check"
+	"github.com/wminshew/emrys/pkg/check"
 	"io"
 	"log"
 	"net/http"

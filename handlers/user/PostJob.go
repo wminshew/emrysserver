@@ -9,7 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/check"
+	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers/miner"

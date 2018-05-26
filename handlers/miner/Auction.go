@@ -2,7 +2,7 @@ package miner
 
 import (
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/check"
+	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/db"
 	"log"
 	"math"
