@@ -31,9 +31,5 @@ func GetOutputLog(w http.ResponseWriter, r *http.Request) {
 	fw := flushwriter.New(w)
 	pr := outputPipes[jUUID].pr
 	_, _ = io.Copy(fw, pr)
-	err = pr.Close()
-	if err != nil {
-		log.Printf("Error closing output pipe: %v\n", err)
-	}
 	delete(outputPipes, jUUID)
 }
