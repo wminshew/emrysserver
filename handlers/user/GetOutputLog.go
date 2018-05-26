@@ -1,9 +1,9 @@
 package user
 
 import (
-	// "github.com/wminshew/emrysserver/pkg/flushwriter"
 	"github.com/gorilla/mux"
 	"github.com/wminshew/check"
+	"github.com/wminshew/emrysserver/pkg/flushwriter"
 	"io"
 	"log"
 	"net/http"
@@ -13,16 +13,8 @@ import (
 
 // GetOutputLog streams job output to user
 func GetOutputLog(w http.ResponseWriter, r *http.Request) {
-	// fw := flushwriter.New(w)
-	//
-	// _, err := fw.Write([]byte("Running image...\n"))
-	// if err != nil {
-	// 	log.Printf("Error writing to flushWriter: %v\n", err)
-	// }
-
 	vars := mux.Vars(r)
 	jID := vars["jID"]
-
 	p := path.Join("job", jID)
 	u := url.URL{
 		Scheme: "http",
@@ -36,6 +28,15 @@ func GetOutputLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _ = io.Copy(w, resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Internal error: Response header error: %v\n", resp.Status)
+		check.Err(resp.Body.Close)
+		http.Error(w, "Internal error.", http.StatusInternalServerError)
+		return
+	}
+
+	// tee := io.TeeReader(resp.Body, os.Stdout)
+	fw := flushwriter.New(w)
+	_, _ = io.Copy(fw, resp.Body)
 	check.Err(resp.Body.Close)
 }

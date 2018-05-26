@@ -39,8 +39,6 @@ func JobAuth(h http.HandlerFunc) http.HandlerFunc {
 
 		vars := mux.Vars(r)
 		jID := vars["jID"]
-		log.Printf("jID: %v\n", jID)
-		log.Printf("token: %v\n", claims.Subject)
 		if jID != claims.Subject {
 			log.Printf("URL path job ID doesn't match user request header Job-Authorization claim.\n")
 			http.Error(w, "URL path job ID doesn't match user request header Job-Authorization claim.", http.StatusUnauthorized)
