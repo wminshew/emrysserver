@@ -35,7 +35,6 @@ func GetOutputLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// tee := io.TeeReader(resp.Body, os.Stdout)
 	fw := flushwriter.New(w)
 	_, _ = io.Copy(fw, resp.Body)
 	check.Err(resp.Body.Close)

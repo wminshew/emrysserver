@@ -1,7 +1,6 @@
 package job
 
 import (
-	// "bufio"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"io"
