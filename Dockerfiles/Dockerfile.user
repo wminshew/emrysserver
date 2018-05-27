@@ -12,5 +12,5 @@ RUN virtualenv venv
 COPY --chown=user:user requirements.txt requirements.txt
 RUN venv/bin/pip install -r requirements.txt
 
-COPY --chown=user:user train.py train.py
-CMD ["venv/bin/python", "train.py"]
+COPY --chown=user:user main.py main.py
+CMD ["venv/bin/python", "main.py"]

@@ -20,16 +20,16 @@ func GetOutputLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if outputPipes[jUUID] == nil {
+	if outputLog[jUUID] == nil {
 		pr, pw := io.Pipe()
-		outputPipes[jUUID] = &pipe{
+		outputLog[jUUID] = &pipe{
 			pr: pr,
 			pw: pw,
 		}
 	}
 
 	fw := flushwriter.New(w)
-	pr := outputPipes[jUUID].pr
+	pr := outputLog[jUUID].pr
 	_, _ = io.Copy(fw, pr)
-	delete(outputPipes, jUUID)
+	delete(outputLog, jUUID)
 }

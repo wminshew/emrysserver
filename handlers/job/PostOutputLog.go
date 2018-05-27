@@ -19,15 +19,15 @@ func PostOutputLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if outputPipes[jUUID] == nil {
+	if outputLog[jUUID] == nil {
 		pr, pw := io.Pipe()
-		outputPipes[jUUID] = &pipe{
+		outputLog[jUUID] = &pipe{
 			pr: pr,
 			pw: pw,
 		}
 	}
 
-	pw := outputPipes[jUUID].pw
+	pw := outputLog[jUUID].pw
 	_, _ = io.Copy(pw, r.Body)
 	err = pw.Close()
 	if err != nil {

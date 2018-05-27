@@ -10,5 +10,8 @@ type pipe struct {
 	pw *io.PipeWriter
 }
 
-// outputPipes facilitate output transfer from miner to user via server
-var outputPipes map[uuid.UUID]*pipe = make(map[uuid.UUID]*pipe)
+// outputLog facilitate output log transfer from miner to user via server
+var outputLog map[uuid.UUID]*pipe = make(map[uuid.UUID]*pipe)
+
+// outputDir facilitate output log transfer from miner to user via server
+var outputDir map[uuid.UUID]*pipe = make(map[uuid.UUID]*pipe)

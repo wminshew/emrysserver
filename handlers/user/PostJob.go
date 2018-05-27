@@ -110,30 +110,30 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trainTempFile, trainHeader, err := r.FormFile("train")
+	mainTempFile, mainHeader, err := r.FormFile("main")
 	if err != nil {
-		log.Printf("Error reading train form file: %v\n", err)
+		log.Printf("Error reading main form file: %v\n", err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
 		if err != nil {
 			log.Printf("Error writing to flushwriter: %v\n", err)
 		}
 		return
 	}
-	defer check.Err(trainTempFile.Close)
-	trainPath := filepath.Join(jobDir, filepath.Base(trainHeader.Filename))
-	trainFile, err := os.OpenFile(trainPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	defer check.Err(mainTempFile.Close)
+	mainPath := filepath.Join(jobDir, filepath.Base(mainHeader.Filename))
+	mainFile, err := os.OpenFile(mainPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
-		log.Printf("Error opening train file: %v\n", err)
+		log.Printf("Error opening main file: %v\n", err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
 		if err != nil {
 			log.Printf("Error writing to flushwriter: %v\n", err)
 		}
 		return
 	}
-	defer check.Err(trainFile.Close)
-	_, err = io.Copy(trainFile, trainTempFile)
+	defer check.Err(mainFile.Close)
+	_, err = io.Copy(mainFile, mainTempFile)
 	if err != nil {
-		log.Printf("Error copying train file to disk: %v\n", err)
+		log.Printf("Error copying main file to disk: %v\n", err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
 		if err != nil {
 			log.Printf("Error writing to flushwriter: %v\n", err)

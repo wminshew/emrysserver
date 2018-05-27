@@ -15,7 +15,7 @@ import (
 func GetOutputLog(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
-	p := path.Join("job", jID)
+	p := path.Join("job", jID, "log")
 	u := url.URL{
 		Scheme: "http",
 		Host:   "localhost:8081",
