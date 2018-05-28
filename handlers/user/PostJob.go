@@ -198,7 +198,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(func() error { return os.Remove(linkedDocker) })
-	buildCtxPath := jobDir + ".tar.gz"
+
 	ctxFiles, err := filepath.Glob(filepath.Join(jobDir, "/*"))
 	if err != nil {
 		log.Printf("Error collecting docker context files: %v\n", err)
@@ -208,29 +208,24 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	err = archiver.TarGz.Make(buildCtxPath, ctxFiles)
-	if err != nil {
-		log.Printf("Error archiving docker context files: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+
+	pr, pw := io.Pipe()
+	go func() {
+		defer check.Err(pw.Close)
+		if err = archiver.TarGz.Write(pw, ctxFiles); err != nil {
+			log.Printf("Error tar-gzipping docker context files: %v\n", err)
+			_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+			if err != nil {
+				log.Printf("Error writing to flushwriter: %v\n", err)
+			}
 		}
-		return
-	}
-	defer check.Err(func() error { return os.Remove(buildCtxPath) })
-	buildCtx, err := os.Open(buildCtxPath)
-	if err != nil {
-		log.Printf("Error opening archived docker context files: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
+	}()
+
 	userHome := "/home/user"
 	requirements := rqmtsHeader.Filename
 	main := mainHeader.Filename
-	buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
+	// buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
+	buildResp, err := cli.ImageBuild(ctx, pr, types.ImageBuildOptions{
 		BuildArgs: map[string]*string{
 			"HOME":         &userHome,
 			"REQUIREMENTS": &requirements,
