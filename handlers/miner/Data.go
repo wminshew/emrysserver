@@ -15,8 +15,9 @@ func Data(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
 
-	// TODO: use claims? or something? to specify correct path...
-	dataPath := filepath.Join("job-upload", jID, "data.tar.gz")
+	jobDir := filepath.Join("job-upload", jID)
+	defer check.Err(func() error { return os.RemoveAll(jobDir) })
+	dataPath := filepath.Join(jobDir, "data.tar.gz")
 	dataFile, err := os.Open(dataPath)
 	if err != nil {
 		log.Printf("Error opening data file: %v\n", err)

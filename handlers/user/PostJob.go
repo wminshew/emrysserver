@@ -66,7 +66,6 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 
-	// jobDir := filepath.Join("job-upload", uUUID.String(), j.ID.String())
 	jobDir := filepath.Join("job-upload", j.ID.String())
 	if err = os.MkdirAll(jobDir, 0755); err != nil {
 		log.Printf("Error creating {job} directory %s: %v\n", jobDir, err)
@@ -119,7 +118,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(mainTempFile.Close)
-	mainPath := filepath.Join(jobDir, filepath.Base(mainHeader.Filename))
+	mainPath := filepath.Join(jobDir, mainHeader.Filename)
 	mainFile, err := os.OpenFile(mainPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		log.Printf("Error opening main file: %v\n", err)
@@ -150,7 +149,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(dataTempFile.Close)
-	dataPath := filepath.Join(jobDir, filepath.Base(dataHeader.Filename))
+	dataPath := filepath.Join(jobDir, dataHeader.Filename)
 	dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Printf("Error opening data file: %v\n", err)
