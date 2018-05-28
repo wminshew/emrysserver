@@ -5,8 +5,6 @@ import (
 	"context"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
-	// "encoding/json"
-	// "fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
@@ -17,6 +15,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/flushwriter"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -75,100 +74,26 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	// defer check.Err(func() error { return os.RemoveAll(jobDir) })
 
-	rqmtsTempFile, rqmtsHeader, err := r.FormFile("requirements")
-	if err != nil {
-		log.Printf("Error reading requirements form file: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
-	defer check.Err(rqmtsTempFile.Close)
-	rqmtsPath := filepath.Join(jobDir, rqmtsHeader.Filename)
-	rqmtsFile, err := os.OpenFile(rqmtsPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		log.Printf("Error opening requirements file: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
-	defer check.Err(rqmtsFile.Close)
-	_, err = io.Copy(rqmtsFile, rqmtsTempFile)
-	if err != nil {
-		log.Printf("Error copying requirements file to disk: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
+	vals := []string{"requirements", "main", "data"}
+	perms := []os.FileMode{0644, 0755, 0644}
+	headers := make(map[string]*multipart.FileHeader, len(vals))
 
-	mainTempFile, mainHeader, err := r.FormFile("main")
-	if err != nil {
-		log.Printf("Error reading main form file: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+	for i := range vals {
+		val := vals[i]
+		perm := perms[i]
+		headers[val], err = saveFormFile(r, val, jobDir, perm)
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error saving %v form file: %v\n", val, err)
+			_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+			if err != nil {
+				log.Printf("Error writing to flushwriter: %v\n", err)
+			}
+			return
 		}
-		return
 	}
-	defer check.Err(mainTempFile.Close)
-	mainPath := filepath.Join(jobDir, mainHeader.Filename)
-	mainFile, err := os.OpenFile(mainPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		log.Printf("Error opening main file: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
-	defer check.Err(mainFile.Close)
-	_, err = io.Copy(mainFile, mainTempFile)
-	if err != nil {
-		log.Printf("Error copying main file to disk: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
-
-	dataTempFile, dataHeader, err := r.FormFile("data")
-	if err != nil {
-		log.Printf("Error reading data form file: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
-	defer check.Err(dataTempFile.Close)
-	dataPath := filepath.Join(jobDir, dataHeader.Filename)
-	dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		log.Printf("Error opening data file: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
-	defer check.Err(dataFile.Close)
-	_, err = io.Copy(dataFile, dataTempFile)
-	if err != nil {
-		log.Printf("Error copying data file to disk: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
-		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
-		}
-		return
-	}
+	reqFilename := headers[vals[0]].Filename
+	mainFilename := headers[vals[1]].Filename
 
 	_, err = fw.Write([]byte("Building image...\n"))
 	if err != nil {
@@ -222,14 +147,11 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	userHome := "/home/user"
-	requirements := rqmtsHeader.Filename
-	main := mainHeader.Filename
-	// buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
 	buildResp, err := cli.ImageBuild(ctx, pr, types.ImageBuildOptions{
 		BuildArgs: map[string]*string{
 			"HOME":         &userHome,
-			"REQUIREMENTS": &requirements,
-			"MAIN":         &main,
+			"REQUIREMENTS": &reqFilename,
+			"MAIN":         &mainFilename,
 		},
 		ForceRemove: true,
 		Tags:        []string{j.ID.String()},
@@ -271,20 +193,31 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func printJSONStream(r io.Reader) {
-	// type stream struct {
-	// 	Stream string
-	// }
-	// dec := json.NewDecoder(r)
-	// for dec.More() {
-	// 	var s stream
-	// 	err := dec.Decode(&s)
-	// 	if err != nil {
-	// 		log.Printf("Error decoding json build stream: %v\n", err)
-	// 	}
-	//
-	// 	fmt.Printf("%v", s.Stream)
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		log.Printf(scanner.Text())
 	}
+}
+
+func saveFormFile(r *http.Request, value, dir string, perm os.FileMode) (*multipart.FileHeader, error) {
+	tempFile, header, err := r.FormFile(value)
+	if err != nil {
+		log.Printf("Error reading %v form file from request: %v\n", value, err)
+		return nil, err
+	}
+	defer check.Err(tempFile.Close)
+	path := filepath.Join(dir, header.Filename)
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		log.Printf("Error opening %v file: %v\n", path, err)
+		return nil, err
+	}
+	defer check.Err(file.Close)
+	_, err = io.Copy(file, tempFile)
+	if err != nil {
+		log.Printf("Error copying %v form file to disk: %v\n", value, err)
+		return nil, err
+	}
+
+	return header, nil
 }
