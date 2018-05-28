@@ -9,8 +9,11 @@ WORKDIR $HOME
 User user
 
 RUN virtualenv venv
-COPY --chown=user:user requirements.txt requirements.txt
-RUN venv/bin/pip install -r requirements.txt
+ARG REQUIREMENTS
+COPY --chown=user:user $REQUIREMENTS $REQUIREMENTS
+RUN venv/bin/pip install -r $REQUIREMENTS
 
-COPY --chown=user:user main.py main.py
-CMD ["venv/bin/python", "main.py"]
+ARG MAIN
+ENV MAIN $MAIN
+COPY --chown=user:user $MAIN $MAIN
+CMD venv/bin/python $MAIN
