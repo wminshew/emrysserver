@@ -3,6 +3,7 @@ package job
 import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrysserver/db"
 	"io"
 	"log"
 	"net/http"
@@ -33,4 +34,17 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error closing output pipe: %v\n", err)
 	}
+
+	go func() {
+		sqlStmt := `
+		UPDATE jobs
+		SET (completed_at) = (NOW())
+		WHERE job_uuid = $1
+		`
+		_, err = db.Db.Exec(sqlStmt, jID)
+		if err != nil {
+			log.Printf("Error inserting finished_at into jobs table for job %v: %v\n", jID, err)
+			return
+		}
+	}()
 }
