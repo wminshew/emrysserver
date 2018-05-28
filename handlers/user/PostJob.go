@@ -1,11 +1,12 @@
 package user
 
 import (
+	"bufio"
 	"context"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
-	"encoding/json"
-	"fmt"
+	// "encoding/json"
+	// "fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
@@ -65,21 +66,19 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 
-	// TODO: re-factor job processing; take out file saving, add relevant paths to r.context
-	// TODO: add extra directory layer for project/job number (git vcs?); return job number to client
-	// TODO: use s3 or something else?
 	// jobDir := filepath.Join("job-upload", uUUID.String(), j.ID.String())
 	jobDir := filepath.Join("job-upload", j.ID.String())
 	if err = os.MkdirAll(jobDir, 0755); err != nil {
-		log.Printf("Error creating {user}/{job} directory %s: %v\n", jobDir, err)
+		log.Printf("Error creating {job} directory %s: %v\n", jobDir, err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
 		if err != nil {
 			log.Printf("Error writing to flushwriter: %v\n", err)
 		}
 		return
 	}
+	// defer check.Err(func() error { return os.RemoveAll(jobDir) })
 
-	requirementsTempFile, requirementsHeader, err := r.FormFile("requirements")
+	rqmtsTempFile, rqmtsHeader, err := r.FormFile("requirements")
 	if err != nil {
 		log.Printf("Error reading requirements form file: %v\n", err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
@@ -88,9 +87,9 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	defer check.Err(requirementsTempFile.Close)
-	requirementsPath := filepath.Join(jobDir, filepath.Base(requirementsHeader.Filename))
-	requirementsFile, err := os.OpenFile(requirementsPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	defer check.Err(rqmtsTempFile.Close)
+	rqmtsPath := filepath.Join(jobDir, rqmtsHeader.Filename)
+	rqmtsFile, err := os.OpenFile(rqmtsPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Printf("Error opening requirements file: %v\n", err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
@@ -99,8 +98,8 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	defer check.Err(requirementsFile.Close)
-	_, err = io.Copy(requirementsFile, requirementsTempFile)
+	defer check.Err(rqmtsFile.Close)
+	_, err = io.Copy(rqmtsFile, rqmtsTempFile)
 	if err != nil {
 		log.Printf("Error copying requirements file to disk: %v\n", err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
@@ -151,8 +150,6 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer check.Err(dataTempFile.Close)
-	// TODO: need to ... save filepathing somehow? could save with own stuff, and include Filename in response header
-	// or token claims or something? Figure it out when I move off disk...
 	dataPath := filepath.Join(jobDir, filepath.Base(dataHeader.Filename))
 	dataFile, err := os.OpenFile(dataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -232,15 +229,16 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userHome := "/home/user"
-	// TODO: ImageBuild isn't throwing an error if it can't find its FROM img?
+	requirements := rqmtsHeader.Filename
+	main := mainHeader.Filename
 	buildResp, err := cli.ImageBuild(ctx, buildCtx, types.ImageBuildOptions{
 		BuildArgs: map[string]*string{
-			"HOME": &userHome,
+			"HOME":         &userHome,
+			"REQUIREMENTS": &requirements,
+			"MAIN":         &main,
 		},
 		ForceRemove: true,
-		// TODO: tags/labels for emrys/project/job/user?
-		Tags: []string{j.ID.String()},
-		// Labels: map[string]string{}
+		Tags:        []string{j.ID.String()},
 	})
 	if err != nil {
 		log.Printf("Error building image: %v\n", err)
@@ -279,17 +277,20 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func printJSONStream(r io.Reader) {
-	type stream struct {
-		stream string
-	}
-	dec := json.NewDecoder(r)
-	for dec.More() {
-		var s stream
-		err := dec.Decode(&s)
-		if err != nil {
-			log.Printf("Error decoding json build stream: %v\n", err)
-		}
-
-		fmt.Printf("%v", s.stream)
+	// type stream struct {
+	// 	Stream string
+	// }
+	// dec := json.NewDecoder(r)
+	// for dec.More() {
+	// 	var s stream
+	// 	err := dec.Decode(&s)
+	// 	if err != nil {
+	// 		log.Printf("Error decoding json build stream: %v\n", err)
+	// 	}
+	//
+	// 	fmt.Printf("%v", s.Stream)
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		log.Printf(scanner.Text())
 	}
 }
