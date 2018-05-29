@@ -38,7 +38,7 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		sqlStmt := `
 		UPDATE jobs
-		SET (completed_at) = (NOW())
+		SET (completed_at, active) = (NOW(), false)
 		WHERE job_uuid = $1
 		`
 		_, err = db.Db.Exec(sqlStmt, jID)
