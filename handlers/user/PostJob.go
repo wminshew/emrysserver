@@ -178,8 +178,11 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 	log.Printf("Auctioning job: %v\n", j.ID)
-	if _, err = db.Db.Query("INSERT INTO jobs (job_uuid, user_uuid, active) VALUES ($1, $2, $3)",
-		j.ID, j.UserID, true); err != nil {
+	sqlStmt := `
+	INSERT INTO jobs (job_uuid, user_uuid, active)
+	VALUES ($1, $2, $3)
+	`
+	if _, err = db.Db.Exec(sqlStmt, j.ID, j.UserID, true); err != nil {
 		log.Printf("Error inserting job into db: %v\n", err)
 		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
 		if err != nil {

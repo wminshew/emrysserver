@@ -100,6 +100,14 @@ func (a *auction) run(p *pool) {
 		log.Printf("Error inserting winning bid info into jobs table: %v\n", err)
 		return
 	}
+	sqlStmt = `
+	INSERT INTO payments (job_uuid, user_paid, miner_paid)
+	VALUES ($1, $2, $3)
+	`
+	if _, err = db.Db.Exec(sqlStmt, a.jobID, false, false); err != nil {
+		log.Printf("Error inserting initial payment into db: %v\n", err)
+		return
+	}
 }
 
 func (a *auction) winner() uuid.UUID {
