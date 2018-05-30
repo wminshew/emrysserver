@@ -1,12 +1,6 @@
-# TODO: minimize size... alpine? multi-stage with scratch?
-# TODO: make CUDA version dynamic
-# TODO: should tensorflow/DL package be installed in image or venv?
 FROM nvidia/cuda:9.0-base-ubuntu16.04
 LABEL maintainer="William Minshew <w@emrys.io>"
 
-# TODO: make python version dynamic; at least 2.x vs 3.x
-# should be handled by base image or multi-build...
-# TODO: make CUDNN version dynamic
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \

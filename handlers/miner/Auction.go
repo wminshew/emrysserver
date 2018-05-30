@@ -27,7 +27,6 @@ func newAuction(jID uuid.UUID) *auction {
 	}
 }
 
-// TODO: auction running should be a separate microservice
 func (a *auction) run(p *pool) {
 	p.auctions[a.jobID] = a
 	defer func() {

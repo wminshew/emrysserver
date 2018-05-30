@@ -184,7 +184,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	`
 	if _, err = db.Db.Exec(sqlStmt, j.ID, j.UserID, true); err != nil {
 		log.Printf("Error inserting job into db: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+		_, err = fw.Write([]byte("Internal error. Please try again, and if the problem continues contact support.\n"))
 		if err != nil {
 			log.Printf("Error writing to flushwriter: %v\n", err)
 		}
