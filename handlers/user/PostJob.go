@@ -1,10 +1,11 @@
 package user
 
 import (
-	"bufio"
 	"context"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
+	"encoding/json"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
@@ -154,6 +155,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 			"MAIN":         &mainFilename,
 		},
 		ForceRemove: true,
+		PullParent:  true,
 		Tags:        []string{j.ID.String()},
 	})
 	if err != nil {
@@ -166,7 +168,15 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	}
 	defer check.Err(buildResp.Body.Close)
 
-	printJSONStream(buildResp.Body)
+	err = printJSONStream(buildResp.Body)
+	if err != nil {
+		log.Printf("Error building image: %v\n", err)
+		_, err = fw.Write([]byte("Error building docker image! Please try again, and if the problem continues contact support.\n"))
+		if err != nil {
+			log.Printf("Error writing to flushwriter: %v\n", err)
+		}
+		return
+	}
 
 	_, err = fw.Write([]byte("Image built!\n"))
 	if err != nil {
@@ -195,11 +205,26 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func printJSONStream(r io.Reader) {
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		log.Printf(scanner.Text())
+func printJSONStream(r io.Reader) error {
+	var stream map[string]interface{}
+
+	dec := json.NewDecoder(r)
+	for dec.More() {
+		if err := dec.Decode(&stream); err != nil {
+			return fmt.Errorf("error decoding json stream: %v", err)
+		}
+		for k, v := range stream {
+			if k == "stream" {
+				log.Printf("%v", v)
+			} else {
+				log.Printf("%v: %v\n", k, v)
+			}
+		}
+		if err, ok := stream["error"]; ok {
+			return fmt.Errorf("%v", err)
+		}
 	}
+	return nil
 }
 
 func saveFormFile(r *http.Request, value, dir string, perm os.FileMode) (*multipart.FileHeader, error) {
