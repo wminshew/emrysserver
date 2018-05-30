@@ -28,9 +28,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	storedC := &creds.User{}
 	u := uuid.UUID{}
-	// errors from QueryRow are defered until Scan
-	result := db.Db.QueryRow("SELECT user_email, password, user_uuid FROM users WHERE user_email=$1", c.Email)
-	err = result.Scan(&storedC.Email, &storedC.Password, &u)
+	sqlStmt := `
+	SELECT user_email, password, user_uuid
+	FROM users
+	WHERE user_email=$1
+	`
+	err = db.Db.QueryRow(sqlStmt, c.Email).Scan(&storedC.Email, &storedC.Password, &u)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("Unauthorized user: %s\n", c.Email)
