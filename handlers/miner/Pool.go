@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrys/pkg/job"
+	comm "github.com/wminshew/emrys/pkg/job"
+	"github.com/wminshew/emrysserver/handlers/job"
 	"log"
 )
 
-// Pool manages the connections to non-working miners
+// Pool manages connections to inactive miners; broadcasts new job auctions
 var Pool *pool
 
-// Pool maintains the set of active and available miners and
-// broadcasts jobs to the miners
 type pool struct {
 	// registered miners
 	miners map[*miner]bool
@@ -28,9 +27,6 @@ type pool struct {
 
 	// outbound messages to miners
 	messages chan []byte
-
-	// job auctions
-	auctions map[uuid.UUID]*auction
 }
 
 // InitPool creates a new Pool of miner connections
@@ -41,7 +37,6 @@ func InitPool() {
 		register:   make(chan *miner),
 		unregister: make(chan *miner),
 		messages:   make(chan []byte),
-		auctions:   make(map[uuid.UUID]*auction),
 	}
 }
 
@@ -72,11 +67,10 @@ func RunPool() {
 	}
 }
 
-func (p *pool) AuctionJob(j *job.Job) {
-	a := newAuction(j.ID)
-	go a.run(p)
+func (p *pool) AuctionJob(j *comm.Job) {
+	go job.NewAuction(j.ID)
 
-	m := job.Message{
+	m := comm.Message{
 		Message: "New job posted!",
 		Job:     j,
 	}

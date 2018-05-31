@@ -3,6 +3,7 @@ package miner
 import (
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrys/pkg/check"
+	"github.com/wminshew/emrysserver/db"
 	"io"
 	"log"
 	"net/http"
@@ -31,4 +32,17 @@ func Data(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error copying data dir to response writer: %v\n", err)
 		return
 	}
+
+	go func() {
+		sqlStmt := `
+		UPDATE statuses
+		SET (data_downloaded) = ($1)
+		WHERE job_uuid = $2
+		`
+		_, err = db.Db.Exec(sqlStmt, true, jID)
+		if err != nil {
+			log.Printf("Error updating job status (data_downloaded): %v\n", err)
+			return
+		}
+	}()
 }

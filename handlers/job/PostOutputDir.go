@@ -43,7 +43,17 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) {
 		`
 		_, err = db.Db.Exec(sqlStmt, jID)
 		if err != nil {
-			log.Printf("Error inserting finished_at into jobs table for job %v: %v\n", jID, err)
+			log.Printf("Error updating job (completed_at) for job %v: %v\n", jID, err)
+			return
+		}
+		sqlStmt = `
+		UPDATE statuses
+		SET (output_dir_posted) = ($1)
+		WHERE job_uuid = $2
+		`
+		_, err = db.Db.Exec(sqlStmt, true, jID)
+		if err != nil {
+			log.Printf("Error updating job status (output_dir_posted): %v\n", err)
 			return
 		}
 	}()

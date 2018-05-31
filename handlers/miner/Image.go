@@ -6,6 +6,7 @@ import (
 	"docker.io/go-docker"
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrys/pkg/check"
+	"github.com/wminshew/emrysserver/db"
 	"io"
 	"log"
 	"net/http"
@@ -34,4 +35,17 @@ func Image(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error copying img to zlib response writer: %v\n", err)
 		return
 	}
+
+	go func() {
+		sqlStmt := `
+		UPDATE statuses
+		SET (image_downloaded) = ($1)
+		WHERE job_uuid = $2
+		`
+		_, err = db.Db.Exec(sqlStmt, true, jID)
+		if err != nil {
+			log.Printf("Error updating job status (image_downloaded): %v\n", err)
+			return
+		}
+	}()
 }

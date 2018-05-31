@@ -1,11 +1,10 @@
 package miner
 
 import (
-	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
-	"github.com/satori/go.uuid"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
@@ -40,16 +39,25 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		u, err := uuid.FromString(claims.Subject)
-		if err != nil {
-			log.Printf("Unable to retrieve valid uuid from jwt\n")
-			http.Error(w, "Unable to retrieve valid uuid from jwt", http.StatusInternalServerError)
+		vars := mux.Vars(r)
+		mID := vars["mID"]
+		if mID != claims.Subject {
+			log.Printf("URL path miner ID doesn't match miner request header Authorization claim.\n")
+			http.Error(w, "URL path miner ID doesn't match miner request header Authorization claim.", http.StatusUnauthorized)
 			return
 		}
-		ctx := r.Context()
-		ctxKey := contextKey("miner_uuid")
-		ctx = context.WithValue(ctx, ctxKey, u)
-		r = r.WithContext(ctx)
+
+		// u, err := uuid.FromString(claims.Subject)
+		// if err != nil {
+		// 	log.Printf("Unable to retrieve valid uuid from jwt\n")
+		// 	http.Error(w, "Unable to retrieve valid uuid from jwt", http.StatusInternalServerError)
+		// 	return
+		// }
+		// ctx := r.Context()
+		// ctxKey := contextKey("miner_uuid")
+		// ctx = context.WithValue(ctx, ctxKey, u)
+		// r = r.WithContext(ctx)
+
 		h(w, r)
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/check"
@@ -33,19 +34,59 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctxKey := contextKey("user_uuid")
-	uUUID, ok := r.Context().Value(ctxKey).(uuid.UUID)
-	if !ok {
-		log.Printf("user_uuid in request context corrupted.\n")
-		http.Error(w, "Unable to retrive valid uuid from jwt. Please login again.", http.StatusBadRequest)
+	vars := mux.Vars(r)
+	uID := vars["uID"]
+	uUUID, err := uuid.FromString(uID)
+	if err != nil {
+		log.Printf("Error parsing user ID: %v\n", err)
+		http.Error(w, "Error parsing user ID in path", http.StatusBadRequest)
 		return
 	}
+	// ctxKey := contextKey("user_uuid")
+	// uUUID, ok := r.Context().Value(ctxKey).(uuid.UUID)
+	// if !ok {
+	// 	log.Printf("user_uuid in request context corrupted.\n")
+	// 	http.Error(w, "Unable to retrive valid uuid from jwt. Please login again.", http.StatusBadRequest)
+	// 	return
+	// }
 
 	jobID := uuid.NewV4()
 	j := &job.Job{
 		ID:     jobID,
 		UserID: uUUID,
 	}
+
+	sqlStmt := `
+	INSERT INTO jobs (job_uuid, user_uuid, active)
+	VALUES ($1, $2, $3)
+	`
+	if _, err = db.Db.Exec(sqlStmt, j.ID, j.UserID, true); err != nil {
+		log.Printf("Error inserting job: %v\n", err)
+		http.Error(w, "Internal error! Please try again, and if the problem continues contact support.", http.StatusInternalServerError)
+		return
+	}
+	sqlStmt = `
+	INSERT INTO payments (job_uuid, user_paid, miner_paid)
+	VALUES ($1, $2, $3)
+	`
+	if _, err = db.Db.Exec(sqlStmt, j.ID, false, false); err != nil {
+		log.Printf("Error inserting payment: %v\n", err)
+		http.Error(w, "Internal error! Please try again, and if the problem continues contact support.", http.StatusInternalServerError)
+		return
+	}
+	sqlStmt = `
+	INSERT INTO statuses (job_uuid, user_data_stored,
+	image_built, auction_completed,
+	image_downloaded, data_downloaded,
+	output_log_posted, output_dir_posted)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`
+	if _, err = db.Db.Exec(sqlStmt, j.ID, false, false, false, false, false, false, false); err != nil {
+		log.Printf("Error inserting status: %v\n", err)
+		http.Error(w, "Internal error! Please try again, and if the problem continues contact support.", http.StatusInternalServerError)
+		return
+	}
+
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 		"iss": "job.service",
@@ -95,6 +136,20 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	}
 	reqFilename := headers[vals[0]].Filename
 	mainFilename := headers[vals[1]].Filename
+
+	sqlStmt = `
+	UPDATE statuses
+	SET (user_data_stored) = ($1)
+	WHERE job_uuid = $2
+	`
+	if _, err = db.Db.Exec(sqlStmt, true, j.ID); err != nil {
+		log.Printf("Error updating status (user_data_stored) in db: %v\n", err)
+		_, err = fw.Write([]byte("Internal error. Please try again, and if the problem continues contact support.\n"))
+		if err != nil {
+			log.Printf("Error writing to flushwriter: %v\n", err)
+		}
+		return
+	}
 
 	_, err = fw.Write([]byte("Building image...\n"))
 	if err != nil {
@@ -155,8 +210,8 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 			"MAIN":         &mainFilename,
 		},
 		ForceRemove: true,
-		PullParent:  true,
-		Tags:        []string{j.ID.String()},
+		// PullParent:  true,
+		Tags: []string{j.ID.String()},
 	})
 	if err != nil {
 		log.Printf("Error building image: %v\n", err)
@@ -183,23 +238,25 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to flushwriter: %v\n", err)
 	}
 
-	_, err = fw.Write([]byte("Beginning miner auction for job...\n"))
-	if err != nil {
-		log.Printf("Error writing to flushwriter: %v\n", err)
-	}
-	log.Printf("Auctioning job: %v\n", j.ID)
-	sqlStmt := `
-	INSERT INTO jobs (job_uuid, user_uuid, active)
-	VALUES ($1, $2, $3)
+	sqlStmt = `
+	UPDATE statuses
+	SET (image_built) = ($1)
+	WHERE job_uuid = $2
 	`
-	if _, err = db.Db.Exec(sqlStmt, j.ID, j.UserID, true); err != nil {
-		log.Printf("Error inserting job into db: %v\n", err)
+	if _, err = db.Db.Exec(sqlStmt, true, j.ID); err != nil {
+		log.Printf("Error updating status (image_built) in db: %v\n", err)
 		_, err = fw.Write([]byte("Internal error. Please try again, and if the problem continues contact support.\n"))
 		if err != nil {
 			log.Printf("Error writing to flushwriter: %v\n", err)
 		}
 		return
 	}
+
+	_, err = fw.Write([]byte("Beginning miner auction for job...\n"))
+	if err != nil {
+		log.Printf("Error writing to flushwriter: %v\n", err)
+	}
+	log.Printf("Auctioning job: %v\n", j.ID)
 	go miner.Pool.AuctionJob(&job.Job{
 		ID: j.ID,
 	})
