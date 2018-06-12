@@ -65,7 +65,6 @@ func PostBid(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Bid: %+v\n", b)
 
 	if b.Late {
-		log.Printf("Late bid: %v\n", b.ID)
 		_, err = w.Write([]byte("Your bid was late.\n"))
 		if err != nil {
 			log.Printf("Error writing response: %v\n", err)
