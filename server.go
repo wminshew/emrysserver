@@ -31,6 +31,7 @@ func main() {
 		rProxy := mux.NewRouter()
 		jobR := rProxy.PathPrefix("/job").Subrouter()
 		jobR.HandleFunc("/{jID}/bid", job.PostBid).Methods("POST")
+		jobR.HandleFunc("/{jID}/auction/success", job.GetAuctionSuccess).Methods("GET")
 		jobR.HandleFunc("/{jID}/log", job.PostOutputLog).Methods("POST")
 		jobR.HandleFunc("/{jID}/dir", job.PostOutputDir).Methods("POST")
 		jobR.HandleFunc("/{jID}/log", job.GetOutputLog).Methods("GET")

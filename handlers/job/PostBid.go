@@ -2,6 +2,7 @@ package job
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
@@ -75,7 +76,8 @@ func PostBid(w http.ResponseWriter, r *http.Request) {
 
 	winbid := a.winBid()
 	if !uuid.Equal(winbid, b.ID) {
-		_, err = w.Write([]byte("You did not win the job auction.\n"))
+		bidNotSelected := fmt.Sprintf("Your bid for job %v was not selected.\n", b.JobID)
+		_, err = w.Write([]byte(bidNotSelected))
 		if err != nil {
 			log.Printf("Error writing bid response: %v\n", err)
 		}

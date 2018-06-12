@@ -5,7 +5,6 @@ import (
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
 	"encoding/json"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
@@ -13,13 +12,14 @@ import (
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
-	auction "github.com/wminshew/emrysserver/handlers/job"
 	"github.com/wminshew/emrysserver/handlers/miner"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 )
@@ -100,6 +100,17 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to http response json encoder: %v\n", err)
 		return
 	}
+	f, ok := w.(http.Flusher)
+	if !ok {
+		log.Printf("Error flushing response writer\n")
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
+		if err != nil {
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
+		}
+		return
+	}
+	f.Flush()
 
 	jobDir := filepath.Join("job-upload", j.ID.String())
 	if err = os.MkdirAll(jobDir, 0755); err != nil {
@@ -153,6 +164,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to http response json encoder: %v\n", err)
 		return
 	}
+	f.Flush()
 
 	ctx := context.Background()
 	cli, err := docker.NewEnvClient()
@@ -242,6 +254,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to http response json encoder: %v\n", err)
 		return
 	}
+	f.Flush()
 
 	sqlStmt = `
 	UPDATE statuses
@@ -263,31 +276,98 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing to http response json encoder: %v\n", err)
 		return
 	}
+	f.Flush()
 	log.Printf("Auctioning job: %v\n", j.ID)
 	go miner.Pool.AuctionJob(&job.Job{
 		ID: j.ID,
 	})
 
-	time.Sleep(auction.Duration + 2*auction.Buffer)
-
-	var success bool
-	sqlStmt = `
-	SELECT auction_completed
-	FROM statuses
-	WHERE job_uuid = $1
-	`
-	err = db.Db.QueryRow(sqlStmt, j.ID).Scan(&success)
+	p := path.Join("job", j.ID.String(), "auction", "success")
+	u := url.URL{
+		Scheme: "http",
+		Host:   "localhost:8081",
+		Path:   p,
+	}
+	resp, err := http.Get(u.String())
 	if err != nil {
-		log.Printf("Error querying job auction status: %v\n", err)
-		err = e.Encode(map[string]string{"error": fmt.Sprintf("Error in job auction: %v\n", err)})
+		log.Printf("Error GET %v: %v\n", u.String(), err)
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
 			return
 		}
 		return
 	}
-	if !success {
-		err = e.Encode(map[string]string{"error": fmt.Sprintf("No bids received in auction\n")})
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Internal error: Response header error: %v\n", resp.Status)
+		check.Err(resp.Body.Close)
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
+		if err != nil {
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
+		}
+		return
+	}
+
+	var dec map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&dec)
+	if err != nil {
+		log.Printf("Error decoding response json %v: %v\n", u.String(), err)
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
+		if err != nil {
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
+		}
+		return
+	}
+
+	success, ok := dec["success"]
+	if !ok {
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
+		if err != nil {
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
+		}
+	}
+
+	successBool, ok := success.(bool)
+	if !ok {
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
+		if err != nil {
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
+		}
+		return
+	}
+
+	if successBool {
+		err = e.Encode(map[string]string{"stream": "Auction success!\n"})
+		if err != nil {
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
+		}
+		f.Flush()
+	} else {
+		errDetail, ok := dec["error"]
+		if !ok {
+			err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
+			if err != nil {
+				log.Printf("Error writing to http response json encoder: %v\n", err)
+				return
+			}
+		}
+
+		errDetailString, ok := errDetail.(string)
+		if !ok {
+			err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
+			if err != nil {
+				log.Printf("Error writing to http response json encoder: %v\n", err)
+				return
+			}
+		}
+
+		err = e.Encode(map[string]string{"error": errDetailString})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
 			return

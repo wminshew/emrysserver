@@ -29,11 +29,9 @@ type winner struct {
 }
 
 const (
-	// Buffer after setting bids to late to make sure all in-process bids are added to db
-	Buffer = 500 * time.Millisecond
-	// Duration of auction
-	Duration    = 5 * time.Second
-	deleteAfter = 2 * (Duration + Buffer)
+	buffer      = 500 * time.Millisecond
+	duration    = 5 * time.Second
+	deleteAfter = 2 * (duration + buffer)
 )
 
 // NewAuction initializes and runs a new auction
@@ -56,11 +54,11 @@ func (a *auction) run() {
 		delete(auctions, a.jobID)
 	}()
 
-	time.Sleep(Duration)
+	time.Sleep(duration)
 	a.late.mux.Lock()
 	a.late.late = true
 	a.late.mux.Unlock()
-	time.Sleep(Buffer)
+	time.Sleep(buffer)
 
 	sqlStmt := `
 	SELECT b1.bid_uuid, b1.min_rate
