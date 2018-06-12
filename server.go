@@ -44,6 +44,7 @@ func main() {
 
 	userR := r.PathPrefix("/user").Subrouter()
 	userR.HandleFunc("", user.New).Methods("POST")
+	userR.HandleFunc("/version", user.GetVersion).Methods("GET")
 	userR.HandleFunc("/login", user.Login).Methods("POST")
 	userR.HandleFunc("/{uID}/job", user.JWTAuth(user.PostJob)).Methods("POST")
 	userR.HandleFunc("/{uID}/job/{jID}/output/log", user.JWTAuth(user.JobAuth(user.GetOutputLog))).Methods("GET")
@@ -51,6 +52,7 @@ func main() {
 
 	minerR := r.PathPrefix("/miner").Subrouter()
 	minerR.HandleFunc("", miner.New).Methods("POST")
+	minerR.HandleFunc("/version", miner.GetVersion).Methods("GET")
 	minerR.HandleFunc("/login", miner.Login).Methods("POST")
 	minerR.HandleFunc("/{mID}/connect", miner.JWTAuth(miner.Connect)).Methods("GET")
 	minerR.HandleFunc("/{mID}/job/{jID}/bid", miner.JWTAuth(miner.PostBid)).Methods("POST")
