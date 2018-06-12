@@ -4,8 +4,6 @@ import (
 	"context"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
-	"encoding/json"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
@@ -14,7 +12,8 @@ import (
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers/miner"
-	"github.com/wminshew/emrysserver/pkg/flushwriter"
+	// "github.com/wminshew/emrysserver/pkg/flushwriter"
+	"encoding/json"
 	"io"
 	"log"
 	"mime/multipart"
@@ -42,13 +41,6 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing user ID in path", http.StatusBadRequest)
 		return
 	}
-	// ctxKey := contextKey("user_uuid")
-	// uUUID, ok := r.Context().Value(ctxKey).(uuid.UUID)
-	// if !ok {
-	// 	log.Printf("user_uuid in request context corrupted.\n")
-	// 	http.Error(w, "Unable to retrive valid uuid from jwt. Please login again.", http.StatusBadRequest)
-	// 	return
-	// }
 
 	jobID := uuid.NewV4()
 	j := &job.Job{
@@ -101,18 +93,20 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Set-Job-Authorization", tString)
 
-	fw := flushwriter.New(w)
-	_, err = fw.Write([]byte("Unpacking request...\n"))
+	e := json.NewEncoder(w)
+	err = e.Encode(map[string]string{"stream": "Unpacking request...\n"})
 	if err != nil {
-		log.Printf("Error writing to flushwriter: %v\n", err)
+		log.Printf("Error writing to http response json encoder: %v\n", err)
+		return
 	}
 
 	jobDir := filepath.Join("job-upload", j.ID.String())
 	if err = os.MkdirAll(jobDir, 0755); err != nil {
 		log.Printf("Error creating {job} directory %s: %v\n", jobDir, err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
 		}
 		return
 	}
@@ -127,9 +121,10 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		headers[val], err = saveFormFile(r, val, jobDir, perm)
 		if err != nil {
 			log.Printf("Error saving %v form file: %v\n", val, err)
-			_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+			err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 			if err != nil {
-				log.Printf("Error writing to flushwriter: %v\n", err)
+				log.Printf("Error writing to http response json encoder: %v\n", err)
+				return
 			}
 			return
 		}
@@ -144,25 +139,28 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	`
 	if _, err = db.Db.Exec(sqlStmt, true, j.ID); err != nil {
 		log.Printf("Error updating status (user_data_stored) in db: %v\n", err)
-		_, err = fw.Write([]byte("Internal error. Please try again, and if the problem continues contact support.\n"))
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
 		}
 		return
 	}
 
-	_, err = fw.Write([]byte("Building image...\n"))
+	err = e.Encode(map[string]string{"stream": "Building image...\n"})
 	if err != nil {
-		log.Printf("Error writing to flushwriter: %v\n", err)
+		log.Printf("Error writing to http response json encoder: %v\n", err)
+		return
 	}
 
 	ctx := context.Background()
 	cli, err := docker.NewEnvClient()
 	if err != nil {
 		log.Printf("Error creating new docker client: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
 		}
 		return
 	}
@@ -172,9 +170,10 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	err = os.Link(userDockerfile, linkedDocker)
 	if err != nil {
 		log.Printf("Error linking dockerfile into user directory: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
 		}
 		return
 	}
@@ -183,9 +182,10 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	ctxFiles, err := filepath.Glob(filepath.Join(jobDir, "/*"))
 	if err != nil {
 		log.Printf("Error collecting docker context files: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
 		}
 		return
 	}
@@ -195,9 +195,10 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		defer check.Err(pw.Close)
 		if err = archiver.TarGz.Write(pw, ctxFiles); err != nil {
 			log.Printf("Error tar-gzipping docker context files: %v\n", err)
-			_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+			err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 			if err != nil {
-				log.Printf("Error writing to flushwriter: %v\n", err)
+				log.Printf("Error writing to http response json encoder: %v\n", err)
+				return
 			}
 		}
 	}()
@@ -215,27 +216,30 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("Error building image: %v\n", err)
-		_, err = fw.Write([]byte("Internal error! Please try again, and if the problem continues contact support.\n"))
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
 		}
 		return
 	}
 	defer check.Err(buildResp.Body.Close)
 
-	err = printJSONStream(buildResp.Body)
+	err = job.ReadJSON(buildResp.Body)
 	if err != nil {
 		log.Printf("Error building image: %v\n", err)
-		_, err = fw.Write([]byte("Error building docker image! Please try again, and if the problem continues contact support.\n"))
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
 		}
 		return
 	}
 
-	_, err = fw.Write([]byte("Image built!\n"))
+	err = e.Encode(map[string]string{"stream": "Image built!\n"})
 	if err != nil {
-		log.Printf("Error writing to flushwriter: %v\n", err)
+		log.Printf("Error writing to http response json encoder: %v\n", err)
+		return
 	}
 
 	sqlStmt = `
@@ -245,43 +249,23 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	`
 	if _, err = db.Db.Exec(sqlStmt, true, j.ID); err != nil {
 		log.Printf("Error updating status (image_built) in db: %v\n", err)
-		_, err = fw.Write([]byte("Internal error. Please try again, and if the problem continues contact support.\n"))
+		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
-			log.Printf("Error writing to flushwriter: %v\n", err)
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
 		}
 		return
 	}
 
-	_, err = fw.Write([]byte("Beginning miner auction for job...\n"))
+	err = e.Encode(map[string]string{"stream": "Beginning miner auction for job...\n"})
 	if err != nil {
-		log.Printf("Error writing to flushwriter: %v\n", err)
+		log.Printf("Error writing to http response json encoder: %v\n", err)
+		return
 	}
 	log.Printf("Auctioning job: %v\n", j.ID)
 	go miner.Pool.AuctionJob(&job.Job{
 		ID: j.ID,
 	})
-}
-
-func printJSONStream(r io.Reader) error {
-	var stream map[string]interface{}
-
-	dec := json.NewDecoder(r)
-	for dec.More() {
-		if err := dec.Decode(&stream); err != nil {
-			return fmt.Errorf("error decoding json stream: %v", err)
-		}
-		for k, v := range stream {
-			if k == "stream" {
-				log.Printf("%v", v)
-			} else {
-				log.Printf("%v: %v\n", k, v)
-			}
-		}
-		if err, ok := stream["error"]; ok {
-			return fmt.Errorf("%v", err)
-		}
-	}
-	return nil
 }
 
 func saveFormFile(r *http.Request, value, dir string, perm os.FileMode) (*multipart.FileHeader, error) {

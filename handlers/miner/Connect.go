@@ -34,13 +34,6 @@ func Connect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing miner ID in path", http.StatusBadRequest)
 		return
 	}
-	// ctxKey := contextKey("miner_uuid")
-	// u, ok := r.Context().Value(ctxKey).(uuid.UUID)
-	// if !ok {
-	// 	log.Printf("miner_uuid in request context corrupted\n")
-	// 	http.Error(w, "Unable to retrieve valid uuid from jwt. Please login again.", http.StatusInternalServerError)
-	// 	return
-	// }
 	m := &miner{
 		ID:      u,
 		pool:    Pool,

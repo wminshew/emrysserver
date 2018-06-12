@@ -7,7 +7,6 @@ import (
 
 // FlushWriter streams responses to io.Writer instead of
 // buffering until the request is fully processed.
-//
 // source: https://github.com/bmorton/flushwriter/blob/master/flush_writer.go
 type FlushWriter struct {
 	flusher http.Flusher
