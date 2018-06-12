@@ -64,6 +64,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	`
 	if _, err = db.Db.Exec(sqlStmt, j.ID, false, false); err != nil {
 		log.Printf("Error inserting payment: %v\n", err)
+		setJobInactive(j.ID)
 		http.Error(w, "Internal error! Please try again, and if the problem continues contact support.", http.StatusInternalServerError)
 		return
 	}
@@ -76,6 +77,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	`
 	if _, err = db.Db.Exec(sqlStmt, j.ID, false, false, false, false, false, false, false); err != nil {
 		log.Printf("Error inserting status: %v\n", err)
+		setJobInactive(j.ID)
 		http.Error(w, "Internal error! Please try again, and if the problem continues contact support.", http.StatusInternalServerError)
 		return
 	}
@@ -89,6 +91,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	tString, err := t.SignedString([]byte(secret))
 	if err != nil {
 		log.Printf("Error signing token string: %v\n", err)
+		setJobInactive(j.ID)
 		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
@@ -98,11 +101,13 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	err = e.Encode(map[string]string{"stream": "Unpacking request...\n"})
 	if err != nil {
 		log.Printf("Error writing to http response json encoder: %v\n", err)
+		setJobInactive(j.ID)
 		return
 	}
 	f, ok := w.(http.Flusher)
 	if !ok {
 		log.Printf("Error flushing response writer\n")
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -115,6 +120,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	jobDir := filepath.Join("job-upload", j.ID.String())
 	if err = os.MkdirAll(jobDir, 0755); err != nil {
 		log.Printf("Error creating {job} directory %s: %v\n", jobDir, err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -133,6 +139,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		headers[val], err = saveFormFile(r, val, jobDir, perm)
 		if err != nil {
 			log.Printf("Error saving %v form file: %v\n", val, err)
+			setJobInactive(j.ID)
 			err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 			if err != nil {
 				log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -151,6 +158,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	`
 	if _, err = db.Db.Exec(sqlStmt, true, j.ID); err != nil {
 		log.Printf("Error updating status (user_data_stored) in db: %v\n", err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -162,6 +170,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	err = e.Encode(map[string]string{"stream": "Building image...\n"})
 	if err != nil {
 		log.Printf("Error writing to http response json encoder: %v\n", err)
+		setJobInactive(j.ID)
 		return
 	}
 	f.Flush()
@@ -170,6 +179,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	cli, err := docker.NewEnvClient()
 	if err != nil {
 		log.Printf("Error creating new docker client: %v\n", err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -183,6 +193,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	err = os.Link(userDockerfile, linkedDocker)
 	if err != nil {
 		log.Printf("Error linking dockerfile into user directory: %v\n", err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -195,6 +206,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	ctxFiles, err := filepath.Glob(filepath.Join(jobDir, "/*"))
 	if err != nil {
 		log.Printf("Error collecting docker context files: %v\n", err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -229,6 +241,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Printf("Error building image: %v\n", err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -241,6 +254,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	err = job.ReadJSON(buildResp.Body)
 	if err != nil {
 		log.Printf("Error building image: %v\n", err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -252,6 +266,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	err = e.Encode(map[string]string{"stream": "Image built!\n"})
 	if err != nil {
 		log.Printf("Error writing to http response json encoder: %v\n", err)
+		setJobInactive(j.ID)
 		return
 	}
 	f.Flush()
@@ -263,6 +278,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	`
 	if _, err = db.Db.Exec(sqlStmt, true, j.ID); err != nil {
 		log.Printf("Error updating status (image_built) in db: %v\n", err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -274,6 +290,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	err = e.Encode(map[string]string{"stream": "Beginning miner auction for job...\n"})
 	if err != nil {
 		log.Printf("Error writing to http response json encoder: %v\n", err)
+		setJobInactive(j.ID)
 		return
 	}
 	f.Flush()
@@ -291,6 +308,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(u.String())
 	if err != nil {
 		log.Printf("Error GET %v: %v\n", u.String(), err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -302,6 +320,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Internal error: Response header error: %v\n", resp.Status)
 		check.Err(resp.Body.Close)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -314,6 +333,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(resp.Body).Decode(&dec)
 	if err != nil {
 		log.Printf("Error decoding response json %v: %v\n", u.String(), err)
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -324,6 +344,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 
 	success, ok := dec["success"]
 	if !ok {
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -333,6 +354,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 
 	successBool, ok := success.(bool)
 	if !ok {
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -345,12 +367,14 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 		err = e.Encode(map[string]string{"stream": "Auction success!\n"})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
+			setJobInactive(j.ID)
 			return
 		}
 		f.Flush()
 	} else {
 		errDetail, ok := dec["error"]
 		if !ok {
+			setJobInactive(j.ID)
 			err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 			if err != nil {
 				log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -360,6 +384,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 
 		errDetailString, ok := errDetail.(string)
 		if !ok {
+			setJobInactive(j.ID)
 			err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
 			if err != nil {
 				log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -367,6 +392,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		setJobInactive(j.ID)
 		err = e.Encode(map[string]string{"error": errDetailString})
 		if err != nil {
 			log.Printf("Error writing to http response json encoder: %v\n", err)
@@ -396,4 +422,21 @@ func saveFormFile(r *http.Request, value, dir string, perm os.FileMode) (*multip
 	}
 
 	return header, nil
+}
+
+func setJobInactive(jUUID uuid.UUID) {
+	sqlStmt := `
+	UPDATE jobs
+	SET (active) = ($1)
+	WHERE job_uuid = $2
+	`
+	if _, err := db.Db.Exec(sqlStmt, false, jUUID); err != nil {
+		log.Printf("Error updating jobs (active) in db: %v\n", err)
+		// err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
+		// if err != nil {
+		// 	log.Printf("Error writing to http response json encoder: %v\n", err)
+		// 	return
+		// }
+		return
+	}
 }
