@@ -13,20 +13,11 @@ import (
 var Pool *pool
 
 type pool struct {
-	// registered miners
-	miners map[*miner]bool
-
-	// maps UUIDs to miners
-	miner map[uuid.UUID]*miner
-
-	// register requests from miners
-	register chan *miner
-
-	// unregister requests from miners
+	miners     map[*miner]bool
+	miner      map[uuid.UUID]*miner
+	register   chan *miner
 	unregister chan *miner
-
-	// outbound messages to miners
-	messages chan []byte
+	messages   chan []byte
 }
 
 // InitPool creates a new Pool of miner connections

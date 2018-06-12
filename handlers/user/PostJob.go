@@ -4,6 +4,8 @@ import (
 	"context"
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
+	"encoding/json"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
@@ -11,9 +13,8 @@ import (
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
+	auction "github.com/wminshew/emrysserver/handlers/job"
 	"github.com/wminshew/emrysserver/handlers/miner"
-	// "github.com/wminshew/emrysserver/pkg/flushwriter"
-	"encoding/json"
 	"io"
 	"log"
 	"mime/multipart"
@@ -266,6 +267,32 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 	go miner.Pool.AuctionJob(&job.Job{
 		ID: j.ID,
 	})
+
+	time.Sleep(auction.Duration + 2*auction.Buffer)
+
+	var success bool
+	sqlStmt = `
+	SELECT auction_completed
+	FROM statuses
+	WHERE job_uuid = $1
+	`
+	err = db.Db.QueryRow(sqlStmt, j.ID).Scan(&success)
+	if err != nil {
+		log.Printf("Error querying job auction status: %v\n", err)
+		err = e.Encode(map[string]string{"error": fmt.Sprintf("Error in job auction: %v\n", err)})
+		if err != nil {
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
+		}
+		return
+	}
+	if !success {
+		err = e.Encode(map[string]string{"error": fmt.Sprintf("No bids received in auction\n")})
+		if err != nil {
+			log.Printf("Error writing to http response json encoder: %v\n", err)
+			return
+		}
+	}
 }
 
 func saveFormFile(r *http.Request, value, dir string, perm os.FileMode) (*multipart.FileHeader, error) {
