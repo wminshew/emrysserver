@@ -11,10 +11,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
 var secret = os.Getenv("SECRET")
+
+const (
+	stdDuration = 7
+)
 
 // Login takes user credentials from the request and, if valid, returns a token
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -52,8 +57,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	days := stdDuration
+	if d, err := strconv.Atoi(c.Duration); err == nil {
+		days = d
+	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+		"exp":   time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(),
 		"iss":   "auth.service",
 		"iat":   time.Now().Unix(),
 		"email": storedC.Email,
