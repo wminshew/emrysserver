@@ -46,10 +46,9 @@ func NewAuction(jID uuid.UUID) {
 
 func (a *auction) run() {
 	a.winner.mux.Lock()
-	defer a.winner.mux.Unlock()
-
 	auctions[a.jobID] = a
 	defer func() {
+		a.winner.mux.Unlock()
 		time.Sleep(deleteAfter)
 		delete(auctions, a.jobID)
 	}()
