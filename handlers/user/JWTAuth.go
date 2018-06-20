@@ -48,17 +48,6 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// u, err := uuid.FromString(claims.Subject)
-		// if err != nil {
-		// 	log.Printf("Unable to retrieve valid uuid from jwt\n")
-		// 	http.Error(w, "Unable to retrieve valid uuid from jwt", http.StatusInternalServerError)
-		// 	return
-		// }
-		// ctx := r.Context()
-		// ctxKey := contextKey("user_uuid")
-		// ctx = context.WithValue(ctx, ctxKey, u)
-		// r = r.WithContext(ctx)
-
 		h(w, r)
 	})
 }

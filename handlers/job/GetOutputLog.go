@@ -20,6 +20,8 @@ func GetOutputLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: technically I think this is a race condition between PostOutputLog and GetOutputLog
+	// how can I make it idempotent?
 	if outputLog[jUUID] == nil {
 		pr, pw := io.Pipe()
 		outputLog[jUUID] = &pipe{
@@ -30,6 +32,8 @@ func GetOutputLog(w http.ResponseWriter, r *http.Request) {
 
 	fw := flushwriter.New(w)
 	pr := outputLog[jUUID].pr
-	_, _ = io.Copy(fw, pr)
+	if _, err = io.Copy(fw, pr); err != nil {
+		log.Printf("Error copying pipe reader to flushwriter: %v\n", err)
+	}
 	delete(outputLog, jUUID)
 }

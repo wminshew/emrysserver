@@ -14,6 +14,7 @@ import (
 func main() {
 	log.Printf("Initializing database...\n")
 	db.Init()
+	job.InitCloudStorage()
 
 	log.Printf("Initializing miner pool...\n")
 	miner.InitPool()

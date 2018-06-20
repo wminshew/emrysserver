@@ -26,7 +26,7 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 				return []byte(secret), nil
 			}, request.WithClaims(claims))
 		if err != nil {
-			log.Printf("Unable to parse miner JWT\n")
+			log.Printf("Unable to parse miner JWT: %v\n", err)
 			http.Error(w, "Unable to parse miner JWT", http.StatusInternalServerError)
 			return
 		}
@@ -46,17 +46,6 @@ func JWTAuth(h http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "URL path miner ID doesn't match miner request header Authorization claim.", http.StatusUnauthorized)
 			return
 		}
-
-		// u, err := uuid.FromString(claims.Subject)
-		// if err != nil {
-		// 	log.Printf("Unable to retrieve valid uuid from jwt\n")
-		// 	http.Error(w, "Unable to retrieve valid uuid from jwt", http.StatusInternalServerError)
-		// 	return
-		// }
-		// ctx := r.Context()
-		// ctxKey := contextKey("miner_uuid")
-		// ctx = context.WithValue(ctx, ctxKey, u)
-		// r = r.WithContext(ctx)
 
 		h(w, r)
 	})

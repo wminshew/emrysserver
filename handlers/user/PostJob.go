@@ -402,26 +402,26 @@ func PostJob(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveFormFile(r *http.Request, value, dir string, perm os.FileMode) (*multipart.FileHeader, error) {
-	tempFile, header, err := r.FormFile(value)
+	f, fh, err := r.FormFile(value)
 	if err != nil {
 		log.Printf("Error reading %v form file from request: %v\n", value, err)
 		return nil, err
 	}
-	defer check.Err(tempFile.Close)
-	path := filepath.Join(dir, header.Filename)
+	defer check.Err(f.Close)
+	path := filepath.Join(dir, fh.Filename)
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
 	if err != nil {
 		log.Printf("Error opening %v file: %v\n", path, err)
 		return nil, err
 	}
 	defer check.Err(file.Close)
-	_, err = io.Copy(file, tempFile)
+	_, err = io.Copy(file, f)
 	if err != nil {
 		log.Printf("Error copying %v form file to disk: %v\n", value, err)
 		return nil, err
 	}
 
-	return header, nil
+	return fh, nil
 }
 
 func setJobInactive(jUUID uuid.UUID) {
@@ -432,11 +432,6 @@ func setJobInactive(jUUID uuid.UUID) {
 	`
 	if _, err := db.Db.Exec(sqlStmt, false, jUUID); err != nil {
 		log.Printf("Error updating jobs (active) in db: %v\n", err)
-		// err = e.Encode(map[string]string{"error": "Internal error! Please try again, and if the problem continues contact support.\n"})
-		// if err != nil {
-		// 	log.Printf("Error writing to http response json encoder: %v\n", err)
-		// 	return
-		// }
 		return
 	}
 }

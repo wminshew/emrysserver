@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	// blank import for psql driver
 	_ "github.com/lib/pq"
 	"os"
 )
@@ -15,8 +16,10 @@ var (
 	dbName     = os.Getenv("DBNAME")
 )
 
+// Db is the database
 var Db *sql.DB
 
+// Init initializes the database
 func Init() {
 	var err error
 

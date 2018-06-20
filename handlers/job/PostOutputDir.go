@@ -1,12 +1,14 @@
 package job
 
 import (
+	"context"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/db"
 	"io"
 	"log"
 	"net/http"
+	"path"
 )
 
 // PostOutputDir receives the miner's container execution for the user
@@ -20,6 +22,8 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: technically I think this is a race condition between PostOutputDir and GetOutputDir
+	// how can I make it idempotent?
 	if outputDir[jUUID] == nil {
 		pr, pw := io.Pipe()
 		outputDir[jUUID] = &pipe{
@@ -29,9 +33,22 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pw := outputDir[jUUID].pw
-	_, _ = io.Copy(pw, r.Body)
-	err = pw.Close()
+	tee := io.TeeReader(r.Body, pw)
+
+	ctx := context.Background()
+	p := path.Join("job", jID, "output", "dir")
+	obj := outputBkt.Object(p)
+	ow := obj.NewWriter(ctx)
+
+	_, err = io.Copy(ow, tee)
 	if err != nil {
+		log.Printf("Error copying request body to cloud storage object: %v\n", err)
+	}
+
+	if err = ow.Close(); err != nil {
+		log.Printf("Error closing cloud storage object writer: %v\n", err)
+	}
+	if err = pw.Close(); err != nil {
 		log.Printf("Error closing output pipe: %v\n", err)
 	}
 

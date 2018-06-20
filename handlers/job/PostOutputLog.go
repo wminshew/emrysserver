@@ -1,12 +1,14 @@
 package job
 
 import (
+	"context"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/db"
 	"io"
 	"log"
 	"net/http"
+	"path"
 )
 
 // PostOutputLog receives the miner's container execution for the user
@@ -20,6 +22,8 @@ func PostOutputLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: technically I think this is a race condition between PostOutputLog and GetOutputLog
+	// how can I make it idempotent?
 	if outputLog[jUUID] == nil {
 		pr, pw := io.Pipe()
 		outputLog[jUUID] = &pipe{
@@ -29,9 +33,22 @@ func PostOutputLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pw := outputLog[jUUID].pw
-	_, _ = io.Copy(pw, r.Body)
-	err = pw.Close()
+	tee := io.TeeReader(r.Body, pw)
+
+	ctx := context.Background()
+	p := path.Join("job", jID, "output", "log")
+	obj := outputBkt.Object(p)
+	ow := obj.NewWriter(ctx)
+
+	_, err = io.Copy(ow, tee)
 	if err != nil {
+		log.Printf("Error copying request body to cloud storage object: %v\n", err)
+	}
+
+	if err = ow.Close(); err != nil {
+		log.Printf("Error closing cloud storage object writer: %v\n", err)
+	}
+	if err = pw.Close(); err != nil {
 		log.Printf("Error closing output pipe: %v\n", err)
 	}
 
