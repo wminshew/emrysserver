@@ -4,9 +4,9 @@ import (
 	"compress/zlib"
 	"docker.io/go-docker"
 	"github.com/gorilla/mux"
-	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/check"
 	"io"
 	"net/http"
 )
@@ -29,10 +29,10 @@ func Image(w http.ResponseWriter, r *http.Request) *app.Error {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	img, err := cli.ImageSave(ctx, []string{jID})
-	defer check.Err(img.Close)
+	defer check.Err(r, img.Close)
 
 	zw := zlib.NewWriter(w)
-	defer check.Err(zw.Close)
+	defer check.Err(r, zw.Close)
 
 	if _, err = io.Copy(zw, img); err != nil {
 		app.Sugar.Errorw("failed to copy image to zlib response writer",

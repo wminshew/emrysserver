@@ -3,9 +3,9 @@ package user
 import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/handlers/miner"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/check"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -61,11 +61,11 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		check.Err(resp.Body.Close)
+		check.Err(r, resp.Body.Close)
 		_ = setJobInactive(r, jUUID)
 		return &app.Error{Code: resp.StatusCode, Message: resp.Status}
 	}
-	check.Err(resp.Body.Close)
+	check.Err(r, resp.Body.Close)
 
 	// Message miners
 	// TODO: fix this janky mess
@@ -107,11 +107,11 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	// }
 	//
 	// if resp.StatusCode != http.StatusOK {
-	// 	check.Err(resp.Body.Close)
+	// 	check.Err(r, resp.Body.Close)
 	// 	_ = setJobInactive(r, jUUID)
 	// 	return &app.Error{Code: resp.StatusCode, Message: resp.Status}
 	// }
-	// check.Err(resp.Body.Close)
+	// check.Err(r, resp.Body.Close)
 
 	// Query auction success
 	h = "localhost:8081"
@@ -147,12 +147,12 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		defer check.Err(resp.Body.Close)
+		defer check.Err(r, resp.Body.Close)
 		_ = setJobInactive(r, jUUID)
 		b, _ := ioutil.ReadAll(resp.Body)
 		return &app.Error{Code: resp.StatusCode, Message: string(b)}
 	}
-	check.Err(resp.Body.Close)
+	check.Err(r, resp.Body.Close)
 
 	return nil
 }

@@ -2,9 +2,9 @@ package miner
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/check"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -19,7 +19,7 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 	mID := vars["mID"]
 
 	inputDir := filepath.Join("job", jID, "input")
-	defer check.Err(func() error { return os.RemoveAll(inputDir) })
+	// defer check.Err(r, func() error { return os.RemoveAll(inputDir) })
 	dataPath := filepath.Join(inputDir, "data")
 	var tee io.Reader
 	if _, err := os.Stat(dataPath); os.IsNotExist(err) {
@@ -48,7 +48,6 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		tee = io.TeeReader(or, dataFile)
-		defer check.Err(dataFile.Close)
 	} else {
 		dataFile, err := os.Open(dataPath)
 		if err != nil {
@@ -61,9 +60,9 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		defer check.Err(dataFile.Close)
 		tee = io.TeeReader(dataFile, ioutil.Discard)
 	}
+	defer check.Err(r, dataFile.Close)
 
 	if _, err := io.Copy(w, tee); err != nil {
 		app.Sugar.Errorw("failed to copy data file to response writer",

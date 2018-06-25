@@ -6,10 +6,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/check"
 	"io"
 	"net/http"
 	"os"
@@ -135,7 +135,7 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	}
 	pr, pw := io.Pipe()
 	go func() {
-		defer check.Err(pw.Close)
+		defer check.Err(r, pw.Close)
 		if err = archiver.TarGz.Write(pw, ctxFiles); err != nil {
 			app.Sugar.Errorw("failed to tar-gzip docker context",
 				"url", r.URL,
@@ -166,7 +166,7 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 		_ = setJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
-	defer check.Err(buildResp.Body.Close)
+	defer check.Err(r, buildResp.Body.Close)
 
 	err = job.ReadJSON(buildResp.Body)
 	if err != nil {

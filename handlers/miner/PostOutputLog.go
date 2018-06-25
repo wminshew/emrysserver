@@ -2,8 +2,8 @@ package miner
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/check"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -43,7 +43,7 @@ func PostOutputLog(w http.ResponseWriter, r *http.Request) *app.Error {
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
-	defer check.Err(resp.Body.Close)
+	defer check.Err(r, resp.Body.Close)
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := ioutil.ReadAll(resp.Body)

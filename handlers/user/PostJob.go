@@ -4,10 +4,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/check"
 	"io"
 	"net/http"
 	"os"
@@ -151,14 +151,14 @@ func uploadAndCacheFormFile(r *http.Request, dir, val string) error {
 	if err != nil {
 		return err
 	}
-	defer check.Err(f.Close)
+	defer check.Err(r, f.Close)
 
 	p := filepath.Join(dir, val)
 	file, err := os.Create(p)
 	if err != nil {
 		return err
 	}
-	defer check.Err(file.Close)
+	defer check.Err(r, file.Close)
 	tee := io.TeeReader(f, file)
 
 	ctx := r.Context()
