@@ -2,78 +2,90 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers"
 	"github.com/wminshew/emrysserver/handlers/job"
 	"github.com/wminshew/emrysserver/handlers/miner"
 	"github.com/wminshew/emrysserver/handlers/user"
-	"log"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"net/http"
 )
 
 func main() {
-	log.Printf("Initializing database...\n")
+	app.InitLogger()
+	defer check.Err(app.Sugar.Sync)
 	db.Init()
-	job.InitCloudStorage()
+	user.InitStorage()
+	job.InitStorage()
 
-	log.Printf("Initializing miner pool...\n")
 	miner.InitPool()
 	go miner.RunPool()
 
-	const httpRedirectPort = ":8080"
-	log.Printf("Re-directing port %s...\n", httpRedirectPort)
 	go func() {
-		log.Fatal(http.ListenAndServe(httpRedirectPort, handlers.Log(http.HandlerFunc(redirect))))
+		const httpRedirectPort = ":8080"
+		app.Sugar.Infof("Re-directing port %s...", httpRedirectPort)
+		if err := http.ListenAndServe(httpRedirectPort, handlers.Log(http.HandlerFunc(redirect))); err != nil {
+			app.Sugar.Fatalf("Re-directing server error: %v", err)
+		}
 	}()
 
-	const jobProxyPort = ":8081"
-	log.Printf("Job proxy server listening on port %s...\n", jobProxyPort)
 	go func() {
+		const jobProxyPort = ":8081"
+		app.Sugar.Infof("Job proxy server listening on port %s...", jobProxyPort)
 		rProxy := mux.NewRouter()
 		jobR := rProxy.PathPrefix("/job").Subrouter()
-		jobR.HandleFunc("/{jID}/bid", job.PostBid).Methods("POST")
-		jobR.HandleFunc("/{jID}/auction/success", job.GetAuctionSuccess).Methods("GET")
-		jobR.HandleFunc("/{jID}/log", job.PostOutputLog).Methods("POST")
-		jobR.HandleFunc("/{jID}/dir", job.PostOutputDir).Methods("POST")
-		jobR.HandleFunc("/{jID}/log", job.GetOutputLog).Methods("GET")
-		jobR.HandleFunc("/{jID}/dir", job.GetOutputDir).Methods("GET")
+		jobR.Handle("/{jID}/bid", app.Handler(job.PostBid)).Methods("POST")
+		jobR.Handle("/{jID}/auction", app.Handler(job.PostAuction)).Methods("POST")
+		jobR.Handle("/{jID}/auction/success", app.Handler(job.GetAuctionSuccess)).Methods("GET")
+		jobR.Handle("/{jID}/log", app.Handler(job.PostOutputLog)).Methods("POST")
+		jobR.Handle("/{jID}/dir", app.Handler(job.PostOutputDir)).Methods("POST")
+		jobR.Handle("/{jID}/log", app.Handler(job.GetOutputLog)).Methods("GET")
+		jobR.Handle("/{jID}/dir", app.Handler(job.GetOutputDir)).Methods("GET")
 
-		log.Fatal(http.ListenAndServe(jobProxyPort, handlers.Log(rProxy)))
+		if err := http.ListenAndServe(jobProxyPort, handlers.Log(rProxy)); err != nil {
+			app.Sugar.Fatalf("Job proxy server error: %v", err)
+		}
 	}()
 
 	r := mux.NewRouter()
 
 	userR := r.PathPrefix("/user").Subrouter()
-	userR.HandleFunc("", user.New).Methods("POST")
-	userR.HandleFunc("/version", user.GetVersion).Methods("GET")
-	userR.HandleFunc("/login", user.Login).Methods("POST")
-	userR.HandleFunc("/{uID}/job", user.JWTAuth(user.PostJob)).Methods("POST")
-	userR.HandleFunc("/{uID}/job/{jID}/output/log", user.JWTAuth(user.JobAuth(user.GetOutputLog))).Methods("GET")
-	userR.HandleFunc("/{uID}/job/{jID}/output/dir", user.JWTAuth(user.JobAuth(user.GetOutputDir))).Methods("GET")
+	userR.Handle("", app.Handler(user.New)).Methods("POST")
+	userR.Handle("/version", app.Handler(user.GetVersion)).Methods("GET")
+	userR.Handle("/login", app.Handler(user.Login)).Methods("POST")
+	userR.Handle("/{uID}/job", app.Handler(user.JWTAuth(user.PostJob))).Methods("POST")
+	userR.Handle("/{uID}/job/{jID}/image", app.Handler(user.JWTAuth(user.JobAuth(user.BuildImage)))).Methods("POST")
+	userR.Handle("/{uID}/job/{jID}/auction", app.Handler(user.JWTAuth(user.JobAuth(user.RunAuction)))).Methods("POST")
+	userR.Handle("/{uID}/job/{jID}/output/log", app.Handler(user.JWTAuth(user.JobAuth(user.GetOutputLog)))).Methods("GET")
+	userR.Handle("/{uID}/job/{jID}/output/dir", app.Handler(user.JWTAuth(user.JobAuth(user.GetOutputDir)))).Methods("GET")
 
 	minerR := r.PathPrefix("/miner").Subrouter()
-	minerR.HandleFunc("", miner.New).Methods("POST")
-	minerR.HandleFunc("/version", miner.GetVersion).Methods("GET")
-	minerR.HandleFunc("/login", miner.Login).Methods("POST")
-	minerR.HandleFunc("/{mID}/connect", miner.JWTAuth(miner.Connect)).Methods("GET")
-	minerR.HandleFunc("/{mID}/job/{jID}/bid", miner.JWTAuth(miner.PostBid)).Methods("POST")
-	minerR.HandleFunc("/{mID}/job/{jID}/image", miner.JWTAuth(miner.JobAuth(miner.Image))).Methods("GET")
-	minerR.HandleFunc("/{mID}/job/{jID}/data", miner.JWTAuth(miner.JobAuth(miner.Data))).Methods("GET")
-	minerR.HandleFunc("/{mID}/job/{jID}/output/log", miner.JWTAuth(miner.JobAuth(miner.PostOutputLog))).Methods("POST")
-	minerR.HandleFunc("/{mID}/job/{jID}/output/dir", miner.JWTAuth(miner.JobAuth(miner.PostOutputDir))).Methods("POST")
+	minerR.Handle("", app.Handler(miner.New)).Methods("POST")
+	minerR.Handle("/version", app.Handler(miner.GetVersion)).Methods("GET")
+	minerR.Handle("/login", app.Handler(miner.Login)).Methods("POST")
+	minerR.Handle("/job/{jID}/auction", app.Handler(miner.PostAuction)).Methods("POST")
+	minerR.Handle("/{mID}/connect", app.Handler(miner.JWTAuth(miner.Connect))).Methods("GET")
+	minerR.Handle("/{mID}/job/{jID}/bid", app.Handler(miner.JWTAuth(miner.PostBid))).Methods("POST")
+	minerR.Handle("/{mID}/job/{jID}/image", app.Handler(miner.JWTAuth(miner.JobAuth(miner.Image)))).Methods("GET")
+	minerR.Handle("/{mID}/job/{jID}/data", app.Handler(miner.JWTAuth(miner.JobAuth(miner.Data)))).Methods("GET")
+	minerR.Handle("/{mID}/job/{jID}/output/log", app.Handler(miner.JWTAuth(miner.JobAuth(miner.PostOutputLog)))).Methods("POST")
+	minerR.Handle("/{mID}/job/{jID}/output/dir", app.Handler(miner.JWTAuth(miner.JobAuth(miner.PostOutputDir)))).Methods("POST")
 
 	server := http.Server{
 		Addr:    ":4430",
 		Handler: handlers.Log(r),
 	}
 
-	log.Printf("Listening on port %s...\n", server.Addr)
-	go log.Fatal(server.ListenAndServeTLS("server.crt", "server.key"))
+	app.Sugar.Infof("Listening on port %s...", server.Addr)
+	if err := server.ListenAndServeTLS("server.crt", "server.key"); err != nil {
+		app.Sugar.Fatalf("Server error: %v", err)
+	}
 }
 
 func redirect(w http.ResponseWriter, r *http.Request) {
 	newURL := *r.URL
 	newURL.Scheme = "https"
-	log.Printf("Redirect to: %s", newURL.String())
+	app.Sugar.Infof("Redirect to: %s", newURL.String())
 	http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
 }

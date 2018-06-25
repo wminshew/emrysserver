@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/blang/semver"
 	"github.com/wminshew/emrys/pkg/creds"
-	"log"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"net/http"
 )
 
@@ -15,14 +15,18 @@ var latestUserVer = semver.Version{
 }
 
 // GetVersion returns the latest user version released
-func GetVersion(w http.ResponseWriter, r *http.Request) {
+func GetVersion(w http.ResponseWriter, r *http.Request) *app.Error {
 	resp := creds.VersionResp{
 		Version: latestUserVer.String(),
 	}
 	err := json.NewEncoder(w).Encode(&resp)
 	if err != nil {
-		log.Printf("Error encoding user semver: %v\n", err)
-		http.Error(w, "Internal error!", http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to encode user semver",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+
+	return nil
 }

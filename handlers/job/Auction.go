@@ -4,13 +4,13 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/db"
-	"log"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"math"
 	"sync"
 	"time"
 )
 
-var auctions map[uuid.UUID]*auction = make(map[uuid.UUID]*auction)
+var auctions = make(map[uuid.UUID]*auction)
 
 type auction struct {
 	jobID uuid.UUID
@@ -34,14 +34,13 @@ const (
 	deleteAfter = 2 * (duration + buffer)
 )
 
-// NewAuction initializes and runs a new auction
-func NewAuction(jID uuid.UUID) {
+func newAuction(jID uuid.UUID) {
 	a := &auction{
 		jobID:  jID,
 		late:   late{late: false},
 		winner: winner{},
 	}
-	a.run()
+	go a.run()
 }
 
 func (a *auction) run() {
@@ -75,7 +74,12 @@ func (a *auction) run() {
 	`
 	rows, err := db.Db.Query(sqlStmt, a.jobID)
 	if err != nil {
-		log.Printf("Error selecting bids for job %v: %v\n", a.jobID, err)
+		app.Sugar.Errorw("failed to query bids",
+			// "url", r.URL,
+			"err", err.Error(),
+			"jID", a.jobID,
+		)
+		// return &app.Error{http.StatusInternalServerError, "Internal error"}
 		return
 	}
 	defer check.Err(rows.Close)
@@ -88,7 +92,12 @@ func (a *auction) run() {
 		var bidRate float64
 		n++
 		if err = rows.Scan(&bidUUID, &bidRate); err != nil {
-			log.Printf("Error scanning bids: %v\n", err)
+			app.Sugar.Errorw("failed to scan bids",
+				// "url", r.URL,
+				"err", err.Error(),
+				"jID", a.jobID,
+			)
+			// return &app.Error{http.StatusInternalServerError, "Internal error"}
 			return
 		}
 		if bidRate < winRate {
@@ -100,42 +109,53 @@ func (a *auction) run() {
 		}
 	}
 	if err = rows.Err(); err != nil {
-		log.Printf("Error scanning bid rows for job %v: %v\n", a.jobID, err)
+		app.Sugar.Errorw("failed to scan bids",
+			// "url", r.URL,
+			"err", err.Error(),
+			"jID", a.jobID,
+		)
+		// return &app.Error{http.StatusInternalServerError, "Internal error"}
 		return
 	}
 	if n == 0 {
-		log.Printf("No bids received.\n")
+		app.Sugar.Infof("No bids received")
 		return
 	} else if n == 1 {
 		payRate = winRate
 	}
 
-	log.Printf("%d bid(s) received.\n", n)
-	log.Printf("Winning bid: %v\n", a.winner.bid)
-	log.Printf("Pay Rate: %v\n", payRate)
+	app.Sugar.Infof("%d bid(s) received", n)
+	app.Sugar.Infof("Winning bid: %v", a.winner.bid)
+	app.Sugar.Infof("Pay Rate: %v", payRate)
 
-	go func() {
-		sqlStmt := `
-		UPDATE jobs
-		SET (win_bid_uuid, pay_rate) = ($1, $2)
-		WHERE job_uuid = $3
-		`
-		_, err = db.Db.Exec(sqlStmt, a.winner.bid, payRate, a.jobID)
-		if err != nil {
-			log.Printf("Error inserting winning bid info into jobs table: %v\n", err)
-			return
-		}
-		sqlStmt = `
-		UPDATE statuses
-		SET (auction_completed) = ($1)
-		WHERE job_uuid = $2
-		`
-		_, err = db.Db.Exec(sqlStmt, true, a.jobID)
-		if err != nil {
-			log.Printf("Error updating job status (auction_completed): %v\n", err)
-			return
-		}
-	}()
+	sqlStmt = `
+	UPDATE jobs
+	SET (win_bid_uuid, pay_rate) = ($1, $2)
+	WHERE job_uuid = $3
+	`
+	if _, err = db.Db.Exec(sqlStmt, a.winner.bid, payRate, a.jobID); err != nil {
+		app.Sugar.Errorw("failed to update job",
+			// "url", r.URL,
+			"err", err.Error(),
+			"jID", a.jobID,
+		)
+		// return &app.Error{http.StatusInternalServerError, "Internal error"}
+		return
+	}
+	sqlStmt = `
+	UPDATE statuses
+	SET (auction_completed) = ($1)
+	WHERE job_uuid = $2
+	`
+	if _, err = db.Db.Exec(sqlStmt, true, a.jobID); err != nil {
+		app.Sugar.Errorw("failed to update job status",
+			// "url", r.URL,
+			"err", err.Error(),
+			"jID", a.jobID,
+		)
+		// return &app.Error{http.StatusInternalServerError, "Internal error"}
+		return
+	}
 }
 
 func (a *auction) winBid() uuid.UUID {

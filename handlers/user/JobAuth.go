@@ -5,7 +5,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gorilla/mux"
-	"log"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"net/http"
 )
 
@@ -13,8 +13,8 @@ import (
 var jobAuthorizationHeaderExtractor = &request.HeaderExtractor{"Job-Authorization"}
 
 // JobAuth authenticates miner job tokens
-func JobAuth(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func JobAuth(h app.Handler) app.Handler {
+	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		claims := &jwt.StandardClaims{}
 		token, err := request.ParseFromRequest(r, jobAuthorizationHeaderExtractor,
 			func(token *jwt.Token) (interface{}, error) {
@@ -24,27 +24,37 @@ func JobAuth(h http.HandlerFunc) http.HandlerFunc {
 				return []byte(secret), nil
 			}, request.WithClaims(claims))
 		if err != nil {
-			log.Printf("Unable to parse user job JWT.\n")
-			http.Error(w, "Unable to parse user job JWT. ", http.StatusInternalServerError)
-			return
+			app.Sugar.Errorw("failed to parse user job JWT",
+				"url", r.URL,
+				"err", err.Error(),
+			)
+			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing user job token"}
 		}
 
 		if token.Valid {
-			log.Printf("Valid user job JWT: %v\n", claims.Subject)
+			app.Sugar.Infow("valid user job jWT",
+				"url", r.URL,
+				"sub", claims.Subject,
+			)
 		} else {
-			log.Printf("Invalid or unauthorized user job JWT.\n")
-			http.Error(w, "Invalid or unauthorized user job JWT.", http.StatusUnauthorized)
-			return
+			app.Sugar.Infow("unauthorized user job JWT",
+				"url", r.URL,
+				"sub", claims.Subject,
+			)
+			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized user job JWT"}
 		}
 
 		vars := mux.Vars(r)
 		jID := vars["jID"]
 		if jID != claims.Subject {
-			log.Printf("URL path job ID doesn't match user request header Job-Authorization claim.\n")
-			http.Error(w, "URL path job ID doesn't match user request header Job-Authorization claim.", http.StatusUnauthorized)
-			return
+			app.Sugar.Infow("URL path job ID doesn't match user request header Job-Authorization claim",
+				"url", r.URL,
+				"sub", claims.Subject,
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusUnauthorized, Message: "URL path user job ID doesn't match user request header Job-Authorization claim"}
 		}
 
-		h(w, r)
-	})
+		return h(w, r)
+	}
 }

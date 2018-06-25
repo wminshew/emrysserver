@@ -7,8 +7,8 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/db"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -22,13 +22,15 @@ const (
 )
 
 // Login takes user credentials from the request and, if valid, returns a token
-func Login(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 	c := &creds.User{}
 	err := json.NewDecoder(r.Body).Decode(c)
 	if err != nil {
-		log.Printf("Error decoding json: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to decode json request body",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "Error parsing json request body"}
 	}
 
 	storedC := &creds.User{}
@@ -38,23 +40,28 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	FROM users
 	WHERE user_email=$1
 	`
-	err = db.Db.QueryRow(sqlStmt, c.Email).Scan(&storedC.Email, &storedC.Password, &u)
-	if err != nil {
+	if err = db.Db.QueryRow(sqlStmt, c.Email).Scan(&storedC.Email, &storedC.Password, &u); err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("Unauthorized user: %s\n", c.Email)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
+			app.Sugar.Infow("unauthorized user",
+				"url", r.URL,
+				"email", c.Email,
+			)
+			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized user"}
 		}
 
-		log.Printf("Database error during login: %v\n", err)
-		http.Error(w, "Error during login.", http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to query database",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(storedC.Password), []byte(c.Password)); err != nil {
-		log.Printf("Unauthorized user: %s\n", c.Email)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+		app.Sugar.Infow("unauthorized user",
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized user"}
 	}
 
 	days := stdDuration
@@ -71,17 +78,27 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		log.Printf("Internal error: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to sign token",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	resp := creds.LoginResp{
 		Token: tokenString,
 	}
 	if err = json.NewEncoder(w).Encode(resp); err != nil {
-		log.Printf("Error encoding JSON response: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to encode json response",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+
+	app.Sugar.Infow("user login",
+		"url", r.URL,
+		"sub", u,
+	)
+	return nil
 }

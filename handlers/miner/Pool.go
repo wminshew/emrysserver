@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/satori/go.uuid"
-	comm "github.com/wminshew/emrys/pkg/job"
-	"github.com/wminshew/emrysserver/handlers/job"
-	"log"
+	"github.com/wminshew/emrys/pkg/job"
+	"github.com/wminshew/emrysserver/pkg/app"
 )
 
-// Pool manages connections to inactive miners; broadcasts new job auctions
-var Pool *pool
+var p *pool
 
 type pool struct {
 	miners     map[*miner]bool
@@ -20,9 +18,10 @@ type pool struct {
 	messages   chan []byte
 }
 
-// InitPool creates a new Pool of miner connections
+// InitPool creates a new pool of miner connections
 func InitPool() {
-	Pool = &pool{
+	app.Sugar.Infof("Initializing miner pool...")
+	p = &pool{
 		miners:     make(map[*miner]bool),
 		miner:      make(map[uuid.UUID]*miner),
 		register:   make(chan *miner),
@@ -31,26 +30,26 @@ func InitPool() {
 	}
 }
 
-// RunPool manages the Pool
+// RunPool manages the pool
 func RunPool() {
 	for {
 		select {
-		case miner := <-Pool.register:
-			Pool.miners[miner] = true
-			Pool.miner[miner.ID] = miner
-		case miner := <-Pool.unregister:
-			if _, ok := Pool.miners[miner]; ok {
-				delete(Pool.miners, miner)
-				delete(Pool.miner, miner.ID)
+		case miner := <-p.register:
+			p.miners[miner] = true
+			p.miner[miner.ID] = miner
+		case miner := <-p.unregister:
+			if _, ok := p.miners[miner]; ok {
+				delete(p.miners, miner)
+				delete(p.miner, miner.ID)
 				close(miner.sendMsg)
 			}
-		case m := <-Pool.messages:
-			for miner := range Pool.miners {
+		case m := <-p.messages:
+			for miner := range p.miners {
 				select {
 				case miner.sendMsg <- m:
 				default:
-					delete(Pool.miners, miner)
-					delete(Pool.miner, miner.ID)
+					delete(p.miners, miner)
+					delete(p.miner, miner.ID)
 					close(miner.sendMsg)
 				}
 			}
@@ -58,19 +57,16 @@ func RunPool() {
 	}
 }
 
-func (p *pool) AuctionJob(j *comm.Job) {
-	go job.NewAuction(j.ID)
-
-	m := comm.Message{
+func (p *pool) auctionJob(j *job.Job) error {
+	m := job.Message{
 		Message: "New job posted!",
 		Job:     j,
 	}
 	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	err := enc.Encode(m)
-	if err != nil {
-		log.Printf("Error encoding new job message: %v\n", err)
-		return
+	if err := json.NewEncoder(&buf).Encode(m); err != nil {
+		return err
 	}
 	p.messages <- buf.Bytes()
+
+	return nil
 }

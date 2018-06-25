@@ -1,77 +1,88 @@
 package job
 
 import (
-	"context"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/db"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"io"
-	"log"
 	"net/http"
 	"path"
 )
 
 // PostOutputDir receives the miner's container execution for the user
-func PostOutputDir(w http.ResponseWriter, r *http.Request) {
+func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
 	jUUID, err := uuid.FromString(jID)
 	if err != nil {
-		log.Printf("Error converting jID %s to uuid: %v\n", jID, err)
-		http.Error(w, "Internal Error.", http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to parse job ID",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "Error parsing job ID"}
 	}
 
-	// TODO: technically I think this is a race condition between PostOutputDir and GetOutputDir
-	// how can I make it idempotent?
-	if outputDir[jUUID] == nil {
-		pr, pw := io.Pipe()
-		outputDir[jUUID] = &pipe{
-			pr: pr,
-			pw: pw,
-		}
-	}
+	pipe := getDirPipe(jUUID)
 
-	pw := outputDir[jUUID].pw
+	pw := pipe.pw
 	tee := io.TeeReader(r.Body, pw)
 
-	ctx := context.Background()
+	ctx := r.Context()
 	p := path.Join("job", jID, "output", "dir")
-	obj := outputBkt.Object(p)
+	obj := bkt.Object(p)
 	ow := obj.NewWriter(ctx)
 
 	_, err = io.Copy(ow, tee)
 	if err != nil {
-		log.Printf("Error copying request body to cloud storage object: %v\n", err)
+		app.Sugar.Errorw("failed to copy tee reader to cloud storage object writer",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
 	}
 
 	if err = ow.Close(); err != nil {
-		log.Printf("Error closing cloud storage object writer: %v\n", err)
+		app.Sugar.Errorw("failed to close cloud storage object writer",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
 	}
 	if err = pw.Close(); err != nil {
-		log.Printf("Error closing output pipe: %v\n", err)
+		app.Sugar.Errorw("failed to close pipe writer",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
 	}
 
-	go func() {
-		sqlStmt := `
-		UPDATE jobs
-		SET (completed_at, active) = (NOW(), false)
-		WHERE job_uuid = $1
-		`
-		_, err = db.Db.Exec(sqlStmt, jID)
-		if err != nil {
-			log.Printf("Error updating job (completed_at) for job %v: %v\n", jID, err)
-			return
-		}
-		sqlStmt = `
-		UPDATE statuses
-		SET (output_dir_posted) = ($1)
-		WHERE job_uuid = $2
-		`
-		_, err = db.Db.Exec(sqlStmt, true, jID)
-		if err != nil {
-			log.Printf("Error updating job status (output_dir_posted): %v\n", err)
-			return
-		}
-	}()
+	sqlStmt := `
+	UPDATE jobs
+	SET (completed_at, active) = (NOW(), false)
+	WHERE job_uuid = $1
+	`
+	_, err = db.Db.Exec(sqlStmt, jID)
+	if err != nil {
+		app.Sugar.Errorw("failed to update job",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
+	}
+	sqlStmt = `
+	UPDATE statuses
+	SET (output_dir_posted) = ($1)
+	WHERE job_uuid = $2
+	`
+	_, err = db.Db.Exec(sqlStmt, true, jID)
+	if err != nil {
+		app.Sugar.Errorw("failed to update job status",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
+	}
+
+	return nil
 }

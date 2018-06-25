@@ -1,29 +1,25 @@
 package job
 
 import (
-	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/db"
-	"log"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"net/http"
 	"time"
 )
 
-type auctionSuccess struct {
-	Success bool   `json:"success"`
-	Error   string `json:"error,omitempty"`
-}
-
 // GetAuctionSuccess returns whether an auction is successful
-func GetAuctionSuccess(w http.ResponseWriter, r *http.Request) {
+func GetAuctionSuccess(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
 	jUUID, err := uuid.FromString(jID)
 	if err != nil {
-		log.Printf("Error parsing job ID: %v\n", err)
-		http.Error(w, "Error parsing job ID in path", http.StatusBadRequest)
-		return
+		app.Sugar.Errorw("failed to parse job ID",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "Error parsing job ID"}
 	}
 
 	time.Sleep(duration)
@@ -32,64 +28,29 @@ func GetAuctionSuccess(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		winBid := a.winBid()
 		if uuid.Equal(winBid, uuid.Nil) {
-			err = json.NewEncoder(w).Encode(auctionSuccess{
-				Success: false,
-				Error:   "No bids received!",
-			})
-			if err != nil {
-				log.Printf("Error encoding json auctionSuccess: %v\n", err)
-				http.Error(w, "Internal error!", http.StatusInternalServerError)
-				return
-			}
-		} else {
-			err = json.NewEncoder(w).Encode(auctionSuccess{
-				Success: true,
-			})
-			if err != nil {
-				log.Printf("Error encoding json auctionSuccess: %v\n", err)
-				http.Error(w, "Internal error!", http.StatusInternalServerError)
-				return
-			}
+			// TODO: once cloud services attached, there should always be at least one bid
+			return &app.Error{Code: http.StatusPaymentRequired, Message: "no bids received"}
 		}
-	} else {
-		var success bool
-		sqlStmt := `
-		SELECT auction_completed
-		FROM statuses
-		WHERE job_uuid = $1
-		`
-		err = db.Db.QueryRow(sqlStmt, jID).Scan(&success)
-		if err != nil {
-			log.Printf("Error querying job auction status: %v\n", err)
-			err = json.NewEncoder(w).Encode(auctionSuccess{
-				Success: false,
-				Error:   "Internal error!",
-			})
-			if err != nil {
-				log.Printf("Error encoding json auctionSuccess: %v\n", err)
-				http.Error(w, "Internal error!", http.StatusInternalServerError)
-				return
-			}
-		}
-		if success {
-			err = json.NewEncoder(w).Encode(auctionSuccess{
-				Success: true,
-			})
-			if err != nil {
-				log.Printf("Error encoding json auctionSuccess: %v\n", err)
-				http.Error(w, "Internal error!", http.StatusInternalServerError)
-				return
-			}
-		} else {
-			err = json.NewEncoder(w).Encode(auctionSuccess{
-				Success: false,
-				Error:   "Internal error!",
-			})
-			if err != nil {
-				log.Printf("Error encoding json auctionSuccess: %v\n", err)
-				http.Error(w, "Internal error!", http.StatusInternalServerError)
-				return
-			}
-		}
+
+		return nil
 	}
+
+	var success bool
+	sqlStmt := `
+	SELECT auction_completed
+	FROM statuses
+	WHERE job_uuid = $1
+	`
+	if err = db.Db.QueryRow(sqlStmt, jID).Scan(&success); err != nil {
+		app.Sugar.Errorw("error querying status",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+	if success {
+		return nil
+	}
+
+	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 }

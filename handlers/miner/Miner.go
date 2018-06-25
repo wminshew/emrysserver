@@ -3,7 +3,7 @@ package miner
 import (
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
-	"log"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"time"
 )
 
@@ -30,7 +30,10 @@ func (m *miner) writePump() {
 	defer func() {
 		ticker.Stop()
 		if err := m.conn.Close(); err != nil {
-			log.Printf("Error defer-closing websocket: %v\n", err)
+			app.Sugar.Errorw("failed to close websocket",
+				"miner", m.ID,
+				"err", err.Error(),
+			)
 		}
 	}()
 
@@ -39,18 +42,27 @@ func (m *miner) writePump() {
 		case msg, ok := <-m.sendMsg:
 			err := m.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err != nil {
-				log.Printf("Error setting websocket write deadline: %v\n", err)
+				app.Sugar.Errorw("failed to set websocket write deadline",
+					"miner", m.ID,
+					"err", err.Error(),
+				)
 			}
 			if !ok {
 				err = m.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				if err != nil {
-					log.Printf("Error writing close message to websocket: %v\n", err)
+					app.Sugar.Errorw("failed to close websocket",
+						"miner", m.ID,
+						"err", err.Error(),
+					)
 				}
 				return
 			}
 			err = m.conn.WriteMessage(websocket.BinaryMessage, msg)
 			if err != nil {
-				log.Printf("Error writing message to socket: %v\n", err)
+				app.Sugar.Errorw("failed to write to websocket",
+					"miner", m.ID,
+					"err", err.Error(),
+				)
 				return
 			}
 
@@ -59,16 +71,25 @@ func (m *miner) writePump() {
 			for i := 0; i < n; i++ {
 				err = m.conn.WriteMessage(websocket.BinaryMessage, <-m.sendMsg)
 				if err != nil {
-					log.Printf("Error writing newline to websocket: %v\n", err)
+					app.Sugar.Errorw("failed to write to websocket",
+						"miner", m.ID,
+						"err", err.Error(),
+					)
 				}
 			}
 		case <-ticker.C:
 			err := m.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err != nil {
-				log.Printf("Error setting write deadline: %v\n", err)
+				app.Sugar.Errorw("failed to set websocket write deadline",
+					"miner", m.ID,
+					"err", err.Error(),
+				)
 			}
 			if err = m.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Printf("Error pinging websocket: %v\n", err)
+				app.Sugar.Errorw("failed to ping websocket",
+					"miner", m.ID,
+					"err", err.Error(),
+				)
 				return
 			}
 		}

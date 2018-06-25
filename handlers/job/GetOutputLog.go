@@ -3,37 +3,37 @@ package job
 import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/flushwriter"
 	"io"
-	"log"
 	"net/http"
 )
 
 // GetOutputLog streams the miner's container execution to the user
-func GetOutputLog(w http.ResponseWriter, r *http.Request) {
+func GetOutputLog(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
 	jUUID, err := uuid.FromString(jID)
 	if err != nil {
-		log.Printf("Error converting jID %s to uuid: %v\n", jID, err)
-		http.Error(w, "Internal Error.", http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to parse job ID",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "Error parsing job ID"}
 	}
 
-	// TODO: technically I think this is a race condition between PostOutputLog and GetOutputLog
-	// how can I make it idempotent?
-	if outputLog[jUUID] == nil {
-		pr, pw := io.Pipe()
-		outputLog[jUUID] = &pipe{
-			pr: pr,
-			pw: pw,
-		}
-	}
+	pipe := getLogPipe(jUUID)
+	defer deleteLogPipe(jUUID)
 
 	fw := flushwriter.New(w)
-	pr := outputLog[jUUID].pr
+	pr := pipe.pr
 	if _, err = io.Copy(fw, pr); err != nil {
-		log.Printf("Error copying pipe reader to flushwriter: %v\n", err)
+		app.Sugar.Errorw("failed to copy pipe reader to flushwriter",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
 	}
-	delete(outputLog, jUUID)
+
+	return nil
 }

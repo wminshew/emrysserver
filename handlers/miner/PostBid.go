@@ -4,8 +4,9 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrys/pkg/check"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"io"
-	"log"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -13,7 +14,7 @@ import (
 )
 
 // PostBid accepts a job.Bid from miner and calls handlers/job.PostBid
-func PostBid(w http.ResponseWriter, r *http.Request) {
+func PostBid(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	mID := vars["mID"]
 	jID := vars["jID"]
@@ -27,18 +28,34 @@ func PostBid(w http.ResponseWriter, r *http.Request) {
 		Path:     p,
 		RawQuery: q.Encode(),
 	}
-	resp, err := http.Post(u.String(), "application/json", r.Body)
+	m := "POST"
+	req, err := http.NewRequest(m, u.String(), r.Body)
 	if err != nil {
-		log.Printf("Error POST %v: %v\n", u.String(), err)
-		http.Error(w, "Internal error.", http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to create request",
+			"url", r.URL,
+			"method", m,
+			"path", u.String(),
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+	req = req.WithContext(r.Context())
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		app.Sugar.Errorw("failed to execute request",
+			"url", r.URL,
+			"method", m,
+			"path", u.String(),
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	defer check.Err(resp.Body.Close)
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Internal error: Response header error: %v\n", resp.Status)
-		http.Error(w, "Internal error.", http.StatusInternalServerError)
-		return
+		b, _ := ioutil.ReadAll(resp.Body)
+		return &app.Error{Code: resp.StatusCode, Message: string(b)}
 	}
 
 	winner := resp.Header.Get("Winner")
@@ -52,18 +69,23 @@ func PostBid(w http.ResponseWriter, r *http.Request) {
 
 		tString, err := t.SignedString([]byte(secret))
 		if err != nil {
-			log.Printf("Error signing token string: %v\n", err)
-			http.Error(w, "Internal error.", http.StatusInternalServerError)
-			return
+			app.Sugar.Errorw("failed to sign token",
+				"url", r.URL,
+				"err", err.Error(),
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
 		w.Header().Set("Set-Job-Authorization", tString)
 	}
 
-	_, err = io.Copy(w, resp.Body)
-	if err != nil {
-		log.Printf("Internal error: Response header error: %v\n", resp.Status)
-		http.Error(w, "Internal error.", http.StatusInternalServerError)
-		return
+	if _, err = io.Copy(w, resp.Body); err != nil {
+		app.Sugar.Errorw("failed to copy response body to response writer",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+
+	return nil
 }

@@ -1,6 +1,6 @@
 keys
 vendor
 user-upload
-job-upload
+job
 *.swp
 *.key

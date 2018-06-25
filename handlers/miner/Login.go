@@ -7,8 +7,8 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/db"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -22,39 +22,46 @@ const (
 )
 
 // Login takes miner credentials from the request and, if valid, returns a token
-func Login(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 	c := &creds.Miner{}
 	err := json.NewDecoder(r.Body).Decode(c)
 	if err != nil {
-		log.Printf("Error decoding json: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to decode json request body",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
 	}
 
 	storedC := &creds.Miner{}
-	u := uuid.UUID{}
+	mUUID := uuid.UUID{}
 	sqlStmt := `
 	SELECT miner_email, password, miner_uuid
 	FROM miners
 	WHERE miner_email=$1
 	`
-	err = db.Db.QueryRow(sqlStmt, c.Email).Scan(&storedC.Email, &storedC.Password, &u)
-	if err != nil {
+	if err = db.Db.QueryRow(sqlStmt, c.Email).Scan(&storedC.Email, &storedC.Password, &mUUID); err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("Unauthorized miner: %s\n", c.Email)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
+			app.Sugar.Infow("unauthorized miner",
+				"url", r.URL,
+				"email", c.Email,
+			)
+			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized miner"}
 		}
 
-		log.Printf("Database error during login: %v\n", err)
-		http.Error(w, "Error during login.", http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to query database",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(storedC.Password), []byte(c.Password)); err != nil {
-		log.Printf("Unauthorized miner: %s\n", c.Email)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+		app.Sugar.Infow("unauthorized miner",
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized miner"}
 	}
 
 	days := stdDuration
@@ -66,22 +73,32 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"iss":   "auth.service",
 		"iat":   time.Now().Unix(),
 		"email": storedC.Email,
-		"sub":   u,
+		"sub":   mUUID,
 	})
 
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		log.Printf("Internal error: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to sign token",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	resp := creds.LoginResp{
 		Token: tokenString,
 	}
 	if err = json.NewEncoder(w).Encode(resp); err != nil {
-		log.Printf("Error encoding JSON response: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to encode json response",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+
+	app.Sugar.Infow("miner login",
+		"url", r.URL,
+		"sub", mUUID,
+	)
+	return nil
 }

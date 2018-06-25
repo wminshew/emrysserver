@@ -2,27 +2,31 @@ package miner
 
 import (
 	"compress/zlib"
-	"context"
 	"docker.io/go-docker"
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/db"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"io"
-	"log"
 	"net/http"
 )
 
 // Image sends the {jID} job docker image to the miner for execution
-func Image(w http.ResponseWriter, r *http.Request) {
+func Image(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
+	mID := vars["mID"]
 
-	ctx := context.Background()
+	ctx := r.Context()
 	cli, err := docker.NewEnvClient()
 	if err != nil {
-		log.Printf("Error creating new docker client: %v\n", err)
-		http.Error(w, "Internal error.", http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to create docker client",
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+			"mID", mID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	img, err := cli.ImageSave(ctx, []string{jID})
 	defer check.Err(img.Close)
@@ -30,22 +34,30 @@ func Image(w http.ResponseWriter, r *http.Request) {
 	zw := zlib.NewWriter(w)
 	defer check.Err(zw.Close)
 
-	_, err = io.Copy(zw, img)
-	if err != nil {
-		log.Printf("Error copying img to zlib response writer: %v\n", err)
-		return
+	if _, err = io.Copy(zw, img); err != nil {
+		app.Sugar.Errorw("failed to copy image to zlib response writer",
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+			"mID", mID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	go func() {
-		sqlStmt := `
-		UPDATE statuses
-		SET (image_downloaded) = ($1)
-		WHERE job_uuid = $2
-		`
-		_, err = db.Db.Exec(sqlStmt, true, jID)
-		if err != nil {
-			log.Printf("Error updating job status (image_downloaded): %v\n", err)
-			return
-		}
-	}()
+	sqlStmt := `
+	UPDATE statuses
+	SET (image_downloaded) = ($1)
+	WHERE job_uuid = $2
+	`
+	if _, err = db.Db.Exec(sqlStmt, true, jID); err != nil {
+		app.Sugar.Errorw("failed to update job status",
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+			"mID", mID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	return nil
 }

@@ -3,16 +3,17 @@ package user
 import (
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrys/pkg/check"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/flushwriter"
 	"io"
-	"log"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 )
 
 // GetOutputDir streams job output to user
-func GetOutputDir(w http.ResponseWriter, r *http.Request) {
+func GetOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
 	p := path.Join("job", jID, "dir")
@@ -21,21 +22,44 @@ func GetOutputDir(w http.ResponseWriter, r *http.Request) {
 		Host:   "localhost:8081",
 		Path:   p,
 	}
-	resp, err := http.Get(u.String())
+	m := "GET"
+	req, err := http.NewRequest(m, u.String(), nil)
 	if err != nil {
-		log.Printf("Error GET %v: %v\n", u.String(), err)
-		http.Error(w, "Internal error.", http.StatusInternalServerError)
-		return
+		app.Sugar.Errorw("failed to create request",
+			"url", r.URL,
+			"method", m,
+			"path", u.String(),
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+	req = req.WithContext(r.Context())
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		app.Sugar.Errorw("failed to execute request",
+			"url", r.URL,
+			"method", m,
+			"path", u.String(),
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+	defer check.Err(resp.Body.Close)
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Internal error: Response header error: %v\n", resp.Status)
-		check.Err(resp.Body.Close)
-		http.Error(w, "Internal error.", http.StatusInternalServerError)
-		return
+		b, _ := ioutil.ReadAll(resp.Body)
+		return &app.Error{Code: resp.StatusCode, Message: string(b)}
 	}
 
 	fw := flushwriter.New(w)
-	_, _ = io.Copy(fw, resp.Body)
-	check.Err(resp.Body.Close)
+	if _, err = io.Copy(fw, resp.Body); err != nil {
+		app.Sugar.Errorw("failed to copy pipe reader to flushwriter",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	return nil
 }
