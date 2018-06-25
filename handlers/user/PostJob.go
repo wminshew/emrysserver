@@ -147,7 +147,6 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 }
 
 func uploadAndCacheFormFile(r *http.Request, dir, val string) error {
-	// f, fh, err := r.FormFile(val)
 	f, _, err := r.FormFile(val)
 	if err != nil {
 		return err
@@ -162,25 +161,8 @@ func uploadAndCacheFormFile(r *http.Request, dir, val string) error {
 	defer check.Err(file.Close)
 	tee := io.TeeReader(f, file)
 
-	// pMeta = p + ".meta"
-	// fMeta, err := os.Create(pMeta)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer check.Err(fMeta.Close)
-	// err = json.NewEncoder(pMeta).Encode(map[string]string{
-	// 	"filename": fh.Filename,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-
 	ctx := r.Context()
-	// p = path.Join(dir, val)
 	ow := bkt.Object(p).NewWriter(ctx)
-	// ow.ObjectAttrs.Metadata = map[string]string{
-	// 	"filename": fh.Filename,
-	// }
 	_, err = io.Copy(ow, tee)
 	if err != nil {
 		return err

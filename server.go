@@ -17,6 +17,7 @@ func main() {
 	defer check.Err(app.Sugar.Sync)
 	db.Init()
 	user.InitStorage()
+	miner.InitStorage()
 	job.InitStorage()
 
 	miner.InitPool()

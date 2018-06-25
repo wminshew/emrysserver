@@ -6,6 +6,7 @@ import (
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,20 +21,51 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 	inputDir := filepath.Join("job", jID, "input")
 	defer check.Err(func() error { return os.RemoveAll(inputDir) })
 	dataPath := filepath.Join(inputDir, "data")
-	dataFile, err := os.Open(dataPath)
-	if err != nil {
-		app.Sugar.Errorw("failed to open data file",
-			"url", r.URL,
-			"path", dataPath,
-			"err", err.Error(),
-			"jID", jID,
-			"mID", mID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	var tee io.Reader
+	if _, err := os.Stat(dataPath); os.IsNotExist(err) {
+		// if not cached to disk, stream from cloud storage and cache
+		ctx := r.Context()
+		or, err := bkt.Object(dataPath).NewReader(ctx)
+		if err != nil {
+			app.Sugar.Errorw("failed to open cloud storage reader",
+				"url", r.URL,
+				"path", dataPath,
+				"err", err.Error(),
+				"jID", jID,
+				"mID", mID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		dataFile, err := os.Create(dataPath)
+		if err != nil {
+			app.Sugar.Errorw("failed to create disk cache",
+				"url", r.URL,
+				"path", dataPath,
+				"err", err.Error(),
+				"jID", jID,
+				"mID", mID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		tee = io.TeeReader(or, dataFile)
+		defer check.Err(dataFile.Close)
+	} else {
+		dataFile, err := os.Open(dataPath)
+		if err != nil {
+			app.Sugar.Errorw("failed to open data file",
+				"url", r.URL,
+				"path", dataPath,
+				"err", err.Error(),
+				"jID", jID,
+				"mID", mID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		defer check.Err(dataFile.Close)
+		tee = io.TeeReader(dataFile, ioutil.Discard)
 	}
-	defer check.Err(dataFile.Close)
 
-	if _, err = io.Copy(w, dataFile); err != nil {
+	if _, err := io.Copy(w, tee); err != nil {
 		app.Sugar.Errorw("failed to copy data file to response writer",
 			"url", r.URL,
 			"err", err.Error(),
@@ -48,7 +80,7 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 	SET (data_downloaded) = ($1)
 	WHERE job_uuid = $2
 	`
-	if _, err = db.Db.Exec(sqlStmt, true, jID); err != nil {
+	if _, err := db.Db.Exec(sqlStmt, true, jID); err != nil {
 		app.Sugar.Errorw("failed to update job status",
 			"url", r.URL,
 			"err", err.Error(),
