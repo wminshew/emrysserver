@@ -19,20 +19,27 @@ func GetOutputLog(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "Error parsing job ID"}
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	pipe := getLogPipe(jUUID)
+	pipe, err := getLogPipe(jUUID)
+	if err != nil {
+		app.Sugar.Errorw("failed to create pipe",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
 	defer deleteLogPipe(jUUID)
 
 	fw := flushwriter.New(w)
-	pr := pipe.pr
+	pr := pipe.r
 	if _, err = io.Copy(fw, pr); err != nil {
 		app.Sugar.Errorw("failed to copy pipe reader to flushwriter",
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	return nil

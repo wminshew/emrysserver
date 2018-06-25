@@ -2,13 +2,13 @@ package job
 
 import (
 	"github.com/satori/go.uuid"
-	"io"
+	"os"
 	"sync"
 )
 
 type pipe struct {
-	pr *io.PipeReader
-	pw *io.PipeWriter
+	r *os.File
+	w *os.File
 }
 
 var (
@@ -18,7 +18,7 @@ var (
 	muDir    = &sync.Mutex{}
 )
 
-func getLogPipe(u uuid.UUID) *pipe {
+func getLogPipe(u uuid.UUID) (*pipe, error) {
 	return getPipe(muLog, logPipes, u)
 }
 
@@ -26,7 +26,7 @@ func deleteLogPipe(u uuid.UUID) {
 	delete(logPipes, u)
 }
 
-func getDirPipe(u uuid.UUID) *pipe {
+func getDirPipe(u uuid.UUID) (*pipe, error) {
 	return getPipe(muDir, dirPipes, u)
 }
 
@@ -34,15 +34,18 @@ func deleteDirPipe(u uuid.UUID) {
 	delete(dirPipes, u)
 }
 
-func getPipe(mu *sync.Mutex, pipes map[uuid.UUID]*pipe, u uuid.UUID) *pipe {
+func getPipe(mu *sync.Mutex, pipes map[uuid.UUID]*pipe, u uuid.UUID) (*pipe, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	if pipes[u] == nil {
-		pr, pw := io.Pipe()
+		r, w, err := os.Pipe()
+		if err != nil {
+			return nil, err
+		}
 		pipes[u] = &pipe{
-			pr: pr,
-			pw: pw,
+			r: r,
+			w: w,
 		}
 	}
-	return pipes[u]
+	return pipes[u], nil
 }

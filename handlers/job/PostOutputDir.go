@@ -20,12 +20,19 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "Error parsing job ID"}
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	pipe := getDirPipe(jUUID)
+	pipe, err := getDirPipe(jUUID)
+	if err != nil {
+		app.Sugar.Errorw("failed to create pipe",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
 
-	pw := pipe.pw
+	pw := pipe.w
 	tee := io.TeeReader(r.Body, pw)
 
 	ctx := r.Context()
@@ -39,7 +46,7 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	if err = ow.Close(); err != nil {
@@ -47,14 +54,14 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	if err = pw.Close(); err != nil {
 		app.Sugar.Errorw("failed to close pipe writer",
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	sqlStmt := `
@@ -68,7 +75,7 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	sqlStmt = `
 	UPDATE statuses
@@ -81,7 +88,7 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	return nil

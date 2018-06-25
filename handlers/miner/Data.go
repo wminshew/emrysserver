@@ -22,6 +22,7 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 	// defer check.Err(r, func() error { return os.RemoveAll(inputDir) })
 	dataPath := filepath.Join(inputDir, "data")
 	var tee io.Reader
+	var dataFile *os.File
 	if _, err := os.Stat(dataPath); os.IsNotExist(err) {
 		// if not cached to disk, stream from cloud storage and cache
 		ctx := r.Context()
@@ -36,7 +37,7 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		dataFile, err := os.Create(dataPath)
+		dataFile, err = os.Create(dataPath)
 		if err != nil {
 			app.Sugar.Errorw("failed to create disk cache",
 				"url", r.URL,
@@ -49,7 +50,7 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 		}
 		tee = io.TeeReader(or, dataFile)
 	} else {
-		dataFile, err := os.Open(dataPath)
+		dataFile, err = os.Open(dataPath)
 		if err != nil {
 			app.Sugar.Errorw("failed to open data file",
 				"url", r.URL,

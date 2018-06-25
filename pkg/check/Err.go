@@ -3,6 +3,7 @@ package check
 
 import (
 	"github.com/wminshew/emrysserver/pkg/app"
+	"net/http"
 )
 
 // Err checks if deferredFunc throws an error and sets err if it hasn't already been set
