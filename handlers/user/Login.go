@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/db"
@@ -24,8 +25,7 @@ const (
 // Login takes user credentials from the request and, if valid, returns a token
 func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 	c := &creds.User{}
-	err := json.NewDecoder(r.Body).Decode(c)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(c); err != nil {
 		app.Sugar.Errorw("failed to decode json request body",
 			"url", r.URL,
 			"err", err.Error(),
@@ -40,7 +40,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 	FROM users
 	WHERE user_email=$1
 	`
-	if err = db.Db.QueryRow(sqlStmt, c.Email).Scan(&storedC.Email, &storedC.Password, &u); err != nil {
+	if err := db.Db.QueryRow(sqlStmt, c.Email).Scan(&storedC.Email, &storedC.Password, &u); err != nil {
 		if err == sql.ErrNoRows {
 			app.Sugar.Infow("unauthorized user",
 				"url", r.URL,
@@ -49,14 +49,30 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized user"}
 		}
 
-		app.Sugar.Errorw("failed to query database",
-			"url", r.URL,
-			"err", err.Error(),
-		)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to query database",
+				"url", r.URL,
+				"err", err.Error(),
+				"email", c.Email,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to query database",
+				"url", r.URL,
+				"err", err.Error(),
+				"email", c.Email,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	if err = bcrypt.CompareHashAndPassword([]byte(storedC.Password), []byte(c.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(storedC.Password), []byte(c.Password)); err != nil {
 		app.Sugar.Infow("unauthorized user",
 			"url", r.URL,
 			"email", c.Email,
@@ -81,6 +97,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 		app.Sugar.Errorw("failed to sign token",
 			"url", r.URL,
 			"err", err.Error(),
+			"email", c.Email,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
@@ -92,6 +109,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 		app.Sugar.Errorw("failed to encode json response",
 			"url", r.URL,
 			"err", err.Error(),
+			"email", c.Email,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
@@ -99,6 +117,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 	app.Sugar.Infow("user login",
 		"url", r.URL,
 		"sub", u,
+		"email", c.Email,
 	)
 	return nil
 }

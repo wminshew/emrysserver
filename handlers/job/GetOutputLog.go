@@ -1,12 +1,14 @@
 package job
 
 import (
+	"cloud.google.com/go/storage"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/flushwriter"
 	"io"
 	"net/http"
+	"path"
 )
 
 // GetOutputLog streams the miner's container execution to the user
@@ -22,22 +24,33 @@ func GetOutputLog(w http.ResponseWriter, r *http.Request) *app.Error {
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	pipe, err := getLogPipe(jUUID)
-	if err != nil {
-		app.Sugar.Errorw("failed to create pipe",
+	var reader io.Reader
+	p := path.Join("job", jID, "output", "log")
+	ctx := r.Context()
+	reader, err = bkt.Object(p).NewReader(ctx)
+	if err == storage.ErrObjectNotExist {
+		pr, pw := io.Pipe()
+		logPipes[jUUID] = &pipe{
+			r: pr,
+			w: pw,
+		}
+		reader = pr
+		defer delete(logPipes, jUUID)
+	} else if err != nil {
+		app.Sugar.Errorw("failed to read from cloud storage",
 			"url", r.URL,
 			"err", err.Error(),
+			"jID", jID,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
-	defer deleteLogPipe(jUUID)
 
 	fw := flushwriter.New(w)
-	pr := pipe.r
-	if _, err = io.Copy(fw, pr); err != nil {
+	if _, err = io.Copy(fw, reader); err != nil {
 		app.Sugar.Errorw("failed to copy pipe reader to flushwriter",
 			"url", r.URL,
 			"err", err.Error(),
+			"jID", jID,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}

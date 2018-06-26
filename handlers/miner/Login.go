@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/db"
@@ -49,10 +50,26 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized miner"}
 		}
 
-		app.Sugar.Errorw("failed to query database",
-			"url", r.URL,
-			"err", err.Error(),
-		)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to query database",
+				"url", r.URL,
+				"err", err.Error(),
+				"email", c.Email,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to query database",
+				"url", r.URL,
+				"err", err.Error(),
+				"email", c.Email,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -81,6 +98,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 		app.Sugar.Errorw("failed to sign token",
 			"url", r.URL,
 			"err", err.Error(),
+			"email", c.Email,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
@@ -92,6 +110,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 		app.Sugar.Errorw("failed to encode json response",
 			"url", r.URL,
 			"err", err.Error(),
+			"email", c.Email,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
@@ -99,6 +118,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 	app.Sugar.Infow("miner login",
 		"url", r.URL,
 		"sub", mUUID,
+		"email", c.Email,
 	)
 	return nil
 }

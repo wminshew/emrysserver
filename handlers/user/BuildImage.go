@@ -4,6 +4,7 @@ import (
 	"docker.io/go-docker"
 	"docker.io/go-docker/api/types"
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
@@ -38,7 +39,7 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 			"jID", jID,
 			"err", err.Error(),
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -46,10 +47,10 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err = os.MkdirAll(inputDir, 0755); err != nil {
 		app.Sugar.Errorw("failed to create job directory",
 			"url", r.URL,
-			"jID", jID,
 			"err", err.Error(),
+			"jID", jID,
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -76,10 +77,10 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 			}(); err != nil {
 				app.Sugar.Errorw("failed to download input file",
 					"url", r.URL,
-					"jID", jID,
 					"err", err.Error(),
+					"jID", jID,
 				)
-				_ = setJobInactive(r, jUUID)
+				_ = db.SetJobInactive(r, jUUID)
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 		}
@@ -109,10 +110,10 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 		}(); err != nil {
 			app.Sugar.Errorw("failed to download dockerfile.user",
 				"url", r.URL,
-				"jID", jID,
 				"err", err.Error(),
+				"jID", jID,
 			)
-			_ = setJobInactive(r, jUUID)
+			_ = db.SetJobInactive(r, jUUID)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 	}
@@ -121,10 +122,10 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err = os.Link(userDockerfile, linkedDocker); err != nil {
 		app.Sugar.Errorw("failed link dockerfile into user dir",
 			"url", r.URL,
-			"jID", jID,
 			"err", err.Error(),
+			"jID", jID,
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -139,8 +140,8 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 		if err = archiver.TarGz.Write(pw, ctxFiles); err != nil {
 			app.Sugar.Errorw("failed to tar-gzip docker context",
 				"url", r.URL,
-				"jID", jID,
 				"err", err.Error(),
+				"jID", jID,
 			)
 			return
 		}
@@ -160,22 +161,21 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err != nil {
 		app.Sugar.Errorw("failed to build image",
 			"url", r.URL,
-			"jID", jID,
 			"err", err.Error(),
+			"jID", jID,
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	defer check.Err(r, buildResp.Body.Close)
 
-	err = job.ReadJSON(buildResp.Body)
-	if err != nil {
+	if err = job.ReadJSON(buildResp.Body); err != nil {
 		app.Sugar.Errorw("failed to build image",
 			"url", r.URL,
-			"jID", jID,
 			"err", err.Error(),
+			"jID", jID,
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -185,12 +185,27 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	WHERE job_uuid = $2
 	`
 	if _, err = db.Db.Exec(sqlStmt, true, jUUID); err != nil {
-		app.Sugar.Errorw("failed to update status",
-			"url", r.URL,
-			"jID", jID,
-			"err", err.Error(),
-		)
-		_ = setJobInactive(r, jUUID)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to update job status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to update job status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 

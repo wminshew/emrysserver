@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/handlers/miner"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/check"
@@ -39,11 +40,11 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err != nil {
 		app.Sugar.Errorw("failed to create request",
 			"url", r.URL,
+			"err", err.Error(),
 			"method", m,
 			"path", u.String(),
-			"err", err.Error(),
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	req = req.WithContext(r.Context())
@@ -52,17 +53,17 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err != nil {
 		app.Sugar.Errorw("failed to execute request",
 			"url", r.URL,
+			"err", err.Error(),
 			"method", m,
 			"path", u.String(),
-			"err", err.Error(),
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		check.Err(r, resp.Body.Close)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: resp.StatusCode, Message: resp.Status}
 	}
 	check.Err(r, resp.Body.Close)
@@ -86,11 +87,11 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	// if err != nil {
 	// 	app.Sugar.Errorw("failed to create request",
 	// 		"url", r.URL,
+	// 		"err", err.Error(),
 	// 		"method", m,
 	// 		"path", u.String(),
-	// 		"err", err.Error(),
 	// 	)
-	// 	_ = setJobInactive(r, jUUID)
+	// 	_ = db.SetJobInactive(r, jUUID)
 	// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	// }
 	// req = req.WithContext(r.Context())
@@ -98,17 +99,17 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	// if err != nil {
 	// 	app.Sugar.Errorw("failed to execute request",
 	// 		"url", r.URL,
+	// 		"err", err.Error(),
 	// 		"method", m,
 	// 		"path", u.String(),
-	// 		"err", err.Error(),
 	// 	)
-	// 	_ = setJobInactive(r, jUUID)
+	// 	_ = db.SetJobInactive(r, jUUID)
 	// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	// }
 	//
 	// if resp.StatusCode != http.StatusOK {
 	// 	check.Err(r, resp.Body.Close)
-	// 	_ = setJobInactive(r, jUUID)
+	// 	_ = db.SetJobInactive(r, jUUID)
 	// 	return &app.Error{Code: resp.StatusCode, Message: resp.Status}
 	// }
 	// check.Err(r, resp.Body.Close)
@@ -126,11 +127,11 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err != nil {
 		app.Sugar.Errorw("failed to create request",
 			"url", r.URL,
+			"err", err.Error(),
 			"method", m,
 			"path", u.String(),
-			"err", err.Error(),
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	req = req.WithContext(r.Context())
@@ -138,17 +139,17 @@ func RunAuction(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err != nil {
 		app.Sugar.Errorw("failed to execute request",
 			"url", r.URL,
+			"err", err.Error(),
 			"method", m,
 			"path", u.String(),
-			"err", err.Error(),
 		)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		defer check.Err(r, resp.Body.Close)
-		_ = setJobInactive(r, jUUID)
+		_ = db.SetJobInactive(r, jUUID)
 		b, _ := ioutil.ReadAll(resp.Body)
 		return &app.Error{Code: resp.StatusCode, Message: string(b)}
 	}

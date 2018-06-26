@@ -2,6 +2,8 @@ package miner
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
+	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/check"
@@ -16,7 +18,14 @@ import (
 func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
-	mID := vars["mID"]
+	jUUID, err := uuid.FromString(jID)
+	if err != nil {
+		app.Sugar.Errorw("failed to parse job ID",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
+	}
 
 	inputDir := filepath.Join("job", jID, "input")
 	// defer check.Err(r, func() error { return os.RemoveAll(inputDir) })
@@ -33,32 +42,30 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 				"path", dataPath,
 				"err", err.Error(),
 				"jID", jID,
-				"mID", mID,
 			)
+			_ = db.SetJobInactive(r, jUUID)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		dataFile, err = os.Create(dataPath)
-		if err != nil {
+		if dataFile, err = os.Create(dataPath); err != nil {
 			app.Sugar.Errorw("failed to create disk cache",
 				"url", r.URL,
 				"path", dataPath,
 				"err", err.Error(),
 				"jID", jID,
-				"mID", mID,
 			)
+			_ = db.SetJobInactive(r, jUUID)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		tee = io.TeeReader(or, dataFile)
 	} else {
-		dataFile, err = os.Open(dataPath)
-		if err != nil {
+		if dataFile, err = os.Open(dataPath); err != nil {
 			app.Sugar.Errorw("failed to open data file",
 				"url", r.URL,
 				"path", dataPath,
 				"err", err.Error(),
 				"jID", jID,
-				"mID", mID,
 			)
+			_ = db.SetJobInactive(r, jUUID)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		tee = io.TeeReader(dataFile, ioutil.Discard)
@@ -70,8 +77,8 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", jID,
-			"mID", mID,
 		)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
 	}
 
@@ -81,12 +88,27 @@ func Data(w http.ResponseWriter, r *http.Request) *app.Error {
 	WHERE job_uuid = $2
 	`
 	if _, err := db.Db.Exec(sqlStmt, true, jID); err != nil {
-		app.Sugar.Errorw("failed to update job status",
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jID,
-			"mID", mID,
-		)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to update job status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to update job status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
 	}
 

@@ -2,6 +2,8 @@ package miner
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/check"
 	"io/ioutil"
@@ -14,6 +16,15 @@ import (
 func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
+	jUUID, err := uuid.FromString(jID)
+	if err != nil {
+		app.Sugar.Errorw("failed to parse job ID",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
+	}
+
 	p := path.Join("job", jID, "dir")
 	u := url.URL{
 		Scheme: "http",
@@ -25,10 +36,11 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err != nil {
 		app.Sugar.Errorw("failed to create request",
 			"url", r.URL,
+			"err", err.Error(),
 			"method", m,
 			"path", u.String(),
-			"err", err.Error(),
 		)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	req = req.WithContext(r.Context())
@@ -37,10 +49,11 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err != nil {
 		app.Sugar.Errorw("failed to execute request",
 			"url", r.URL,
+			"err", err.Error(),
 			"method", m,
 			"path", u.String(),
-			"err", err.Error(),
 		)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	defer check.Err(r, resp.Body.Close)

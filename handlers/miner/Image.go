@@ -4,6 +4,8 @@ import (
 	"compress/zlib"
 	"docker.io/go-docker"
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
+	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/db"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/check"
@@ -11,11 +13,18 @@ import (
 	"net/http"
 )
 
-// Image sends the {jID} job docker image to the miner for execution
+// Image sends the job docker image to the miner
 func Image(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	jID := vars["jID"]
-	mID := vars["mID"]
+	jUUID, err := uuid.FromString(jID)
+	if err != nil {
+		app.Sugar.Errorw("failed to parse job ID",
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
+	}
 
 	ctx := r.Context()
 	cli, err := docker.NewEnvClient()
@@ -24,8 +33,8 @@ func Image(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", jID,
-			"mID", mID,
 		)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	img, err := cli.ImageSave(ctx, []string{jID})
@@ -39,8 +48,8 @@ func Image(w http.ResponseWriter, r *http.Request) *app.Error {
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", jID,
-			"mID", mID,
 		)
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -50,12 +59,27 @@ func Image(w http.ResponseWriter, r *http.Request) *app.Error {
 	WHERE job_uuid = $2
 	`
 	if _, err = db.Db.Exec(sqlStmt, true, jID); err != nil {
-		app.Sugar.Errorw("failed to update job status",
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jID,
-			"mID", mID,
-		)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to update job status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to update job status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
+		_ = db.SetJobInactive(r, jUUID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 

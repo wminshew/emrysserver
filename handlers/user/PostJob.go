@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/db"
@@ -53,10 +54,10 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err != nil {
 		app.Sugar.Errorw("failed to sign job token",
 			"url", r.URL,
-			"jID", j.ID,
 			"err", err.Error(),
+			"jID", j.ID,
 		)
-		_ = setJobInactive(r, j.ID)
+		_ = db.SetJobInactive(r, j.ID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	w.Header().Set("Set-Job-Authorization", tString)
@@ -66,11 +67,26 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 	VALUES ($1, $2, $3)
 	`
 	if _, err = db.Db.Exec(sqlStmt, j.ID, j.UserID, true); err != nil {
-		app.Sugar.Errorw("failed to insert job",
-			"url", r.URL,
-			"jID", j.ID,
-			"err", err.Error(),
-		)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to insert job",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", j.ID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to insert job",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", j.ID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	sqlStmt = `
@@ -78,12 +94,27 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 	VALUES ($1, $2, $3)
 	`
 	if _, err = db.Db.Exec(sqlStmt, j.ID, false, false); err != nil {
-		app.Sugar.Errorw("failed to insert payment",
-			"url", r.URL,
-			"jID", j.ID,
-			"err", err.Error(),
-		)
-		_ = setJobInactive(r, j.ID)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to insert payment",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", j.ID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to insert payment",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", j.ID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
+		_ = db.SetJobInactive(r, j.ID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	sqlStmt = `
@@ -94,12 +125,27 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	if _, err = db.Db.Exec(sqlStmt, j.ID, false, false, false, false, false, false, false); err != nil {
-		app.Sugar.Errorw("failed to insert status",
-			"url", r.URL,
-			"jID", j.ID,
-			"err", err.Error(),
-		)
-		_ = setJobInactive(r, j.ID)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to insert status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", j.ID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to insert status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", j.ID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
+		_ = db.SetJobInactive(r, j.ID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -107,10 +153,10 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 	if err = os.MkdirAll(inputDir, 0755); err != nil {
 		app.Sugar.Errorw("failed to create job directory",
 			"url", r.URL,
-			"jID", j.ID,
 			"err", err.Error(),
+			"jID", j.ID,
 		)
-		_ = setJobInactive(r, j.ID)
+		_ = db.SetJobInactive(r, j.ID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -120,10 +166,10 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 		if err != nil {
 			app.Sugar.Errorw("failed to upload form file",
 				"url", r.URL,
-				"jID", j.ID,
 				"err", err.Error(),
+				"jID", j.ID,
 			)
-			_ = setJobInactive(r, j.ID)
+			_ = db.SetJobInactive(r, j.ID)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 	}
@@ -134,12 +180,27 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 	WHERE job_uuid = $2
 	`
 	if _, err = db.Db.Exec(sqlStmt, true, j.ID); err != nil {
-		app.Sugar.Errorw("failed to update status",
-			"url", r.URL,
-			"jID", j.ID,
-			"err", err.Error(),
-		)
-		_ = setJobInactive(r, j.ID)
+		pqErr := err.(*pq.Error)
+		if pqErr.Fatal() {
+			app.Sugar.Fatalw("failed to insert status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", j.ID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			app.Sugar.Errorw("failed to insert status",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", j.ID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		}
+		_ = db.SetJobInactive(r, j.ID)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -171,22 +232,5 @@ func uploadAndCacheFormFile(r *http.Request, dir, val string) error {
 		return err
 	}
 
-	return nil
-}
-
-func setJobInactive(r *http.Request, jUUID uuid.UUID) error {
-	sqlStmt := `
-	UPDATE jobs
-	SET (active) = ($1)
-	WHERE job_uuid = $2
-	`
-	if _, err := db.Db.Exec(sqlStmt, false, jUUID); err != nil {
-		app.Sugar.Errorw("failed to update job",
-			"url", r.URL,
-			"jID", jUUID,
-			"err", err.Error(),
-		)
-		return err
-	}
 	return nil
 }
