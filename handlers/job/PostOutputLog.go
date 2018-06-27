@@ -27,7 +27,7 @@ func PostOutputLog(w http.ResponseWriter, r *http.Request) *app.Error {
 	}
 
 	var tee io.Reader
-	if pipe, ok := dirPipes[jUUID]; ok {
+	if pipe, ok := logPipes[jUUID]; ok {
 		tee = io.TeeReader(r.Body, pipe.w)
 		defer check.Err(r, pipe.w.Close)
 	} else {

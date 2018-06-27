@@ -6,12 +6,13 @@ RUN useradd --create-home --home-dir $HOME user \
   && chown -R user:user $HOME
 
 WORKDIR $HOME
-User user
+USER user
 
 RUN virtualenv venv
 ARG REQUIREMENTS
 COPY --chown=user:user $REQUIREMENTS $REQUIREMENTS
 RUN venv/bin/pip install -r $REQUIREMENTS
+RUN rm -rf $HOME/.cache/pip
 
 ARG MAIN
 ENV MAIN $MAIN

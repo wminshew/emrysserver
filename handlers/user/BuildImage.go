@@ -55,6 +55,8 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	}
 
 	vals := []string{"requirements", "main"}
+	reqs := vals[0]
+	main := vals[1]
 	for i := range vals {
 		p := path.Join(inputDir, vals[i])
 		if _, err = os.Stat(p); os.IsNotExist(err) {
@@ -130,8 +132,8 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	}
 
 	ctxFiles := []string{
-		filepath.Join(inputDir, vals[0]),      // requirements
-		filepath.Join(inputDir, vals[1]),      // main
+		filepath.Join(inputDir, reqs),         // requirements
+		filepath.Join(inputDir, main),         // main
 		filepath.Join(inputDir, "Dockerfile"), // Dockerfile
 	}
 	pr, pw := io.Pipe()
@@ -151,12 +153,11 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	buildResp, err := cli.ImageBuild(ctx, pr, types.ImageBuildOptions{
 		BuildArgs: map[string]*string{
 			"HOME":         &userHome,
-			"REQUIREMENTS": &vals[0],
-			"MAIN":         &vals[1],
+			"REQUIREMENTS": &reqs,
+			"MAIN":         &main,
 		},
 		ForceRemove: true,
-		// PullParent:  true,
-		Tags: []string{jID},
+		Tags:        []string{jID},
 	})
 	if err != nil {
 		app.Sugar.Errorw("failed to build image",
