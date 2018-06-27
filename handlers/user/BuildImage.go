@@ -132,9 +132,9 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 	}
 
 	ctxFiles := []string{
-		filepath.Join(inputDir, reqs),         // requirements
-		filepath.Join(inputDir, main),         // main
-		filepath.Join(inputDir, "Dockerfile"), // Dockerfile
+		filepath.Join(inputDir, reqs),
+		filepath.Join(inputDir, main),
+		filepath.Join(inputDir, "Dockerfile"),
 	}
 	pr, pw := io.Pipe()
 	go func() {

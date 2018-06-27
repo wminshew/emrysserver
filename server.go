@@ -23,13 +23,13 @@ func main() {
 	miner.InitPool()
 	go miner.RunPool()
 
-	go func() {
-		const httpRedirectPort = ":8080"
-		app.Sugar.Infof("Re-directing port %s...", httpRedirectPort)
-		if err := http.ListenAndServe(httpRedirectPort, handlers.Log(http.HandlerFunc(redirect))); err != nil {
-			app.Sugar.Fatalf("Re-directing server error: %v", err)
-		}
-	}()
+	// go func() {
+	// 	const httpRedirectPort = ":8080"
+	// 	app.Sugar.Infof("Re-directing port %s...", httpRedirectPort)
+	// 	if err := http.ListenAndServe(httpRedirectPort, handlers.Log(http.HandlerFunc(redirect))); err != nil {
+	// 		app.Sugar.Fatalf("Re-directing server error: %v", err)
+	// 	}
+	// }()
 
 	go func() {
 		const jobProxyPort = ":8081"
@@ -74,12 +74,16 @@ func main() {
 	minerR.Handle("/{mID}/job/{jID}/output/dir", app.Handler(miner.JWTAuth(miner.JobAuth(miner.PostOutputDir)))).Methods("POST")
 
 	server := http.Server{
-		Addr:    ":4430",
+		// Addr:    ":4430",
+		Addr:    ":8080",
 		Handler: handlers.Log(r),
 	}
 
 	app.Sugar.Infof("Listening on port %s...", server.Addr)
-	if err := server.ListenAndServeTLS("server.crt", "server.key"); err != nil {
+	// if err := server.ListenAndServeTLS("server.crt", "server.key"); err != nil {
+	// 	app.Sugar.Fatalf("Server error: %v", err)
+	// }
+	if err := server.ListenAndServe(); err != nil {
 		app.Sugar.Fatalf("Server error: %v", err)
 	}
 }
