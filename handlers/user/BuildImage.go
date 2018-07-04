@@ -88,7 +88,8 @@ func BuildImage(w http.ResponseWriter, r *http.Request) *app.Error {
 		}
 	}
 
-	userDockerfile := filepath.Join("Dockerfiles", "Dockerfile.user")
+	// userDockerfile := filepath.Join("Dockerfiles", "Dockerfile.user")
+	userDockerfile := filepath.Join("Dockerfiles", "Dockerfile")
 	if _, err = os.Stat(userDockerfile); os.IsNotExist(err) {
 		if err = func() error {
 			if err = os.Mkdir("Dockerfiles", 0755); err != nil {

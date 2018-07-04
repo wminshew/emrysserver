@@ -1,0 +1,6 @@
+keys
+*.key
+*.crt
+.git*
+tags
+*.swp

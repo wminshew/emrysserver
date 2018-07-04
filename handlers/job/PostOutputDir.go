@@ -26,6 +26,7 @@ func PostOutputDir(w http.ResponseWriter, r *http.Request) *app.Error {
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
+	// TODO: make less kludgey (requires user to GetOutputDir first)
 	time.Sleep(1 * time.Second)
 
 	var tee io.Reader
