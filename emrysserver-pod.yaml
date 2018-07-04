@@ -30,6 +30,14 @@ spec:
       mountPath: /etc/secret-volume
     - name: emrys-volume
       mountPath: /data
+  - name: cloudsql-proxy
+    image: gcr.io/cloudsql-docker/gce-proxy:1.11
+    command: ["/cloud_sql_proxy",
+              "-instances=emrys-12:us-central1:emrysserver-psql=tcp:5432"]
+    volumeMounts:
+      - name: cloudsql-instance-credentials
+        mountPath: /secrets/cloudql
+        readOnly: true
   volumes:
   - name: secret-volume
     secret:
