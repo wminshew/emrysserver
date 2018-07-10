@@ -27,7 +27,20 @@ func Init() {
 	var err error
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbNetloc, dbPort, dbName)
 	if Db, err = sql.Open("postgres", connStr); err != nil {
-		app.Sugar.Errorf("Error connecting to database: %v", err)
+		app.Sugar.Errorf("Error opening database: %v", err)
 		panic(err)
+	}
+
+	if err = Db.Ping(); err != nil {
+		app.Sugar.Errorf("Error pinging database: %v", err)
+		panic(err)
+	}
+}
+
+func Close() {
+	app.Sugar.Infof("Closing database...")
+
+	if err := Db.Close(); err != nil {
+		app.Sugar.Errorf("Error closing database: %v", err)
 	}
 }

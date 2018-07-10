@@ -10,39 +10,40 @@ spec:
     image: gcr.io/emrys-12/emrysserver
     env:
     - name: DBNAME
-      value: "emrysuser"
+      value: "emrysserver"
     - name: DBNETLOC
       value: "localhost"
     - name: DBPASSWORD
       valueFrom:
         secretKeyRef:
-          name: emrysserver-secret
-          key: dbpassword
+          name: cloudsql-db-credentials
+          key: password
     - name: DBPORT
       value: "5432"
     - name: DBUSER
       valueFrom:
         secretKeyRef:
-          name: emrysserver-secret
-          key: dbuser
-    volumeMounts:
-    - name: secret-volume
-      mountPath: /etc/secret-volume
-    - name: emrys-volume
-      mountPath: /data
+          name: cloudsql-db-credentials
+          key: username
+    # volumeMounts:
+    # - name: emrys-volume
+    #   mountPath: /data
   - name: cloudsql-proxy
     image: gcr.io/cloudsql-docker/gce-proxy:1.11
     command: ["/cloud_sql_proxy",
-              "-instances=emrys-12:us-central1:emrysserver-psql=tcp:5432"]
-    # volumeMounts:
-    #   - name: cloudsql-instance-credentials
-    #     mountPath: /secrets/cloudql
-    #     readOnly: true
+              "-instances=emrys-12:us-central1:emrysserver-psql=tcp:5432",
+              "-credential_file=/secrets/cloudsql/credentials.json"]
+    ports:
+    - containerPort: 5432
+    volumeMounts:
+      - name: cloudsql-instance-credentials
+        mountPath: /secrets/cloudsql
+        readOnly: true
   volumes:
-  - name: secret-volume
+  - name: cloudsql-instance-credentials
     secret:
-      secretName: emrysserver-secret
-  - name: emrys-volume
-    gcePersistentDisk:
-      pdName: emrys-disk
-      fsType: ex4
+      secretName: cloudsql-instance-credentials
+  # - name: emrys-volume
+  #   gcePersistentDisk:
+  #     pdName: emrys-disk
+  #     fsType: ex4
