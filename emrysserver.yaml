@@ -1,0 +1,65 @@
+apiVersion: emrysserver/v1alpha
+kind: Deployment
+metadata:
+  name: emrysserver-deployment
+  # labels:
+  #   app: emrysserver
+spec:
+  replicas: 1
+  restartPolicy: Always
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: emrysserver
+    # labels:
+    #   app: emrysserver
+  template:
+    metadata:
+      labels:
+        app: emrysserver
+    spec:
+      containers:
+      - name: emrysserver-container
+        image: gcr.io/emrys-12/emrysserver
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DBNAME
+          value: "emrysserver"
+        - name: DBNETLOC
+          value: "localhost"
+        - name: DBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: password
+        - name: DBPORT
+          value: "5432"
+        - name: DBUSER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: username
+        # volumeMounts:
+        # - name: emrys-volume
+        #   mountPath: /data
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        command: ["/cloud_sql_proxy",
+                  "-instances=emrys-12:us-central1:emrysserver-psql=tcp:5432",
+                  "-credential_file=/secrets/cloudsql/credentials.json"]
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+          - name: cloudsql-instance-credentials
+            mountPath: /secrets/cloudsql
+            readOnly: true
+      volumes:
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-instance-credentials
+      # - name: emrys-volume
+      #   gcePersistentDisk:
+      #     pdName: emrys-disk
+      #     fsType: ex4
