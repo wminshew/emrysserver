@@ -1,24 +1,22 @@
-apiVersion: emrysserver/v1alpha
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: emrysserver-deployment
-  # labels:
-  #   app: emrysserver
+  labels:
+    app: emrysserver
 spec:
   replicas: 1
-  restartPolicy: Always
   strategy:
     type: RollingUpdate
   selector:
     matchLabels:
       app: emrysserver
-    # labels:
-    #   app: emrysserver
   template:
     metadata:
       labels:
         app: emrysserver
     spec:
+      restartPolicy: Always
       containers:
       - name: emrysserver-container
         image: gcr.io/emrys-12/emrysserver
