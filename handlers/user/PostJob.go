@@ -50,7 +50,7 @@ func PostJob(w http.ResponseWriter, r *http.Request) *app.Error {
 		"iat": time.Now().Unix(),
 		"sub": j.ID,
 	})
-	tString, err := t.SignedString([]byte(secret))
+	tString, err := t.SignedString([]byte(userSecret))
 	if err != nil {
 		app.Sugar.Errorw("failed to sign job token",
 			"url", r.URL,

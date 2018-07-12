@@ -21,7 +21,7 @@ func JobAuth(h app.Handler) app.Handler {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 				}
-				return []byte(secret), nil
+				return []byte(userSecret), nil
 			}, request.WithClaims(claims))
 		if err != nil {
 			app.Sugar.Errorw("failed to parse user job JWT",

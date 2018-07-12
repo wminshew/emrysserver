@@ -67,7 +67,7 @@ func PostBid(w http.ResponseWriter, r *http.Request) *app.Error {
 			"sub": jID,
 		})
 
-		tString, err := t.SignedString([]byte(secret))
+		tString, err := t.SignedString([]byte(minerSecret))
 		if err != nil {
 			app.Sugar.Errorw("failed to sign token",
 				"url", r.URL,

@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var secret = os.Getenv("SECRET")
+var minerSecret = os.Getenv("SECRET")
 
 const (
 	stdDuration = 7

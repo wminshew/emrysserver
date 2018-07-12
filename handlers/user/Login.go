@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var secret = os.Getenv("SECRET")
+var userSecret = os.Getenv("USERSECRET")
 
 const (
 	stdDuration = 7
@@ -92,7 +92,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 		"sub":   u,
 	})
 
-	tokenString, err := token.SignedString([]byte(secret))
+	tokenString, err := token.SignedString([]byte(userSecret))
 	if err != nil {
 		app.Sugar.Errorw("failed to sign token",
 			"url", r.URL,
