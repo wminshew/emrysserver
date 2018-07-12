@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/blendle/zapdriver"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -18,11 +19,13 @@ var (
 func InitLogger() {
 	var err error
 	if appEnv == "dev" {
-		if Logger, err = zap.NewDevelopment(); err != nil {
+		// if Logger, err = zap.NewDevelopment(); err != nil {
+		if Logger, err = zapdriver.NewDevelopment(); err != nil {
 			panic(err)
 		}
 	} else {
-		if Logger, err = zap.NewProduction(); err != nil {
+		// if Logger, err = zap.NewProduction(); err != nil {
+		if Logger, err = zapdriver.NewProduction(); err != nil {
 			panic(err)
 		}
 	}

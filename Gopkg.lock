@@ -52,6 +52,12 @@
   version = "v3.5.1"
 
 [[projects]]
+  name = "github.com/blendle/zapdriver"
+  packages = ["."]
+  revision = "d2d292b2ee7202aedceb5618bb7b49ce38acb306"
+  version = "v1.1.2"
+
+[[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = [
     ".",
@@ -415,6 +421,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e207e78eed2c885794830cc23fc39400c7fa4c8aa66380a78f538d083a4ab17b"
+  inputs-digest = "c6a86f532b2e650d3ff76182e939197ba05107c36a0f4ed6f2d94abec279235d"
   solver-name = "gps-cdcl"
   solver-version = 1
