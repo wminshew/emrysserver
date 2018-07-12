@@ -93,7 +93,7 @@ func Login(w http.ResponseWriter, r *http.Request) *app.Error {
 		"sub":   mUUID,
 	})
 
-	tokenString, err := token.SignedString([]byte(secret))
+	tokenString, err := token.SignedString([]byte(minerSecret))
 	if err != nil {
 		app.Sugar.Errorw("failed to sign token",
 			"url", r.URL,
