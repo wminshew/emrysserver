@@ -9,11 +9,13 @@ import (
 // Log logs request method, URL, & address
 func Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		app.Sugar.Infow("request",
-			"method", r.Method,
-			"url", r.URL,
-			"source", r.RemoteAddr,
-		)
+		if r.URL.Path != "/" {
+			app.Sugar.Infow("request",
+				"method", r.Method,
+				"url", r.URL,
+				"source", r.RemoteAddr,
+			)
+		}
 		handler.ServeHTTP(w, r)
 	})
 }

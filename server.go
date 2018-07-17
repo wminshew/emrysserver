@@ -51,6 +51,7 @@ func main() {
 	}()
 
 	r := mux.NewRouter()
+	r.HandleFunc("/", healthCheck)
 
 	userR := r.PathPrefix("/user").Subrouter()
 	userR.Handle("", app.Handler(user.New)).Methods("POST")
@@ -75,23 +76,23 @@ func main() {
 	minerR.Handle("/{mID}/job/{jID}/output/dir", app.Handler(miner.JWTAuth(miner.JobAuth(miner.PostOutputDir)))).Methods("POST")
 
 	server := http.Server{
-		// Addr:    ":4430",
 		Addr:    ":8080",
 		Handler: handlers.Log(r),
 	}
 
 	app.Sugar.Infof("Listening on port %s...", server.Addr)
-	// if err := server.ListenAndServeTLS("server.crt", "server.key"); err != nil {
-	// 	app.Sugar.Fatalf("Server error: %v", err)
-	// }
 	if err := server.ListenAndServe(); err != nil {
 		app.Sugar.Fatalf("Server error: %v", err)
 	}
 }
 
-func redirect(w http.ResponseWriter, r *http.Request) {
-	newURL := *r.URL
-	newURL.Scheme = "https"
-	app.Sugar.Infof("Redirect to: %s", newURL.String())
-	http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
+// func redirect(w http.ResponseWriter, r *http.Request) {
+// 	newURL := *r.URL
+// 	newURL.Scheme = "https"
+// 	app.Sugar.Infof("Redirect to: %s", newURL.String())
+// 	http.Redirect(w, r, newURL.String(), http.StatusTemporaryRedirect)
+// }
+
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	return
 }
