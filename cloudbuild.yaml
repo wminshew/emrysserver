@@ -1,12 +1,16 @@
 steps:
-# - name: 'gcr.io/cloud-builders/docker'
-#   args: [ 'pull', 'gcr.io/$PROJECT_ID/emrysserver:latest' ]
 - name: 'gcr.io/cloud-builders/docker'
-  args: [
-        'build',
-        '-t', 'gcr.io/$PROJECT_ID/emrysserver',
-        # '--cache-from', 'gcr.io/$PROJECT_ID/emrysserver:latest',
-        '.'
-        ]
+  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD', '-t', 'gcr.io/$PROJECT_ID/$_IMAGE:latest', '.' ]
+# - name: 'gcr.io/cloud-builders/kubectl'
+#   args:
+#   - 'set'
+#   - 'image'
+#   - 'deployment/[deployment-name]'
+#   - '[my-container]=gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD'
+#   env:
+#   - 'CLOUDSDK_COMPUTE_ZONE=[zone]'
+#   - 'CLOUDSDK_CONTAINER_CLUSTER=[cluster]'
 images:
-  - 'gcr.io/$PROJECT_ID/emrysserver:latest'
+  - 'gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD'
+  - 'gcr.io/$PROJECT_ID/$_IMAGE:latest'
+tags: [ '$_IMAGE', '$_BUILD' ]
