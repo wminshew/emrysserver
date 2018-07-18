@@ -17,6 +17,7 @@ func main() {
 	defer check.Err(app.Sugar.Sync)
 	db.Init()
 	defer db.Close()
+	user.InitOauthClient()
 	user.InitStorage()
 	miner.InitStorage()
 	job.InitStorage()

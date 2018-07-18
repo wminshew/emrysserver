@@ -76,3 +76,7 @@
 [[constraint]]
   name = "github.com/blendle/zapdriver"
   version = "1.1.2"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/oauth2"

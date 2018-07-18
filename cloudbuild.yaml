@@ -10,7 +10,5 @@ steps:
 #   env:
 #   - 'CLOUDSDK_COMPUTE_ZONE=[zone]'
 #   - 'CLOUDSDK_CONTAINER_CLUSTER=[cluster]'
-images:
-  - 'gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD'
-  - 'gcr.io/$PROJECT_ID/$_IMAGE:latest'
+images: [ 'gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD', 'gcr.io/$PROJECT_ID/$_IMAGE:latest' ]
 tags: [ '$_IMAGE', '$_BUILD' ]
