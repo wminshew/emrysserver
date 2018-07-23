@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
-	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/log"
 )
 
 var p *pool
@@ -20,7 +20,7 @@ type pool struct {
 
 // initPool creates a new pool of miner connections
 func initPool() {
-	app.Sugar.Infof("Initializing miner pool...")
+	log.Sugar.Infof("Initializing miner pool...")
 	p = &pool{
 		miners:     make(map[*miner]bool),
 		miner:      make(map[uuid.UUID]*miner),

@@ -25,10 +25,10 @@ func main() {
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rUser := r.PathPrefix("/user").Subrouter()
-	rUser.Handle("", app.Handler(newUser)).Methods("POST")
-	rUser.Handle("/", app.Handler(newUser)).Methods("POST")
-	rUser.Handle("/login", app.Handler(login)).Methods("POST")
-	rUser.Handle("/version", app.Handler(getVersion)).Methods("GET")
+	rUser.Handle("", newUser()).Methods("POST")
+	rUser.Handle("/", newUser()).Methods("POST")
+	rUser.Handle("/login", login()).Methods("POST")
+	rUser.Handle("/version", getVersion()).Methods("GET")
 	rUser.Handle("/{uID}/job", postJob()).Methods("POST").
 		HeadersRegexp("Authorization", "^Bearer ").
 		Subrouter().Use(auth.Jwt(secret))

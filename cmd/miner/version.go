@@ -5,6 +5,7 @@ import (
 	"github.com/blang/semver"
 	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 )
 
@@ -22,7 +23,7 @@ func getVersion() app.Handler {
 		}
 		err := json.NewEncoder(w).Encode(&resp)
 		if err != nil {
-			app.Sugar.Errorw("failed to encode miner semver",
+			log.Sugar.Errorw("failed to encode miner semver",
 				"url", r.URL,
 				"err", err.Error(),
 			)

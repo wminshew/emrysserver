@@ -3,7 +3,7 @@ package main
 import (
 	"cloud.google.com/go/storage"
 	"context"
-	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/app"
 )
 
 const (
@@ -12,14 +12,14 @@ const (
 
 var bkt *storage.BucketHandle
 
-// initStorage initializes the google cloud storage client for user nodes
+// initStorage initializes the google cloud storage client
 func initStorage() {
-	log.Sugar.Infof("Initializing user storage...")
+	app.Sugar.Infof("Initializing job storage...")
 
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		log.Sugar.Errorf("Cloud storage failed to initialize! Panic!")
+		app.Sugar.Errorf("Cloud storage failed to initialize! Panic!")
 		panic(err)
 	}
 	bkt = client.Bucket(bktName)

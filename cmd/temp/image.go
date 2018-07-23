@@ -6,8 +6,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/db"
+	"github.com/wminshew/emrysserver/pkg/log"
 	"io"
 	"net/http"
 )
@@ -18,7 +19,7 @@ func image(w http.ResponseWriter, r *http.Request) *app.Error {
 	jID := vars["jID"]
 	jUUID, err := uuid.FromString(jID)
 	if err != nil {
-		app.Sugar.Errorw("failed to parse job ID",
+		log.Sugar.Errorw("failed to parse job ID",
 			"url", r.URL,
 			"err", err.Error(),
 		)
@@ -28,7 +29,7 @@ func image(w http.ResponseWriter, r *http.Request) *app.Error {
 	ctx := r.Context()
 	cli, err := docker.NewEnvClient()
 	if err != nil {
-		app.Sugar.Errorw("failed to create docker client",
+		log.Sugar.Errorw("failed to create docker client",
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", jID,
@@ -43,7 +44,7 @@ func image(w http.ResponseWriter, r *http.Request) *app.Error {
 	defer app.CheckErr(r, zw.Close)
 
 	if _, err = io.Copy(zw, img); err != nil {
-		app.Sugar.Errorw("failed to copy image to zlib response writer",
+		log.Sugar.Errorw("failed to copy image to zlib response writer",
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", jID,
@@ -60,7 +61,7 @@ func image(w http.ResponseWriter, r *http.Request) *app.Error {
 	if _, err = db.Db.Exec(sqlStmt, true, jID); err != nil {
 		pqErr := err.(*pq.Error)
 		if pqErr.Fatal() {
-			app.Sugar.Fatalw("failed to update job status",
+			log.Sugar.Fatalw("failed to update job status",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -69,7 +70,7 @@ func image(w http.ResponseWriter, r *http.Request) *app.Error {
 				"pq_detail", pqErr.Detail,
 			)
 		} else {
-			app.Sugar.Errorw("failed to update job status",
+			log.Sugar.Errorw("failed to update job status",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,

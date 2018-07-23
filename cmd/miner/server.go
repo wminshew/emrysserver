@@ -4,6 +4,7 @@ package main
 import (
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
@@ -40,6 +41,7 @@ func main() {
 	rAuction := r.PathPrefix("/auction").Subrouter()
 	rAuction.Handle("/{jID}", postAuction()).Methods("POST")
 	rAuction.Use(auth.Jwt(userSecret))
+	rAuction.Use(auth.UserJobMiddleware())
 
 	server := http.Server{
 		Addr:    ":8080",

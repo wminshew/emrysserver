@@ -4,8 +4,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/db"
+	"github.com/wminshew/emrysserver/pkg/log"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -19,7 +20,7 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 	jID := vars["jID"]
 	jUUID, err := uuid.FromString(jID)
 	if err != nil {
-		app.Sugar.Errorw("failed to parse job ID",
+		log.Sugar.Errorw("failed to parse job ID",
 			"url", r.URL,
 			"err", err.Error(),
 		)
@@ -36,7 +37,7 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 		ctx := r.Context()
 		or, err := bkt.Object(dataPath).NewReader(ctx)
 		if err != nil {
-			app.Sugar.Errorw("failed to open cloud storage reader",
+			log.Sugar.Errorw("failed to open cloud storage reader",
 				"url", r.URL,
 				"path", dataPath,
 				"err", err.Error(),
@@ -46,7 +47,7 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		if dataFile, err = os.Create(dataPath); err != nil {
-			app.Sugar.Errorw("failed to create disk cache",
+			log.Sugar.Errorw("failed to create disk cache",
 				"url", r.URL,
 				"path", dataPath,
 				"err", err.Error(),
@@ -58,7 +59,7 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 		tee = io.TeeReader(or, dataFile)
 	} else {
 		if dataFile, err = os.Open(dataPath); err != nil {
-			app.Sugar.Errorw("failed to open data file",
+			log.Sugar.Errorw("failed to open data file",
 				"url", r.URL,
 				"path", dataPath,
 				"err", err.Error(),
@@ -72,7 +73,7 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 	defer app.CheckErr(r, dataFile.Close)
 
 	if _, err := io.Copy(w, tee); err != nil {
-		app.Sugar.Errorw("failed to copy data file to response writer",
+		log.Sugar.Errorw("failed to copy data file to response writer",
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", jID,
@@ -89,7 +90,7 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 	if _, err := db.Db.Exec(sqlStmt, true, jID); err != nil {
 		pqErr := err.(*pq.Error)
 		if pqErr.Fatal() {
-			app.Sugar.Fatalw("failed to update job status",
+			log.Sugar.Fatalw("failed to update job status",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -98,7 +99,7 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 				"pq_detail", pqErr.Detail,
 			)
 		} else {
-			app.Sugar.Errorw("failed to update job status",
+			log.Sugar.Errorw("failed to update job status",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,

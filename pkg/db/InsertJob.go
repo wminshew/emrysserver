@@ -12,6 +12,18 @@ import (
 func InsertJob(r *http.Request, uUUID, jUUID uuid.UUID) *app.Error {
 	ctx := r.Context()
 	tx, err := Db.BeginTx(ctx, nil)
+	if err != nil {
+		pqErr := err.(*pq.Error)
+		log.Sugar.Errorw("failed to begin tx",
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jUUID,
+			"pq_sev", pqErr.Severity,
+			"pq_code", pqErr.Code,
+			"pq_detail", pqErr.Detail,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
 
 	sqlStmt := `
 	INSERT INTO jobs (job_uuid, user_uuid, active)
@@ -70,7 +82,7 @@ func InsertJob(r *http.Request, uUUID, jUUID uuid.UUID) *app.Error {
 
 	if err = tx.Commit(); err != nil {
 		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to insert status",
+		log.Sugar.Errorw("failed to commit tx",
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", jUUID,

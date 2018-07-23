@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 	"time"
 )
@@ -20,25 +21,28 @@ var upgrader = websocket.Upgrader{
 // available worker Pool
 func connect() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			app.Sugar.Errorw("failed to upgrade connection",
-				"url", r.URL,
-				"err", err.Error(),
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
 		vars := mux.Vars(r)
 		mID := vars["mID"]
 		mUUID, err := uuid.FromString(mID)
 		if err != nil {
-			app.Sugar.Errorw("failed to parse miner ID",
+			log.Sugar.Errorw("failed to parse miner ID",
 				"url", r.URL,
 				"err", err.Error(),
+				"mID", mID,
 			)
 			return &app.Error{Code: http.StatusBadRequest, Message: "failed to parse miner ID in path"}
 		}
+
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Sugar.Errorw("failed to upgrade connection",
+				"url", r.URL,
+				"err", err.Error(),
+				"mID", mID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+
 		m := &miner{
 			ID:      mUUID,
 			pool:    p,
