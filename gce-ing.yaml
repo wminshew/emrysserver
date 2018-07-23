@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gce-ing
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "emrys-static-ip"
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  tls:
+  - secretName: emrys-tls-secret
+  rules:
+  - host: emrys.io
+    http:
+      paths:
+      - path: /user
+        backend:
+          serviceName: user-svc
+          servicePort: 8080
+      - path: /user/*
+        backend:
+          serviceName: user-svc
+          servicePort: 8080
+      - path: /image/*
+        backend:
+          serviceName: user-svc
+          servicePort: 8080
+      # - path: /data/*
+      #   backend:
+      #     serviceName: data-svc
+      #     servicePort: 8080
+      - path: /auction/*
+        backend:
+          serviceName: miner-svc
+          servicePort: 8080
+      - path: /miner
+        backend:
+          serviceName: miner-svc
+          servicePort: 8080
+      - path: /miner/*
+        backend:
+          serviceName: miner-svc
+          servicePort: 8080
+      - path: /job/*
+        backend:
+          serviceName: job-svc
+          servicePort: 8080

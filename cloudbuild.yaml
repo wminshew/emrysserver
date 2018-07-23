@@ -1,14 +1,22 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD', '-t', 'gcr.io/$PROJECT_ID/$_IMAGE:latest', '.' ]
-# - name: 'gcr.io/cloud-builders/kubectl'
-#   args:
-#   - 'set'
-#   - 'image'
-#   - 'deployment/[deployment-name]'
-#   - '[my-container]=gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD'
-#   env:
-#   - 'CLOUDSDK_COMPUTE_ZONE=[zone]'
-#   - 'CLOUDSDK_CONTAINER_CLUSTER=[cluster]'
-images: [ 'gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD', 'gcr.io/$PROJECT_ID/$_IMAGE:latest' ]
-tags: [ '$_IMAGE', '$_BUILD' ]
+  args: [ 'build', '-f', './cmd/user/dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/user:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/user:latest',
+    '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/miner/dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/miner:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/miner:latest',
+    '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/job/dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/job:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/job:latest',
+    '.' ]
+images: [
+  'gcr.io/$PROJECT_ID/user:$_BUILD', 'gcr.io/$PROJECT_ID/user:latest',
+  'gcr.io/$PROJECT_ID/miner:$_BUILD', 'gcr.io/$PROJECT_ID/miner:latest',
+  'gcr.io/$PROJECT_ID/job:$_BUILD', 'gcr.io/$PROJECT_ID/job:latest'
+]
+tags: [ 'user', 'miner', 'job', '$_BUILD' ]

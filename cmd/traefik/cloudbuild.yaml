@@ -1,0 +1,5 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/emrys-traefik:$_BUILD', '-t', 'gcr.io/$PROJECT_ID/emrys-traefik:latest', '.' ]
+images: [ 'gcr.io/$PROJECT_ID/emrys-traefik:$_BUILD', 'gcr.io/$PROJECT_ID/emrys-traefik:latest' ]
+tags: [ 'emrys-traefik', '$_BUILD' ]

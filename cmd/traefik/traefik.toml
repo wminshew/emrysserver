@@ -1,0 +1,67 @@
+# Entrypoints
+[entryPoints]
+
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certficates]]
+      certFile = "./traefik.crt"
+      keyFile = "./traefik.key"
+
+# Letsencrypt
+# [acme]
+# email = "wminshew@gmail.com"
+# storage = "acme.json"
+# caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+# entryPoint = "https"
+#   [acme.httpChallenge]
+#   entryPoint = "http"
+# [[acme.domains]]
+#   main = "emrys.io"
+
+# Frontends
+[frontends]
+
+  [frontend.user]
+  backend = "emrys-user-svc"
+    [frontends.user.routes.1]
+    rule = "Host:emrys.io;PathPrefixStrip:/user"
+
+  [frontend.miner]
+  backend = "emrys-miner-svc"
+    [frontends.miner.routes.1]
+    rule = "Host:emrys.io;PathPrefixStrip:/miner"
+
+  [frontend.job]
+  backend = "emrys-job-svc"
+    [frontends.job.routes.1]
+    rule = "Host:emrys.io;PathPrefixStrip:/job"
+
+# Backends
+[backends]
+
+  [backends.emrys-user-svc]
+    [backends.emrys-user-svc.servers.1]
+    url = http://emrys-user-svc
+  
+  [backends.emrys-miner-svc]
+    [backends.emrys-miner-svc.servers.1]
+    url = http://emrys-miner-svc
+
+  [backends.emrys-job-svc]
+    [backends.emrys-job-svc.servers.1]
+    url = http://emrys-job-svc
+    # Use sticky sessions to coordinate job server between user/miner
+    # Will need to grab user-assigned cookie (refresh per job) and
+    # provide it to winning miner
+    # [backends.emrys-job-svc.loadbalancer.stickiness]
+    # Could also achieve this by hardcoding which server the request
+    # goes to based on the value of the first bit, etc [all job requests 
+    # with first bit 0 go to one server, with bit 1 go to another]
+    # Or I could just fork and implement consistent hashing
+    # or choose another ingress..

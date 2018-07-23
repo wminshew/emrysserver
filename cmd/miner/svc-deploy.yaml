@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: miner-svc
+  labels:
+    app: miner
+spec:
+  selector:
+    app: miner
+  type: NodePort
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miner-deploy
+  labels:
+    app: miner
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: miner
+  template:
+    metadata:
+      labels:
+        app: miner
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: miner-container
+        image: gcr.io/emrys-12/miner
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/secrets/google_application_credentials/credentials.json"
+        - name: DBNAME
+          value: "emrysserver"
+        - name: DBNETLOC
+          value: "sqlproxy-svc"
+        - name: DBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: password
+        - name: DBPORT
+          value: "5432"
+        - name: DBUSER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: username
+        - name: MINERSECRET
+          valueFrom:
+            secretKeyRef:
+              name: miner-secret
+              key: secret
+        - name: USERSECRET
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: secret
+        volumeMounts:
+          - name: miner-creds
+            mountPath: /secrets/google_application_credentials
+            readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: miner-creds
+        secret:
+          secretName: miner-creds
