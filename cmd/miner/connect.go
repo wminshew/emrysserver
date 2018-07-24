@@ -15,6 +15,7 @@ func connect() app.Handler {
 
 		q := r.URL.Query()
 		q.Set("category", "jobs")
+		q.Set("timeout", "600")
 		r.URL.RawQuery = q.Encode()
 		jobsManager.SubscriptionHandler(w, r)
 		return nil
