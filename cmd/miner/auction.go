@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -37,6 +38,21 @@ const (
 
 func (a *auction) run(r *http.Request) *app.Error {
 	a.winner.mux.Lock()
+	j := &job.Job{
+		ID: a.jobID,
+	}
+	jMsg := job.Message{
+		Message: "New job posted!",
+		Job:     j,
+	}
+	if err := jobsManager.Publish("jobs", jMsg); err != nil {
+		log.Sugar.Errorw("failed to publish job",
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", a.jobID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
 	auctions[a.jobID] = a
 	defer func() {
 		a.winner.mux.Unlock()

@@ -20,9 +20,7 @@ func main() {
 	db.Init()
 	defer db.Close()
 	initStorage()
-
-	initPool()
-	go runPool()
+	initJobsManager()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
@@ -34,8 +32,8 @@ func main() {
 	rMiner.Handle("/version", getVersion()).Methods("GET")
 
 	rMinerAuth := rMiner.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rMinerAuth.Handle("/{mID}/connect", connect()).Methods("GET")
-	rMinerAuth.Handle("/{mID}/job/{jID}/bid", postBid()).Methods("POST")
+	rMinerAuth.Handle("/connect", connect()).Methods("GET")
+	rMinerAuth.Handle("/job/{jID}/bid", postBid()).Methods("POST")
 	rMinerAuth.Use(auth.Jwt(minerSecret))
 
 	rAuction := r.PathPrefix("/auction").Subrouter()

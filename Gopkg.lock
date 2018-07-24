@@ -153,6 +153,12 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/jcuga/golongpoll"
+  packages = ["."]
+  revision = "645f5b7692d8f02ab5537866ae04a00478e91e97"
+  version = "v1.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/lib/pq"
   packages = [
@@ -166,6 +172,12 @@
   name = "github.com/mholt/archiver"
   packages = ["."]
   revision = "e4ef56d48eb029648b0e895bb0b6a393ef0829c3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nu7hatch/gouuid"
+  packages = ["."]
+  revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
   branch = "master"
@@ -227,7 +239,6 @@
   branch = "master"
   name = "github.com/wminshew/emrys"
   packages = [
-    "pkg/check",
     "pkg/creds",
     "pkg/job"
   ]
@@ -421,6 +432,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "309dea8ee205648535b300637a2ca9c1afcf7cabe9d11caa66d03997511c2d60"
+  inputs-digest = "724c5f01338d0a1eba62313db8219555ed8791ba20942fce626365fcc22c3da8"
   solver-name = "gps-cdcl"
   solver-version = 1

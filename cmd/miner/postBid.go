@@ -15,7 +15,6 @@ import (
 func postBid() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		var err error
-		vars := mux.Vars(r)
 		b := &job.Bid{}
 		if err = json.NewDecoder(r.Body).Decode(b); err != nil {
 			log.Sugar.Errorw("failed to decode json bid body",
@@ -26,6 +25,7 @@ func postBid() app.Handler {
 		}
 		b.ID = uuid.NewV4()
 
+		vars := mux.Vars(r)
 		jID := vars["jID"]
 		if b.JobID, err = uuid.FromString(jID); err != nil {
 			log.Sugar.Errorw("failed to parse job ID",
@@ -36,7 +36,7 @@ func postBid() app.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 
-		mID := vars["mID"]
+		mID := r.Header.Get("X-Jwt-Claims-Subject")
 		if b.MinerID, err = uuid.FromString(mID); err != nil {
 			log.Sugar.Errorw("failed to parse miner ID",
 				"url", r.URL,
