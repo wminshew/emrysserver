@@ -1,11 +1,14 @@
-FROM golang:1.9.2-alpine
+FROM golang:1.9.2-alpine as builder
+# FROM golang:1.9.2-stretch
 COPY . /go/src/github.com/wminshew/emrysserver
-RUN go install github.com/wminshew/emrysserver/cmd/user
+RUN go install github.com/wminshew/emrysserver/cmd/user 
+# RUN CGO_ENABLED=0 go install -tags netgo -a github.com/wminshew/emrysserver/cmd/user 
 
 FROM alpine:3.8
 RUN apk --update upgrade && \
   apk add curl ca-certificates && \
   update-ca-certificates && \
   rm -rf /var/cache/apk/*
-COPY --from=0 /go/bin/user .
+COPY --from=builder /go/bin/user .
 CMD ["./user"]
+# CMD ["/go/bin/user"]

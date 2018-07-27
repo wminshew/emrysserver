@@ -24,7 +24,7 @@ func GetValidBids(r *http.Request, jUUID uuid.UUID) (*sql.Rows, error) {
 	ORDER BY b1.min_rate
 	LIMIT 2
 	`
-	rows, err := Db.Query(sqlStmt, jUUID)
+	rows, err := db.Query(sqlStmt, jUUID)
 	if err != nil {
 		pqErr := err.(*pq.Error)
 		log.Sugar.Errorw("failed to query for valid bids",

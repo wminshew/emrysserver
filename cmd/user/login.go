@@ -58,7 +58,7 @@ func login() app.Handler {
 			"sub":   uUUID,
 		})
 
-		tokenString, err := token.SignedString([]byte(secret))
+		tokenString, err := token.SignedString([]byte(userSecret))
 		if err != nil {
 			log.Sugar.Errorw("failed to sign token",
 				"url", r.URL,

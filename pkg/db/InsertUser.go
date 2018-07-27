@@ -14,7 +14,7 @@ func InsertUser(r *http.Request, email, hashedPassword string, uUUID uuid.UUID) 
 	INSERT INTO users (user_email, password, user_uuid)
 	VALUES ($1, $2, $3)
 	`
-	if _, err := Db.Exec(sqlStmt, email, hashedPassword, uUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, email, hashedPassword, uUUID); err != nil {
 		pqErr := err.(*pq.Error)
 		log.Sugar.Errorw("failed to insert user",
 			"url", r.URL,

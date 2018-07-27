@@ -8,38 +8,31 @@ import (
 	"net/http"
 )
 
-// InsertJob inserts a new job, status, and payment into the db
-func InsertJob(r *http.Request, uUUID, jUUID uuid.UUID) *app.Error {
+// SetJobWinnerAndAuctionStatus sets the winBid UUID, pay rate, and status for job jUUID
+func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payRate float64) *app.Error {
 	ctx := r.Context()
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
 		if txerr != nil {
 			return "failed to begin tx", txerr
 		}
+
 		sqlStmt := `
-	INSERT INTO jobs (job_uuid, user_uuid, active)
-	VALUES ($1, $2, $3)
-	`
-		if _, err := tx.Exec(sqlStmt, jUUID, uUUID, true); err != nil {
-			return "failed to insert job", err
+		UPDATE jobs
+		SET (win_bid_uuid, pay_rate) = ($1, $2)
+		WHERE job_uuid = $3
+		`
+		if _, err := tx.Exec(sqlStmt, wbUUID, payRate, jUUID); err != nil {
+			return "failed to update job winner", err
 		}
 
 		sqlStmt = `
-	INSERT INTO payments (job_uuid, user_paid, miner_paid)
-	VALUES ($1, $2, $3)
-	`
-		if _, err := tx.Exec(sqlStmt, jUUID, false, false); err != nil {
-			return "failed to insert payment", err
-		}
-		sqlStmt = `
-	INSERT INTO statuses (job_uuid, user_data_stored,
-	image_built, auction_completed,
-	image_downloaded, data_downloaded,
-	output_log_posted, output_dir_posted)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`
-		if _, err := tx.Exec(sqlStmt, jUUID, false, false, false, false, false, false, false); err != nil {
-			return "failed to insert status", err
+		UPDATE statuses
+		SET (auction_completed) = ($1)
+		WHERE job_uuid = $2
+		`
+		if _, err := tx.Exec(sqlStmt, true, jUUID); err != nil {
+			return "failed to update job status", err
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -61,6 +54,9 @@ func InsertJob(r *http.Request, uUUID, jUUID uuid.UUID) *app.Error {
 			if err := tx.Rollback(); err != nil {
 				log.Sugar.Errorf("Error rolling tx back job %v: %v\n", jUUID, err)
 			}
+		}
+		if err := SetJobInactive(r, jUUID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}

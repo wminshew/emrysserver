@@ -42,9 +42,9 @@ spec:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
         - name: DOCKER_HOST
-          value: tcp://docker-svc:2375
+          value: "tcp://docker-svc:2375"
         - name: DOCKER_API_VERSION
-          value: 18.03.1-ce
+          value: "1.37"
         - name: DBNAME
           value: "emrysserver"
         - name: DBNETLOC
@@ -61,6 +61,11 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
+        - name: MINERSECRET
+          valueFrom:
+            secretKeyRef:
+              name: miner-secret
+              key: secret
         - name: USERSECRET
           valueFrom:
             secretKeyRef:

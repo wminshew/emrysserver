@@ -16,7 +16,7 @@ func GetJobWinner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
 	INNER JOIN jobs j ON (j.win_bid_uuid = b.bid_uuid)
 	WHERE j.job_uuid = $1
 	`
-	if err := Db.QueryRow(sqlStmt, jUUID).Scan(&mUUID); err != nil {
+	if err := db.QueryRow(sqlStmt, jUUID).Scan(&mUUID); err != nil {
 		pqErr := err.(*pq.Error)
 		log.Sugar.Errorw("failed to query for job winning bid",
 			"url", r.URL,

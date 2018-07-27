@@ -9,6 +9,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 	"os"
+	"time"
 )
 
 var minerSecret = os.Getenv("MINERSECRET")
@@ -42,8 +43,9 @@ func main() {
 	rAuction.Use(auth.UserJobMiddleware())
 
 	server := http.Server{
-		Addr:    ":8080",
-		Handler: log.Log(r),
+		Addr:        ":8080",
+		Handler:     log.Log(r),
+		ReadTimeout: 5 * time.Second,
 	}
 
 	log.Sugar.Infof("Miner listening on port %s...", server.Addr)

@@ -34,7 +34,10 @@ func image(w http.ResponseWriter, r *http.Request) *app.Error {
 			"err", err.Error(),
 			"jID", jID,
 		)
-		_ = db.SetJobInactive(r, jUUID)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	img, err := cli.ImageSave(ctx, []string{jID})
@@ -49,7 +52,10 @@ func image(w http.ResponseWriter, r *http.Request) *app.Error {
 			"err", err.Error(),
 			"jID", jID,
 		)
-		_ = db.SetJobInactive(r, jUUID)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
@@ -79,7 +85,10 @@ func image(w http.ResponseWriter, r *http.Request) *app.Error {
 				"pq_detail", pqErr.Detail,
 			)
 		}
-		_ = db.SetJobInactive(r, jUUID)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 

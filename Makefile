@@ -1,12 +1,14 @@
 DATE := $(shell date +%Y-%m-%d_%H-%M-%S)
+USERTIMEOUT := 120
+MINERTIMEOUT := 605
 
-all: build deploy
+all: build deploy rollout
 
-user: build-user deploy-user
+user: build-user deploy-user rollout-user
 
-miner: build-miner deploy-miner
+miner: build-miner deploy-miner rollout-miner
 
-job: build-job deploy-job
+job: build-job deploy-job rollout-job
 
 
 build: cloudbuild.yaml
@@ -22,21 +24,27 @@ build-job: cmd/job/cloudbuild.yaml cmd/job/dockerfile
 	gcloud container builds submit --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
 
-deploy: deploy-user deploy-miner deploy-job deploy-sqlproxy deploy-ing
+deploy: deploy-user deploy-miner deploy-job deploy-docker deploy-sqlproxy deploy-ing
 
 deploy-user: cmd/user/svc-deploy.yaml
 	kubectl apply -f cmd/user/svc-deploy.yaml
+	gcloud compute backend-services list --filter='user' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(USERTIMEOUT)
 
 deploy-miner: cmd/miner/svc-deploy.yaml
 	kubectl apply -f cmd/miner/svc-deploy.yaml
+	gcloud compute backend-services list --filter='miner' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(MINERTIMEOUT)
 
 deploy-job: cmd/job/svc-deploy.yaml
 	kubectl apply -f cmd/job/svc-deploy.yaml
 
-deploy-sqlproxy: cmd/sqlproxy/svc-deploy.yaml
+deploy-docker: cmd/docker/svc-deploy.yaml
+	kubectl apply -f cmd/docker/svc-deploy.yaml
 
-deploy-ing: ingress.yaml
-	kubectl apply -f ingress.yaml
+deploy-sqlproxy: cmd/sqlproxy/svc-deploy.yaml
+	kubectl apply -f cmd/sqlproxy/svc-deploy.yaml
+
+deploy-ing: gce-ing.yaml
+	kubectl replace -f gce-ing.yaml
 
 
 rollout: rollout-user rollout-miner rollout-job

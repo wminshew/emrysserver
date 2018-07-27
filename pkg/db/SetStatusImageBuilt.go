@@ -15,7 +15,7 @@ func SetStatusImageBuilt(r *http.Request, jUUID uuid.UUID) *app.Error {
 	SET (image_built) = ($1)
 	WHERE job_uuid = $2
 	`
-	if _, err := Db.Exec(sqlStmt, true, jUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, true, jUUID); err != nil {
 		pqErr := err.(*pq.Error)
 		log.Sugar.Errorw("failed to update job status",
 			"url", r.URL,
@@ -25,7 +25,9 @@ func SetStatusImageBuilt(r *http.Request, jUUID uuid.UUID) *app.Error {
 			"pq_code", pqErr.Code,
 			"pq_detail", pqErr.Detail,
 		)
-		_ = SetJobInactive(r, jUUID)
+		if err := SetJobInactive(r, jUUID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 

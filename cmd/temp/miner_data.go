@@ -43,7 +43,10 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 				"err", err.Error(),
 				"jID", jID,
 			)
-			_ = db.SetJobInactive(r, jUUID)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		if dataFile, err = os.Create(dataPath); err != nil {
@@ -53,7 +56,10 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 				"err", err.Error(),
 				"jID", jID,
 			)
-			_ = db.SetJobInactive(r, jUUID)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		tee = io.TeeReader(or, dataFile)
@@ -65,7 +71,10 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 				"err", err.Error(),
 				"jID", jID,
 			)
-			_ = db.SetJobInactive(r, jUUID)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		tee = io.TeeReader(dataFile, ioutil.Discard)
@@ -78,7 +87,10 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 			"err", err.Error(),
 			"jID", jID,
 		)
-		_ = db.SetJobInactive(r, jUUID)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
 	}
 
@@ -108,7 +120,10 @@ func data(w http.ResponseWriter, r *http.Request) *app.Error {
 				"pq_detail", pqErr.Detail,
 			)
 		}
-		_ = db.SetJobInactive(r, jUUID)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+if err := db.SetJobInactive(r, jUUID); err != nil {
+		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
 	}
 

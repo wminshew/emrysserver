@@ -7,22 +7,23 @@ metadata:
 spec:
   selector:
     app: docker
-  type: NodePort
+  clusterIP: None
   ports:
-  - name: http
+  - name: dockerd
     port: 2375
     targetPort: 2375
     protocol: TCP
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: docker-deploy
+  name: docker-stfl
   labels:
     app: docker
 spec:
+  serviceName: "docker-svc"
   replicas: 1
-  strategy:
+  updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
@@ -32,6 +33,7 @@ spec:
       labels:
         app: docker
     spec:
+      terminationGracePeriodSeconds: 10
       restartPolicy: Always
       containers:
       - name: dind-daemon 
@@ -39,10 +41,15 @@ spec:
         securityContext: 
           privileged: true 
         ports:
-        - containerPorts: 2375
+        - containerPort: 2375
         volumeMounts: 
           - name: docker-graph-storage 
             mountPath: /var/lib/docker 
-      volumes:
-      - name: docker-graph-storage 
-        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: docker-graph-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 100Gi

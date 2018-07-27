@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"docker.io/go-docker/api/types"
 	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
@@ -36,59 +37,32 @@ func buildImage() app.Handler {
 				"err", err.Error(),
 				"jID", jID,
 			)
-			_ = db.SetJobInactive(r, jUUID)
+			if err := db.SetJobInactive(r, jUUID); err != nil {
+				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		ctx := r.Context()
+		// TODO: why does this throw errors with storage read and docker build?
+		// ctx := r.Context()
+		ctx := context.Background()
 		if err = archiver.TarGz.Read(r.Body, inputDir); err != nil {
 			log.Sugar.Errorw("failed to un-targz request body to input dir",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			_ = db.SetJobInactive(r, jUUID)
+			if err := db.SetJobInactive(r, jUUID); err != nil {
+				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		// vals := []string{"requirements", "main"}
-		// reqs := vals[0]
-		// main := vals[1]
-		// for i := range vals {
-		// 	p := path.Join(inputDir, vals[i])
-		// 	if _, err = os.Stat(p); os.IsNotExist(err) {
-		// 		if err = func() error {
-		// 			f, err := os.Create(p)
-		// 			if err != nil {
-		// 				return nil
-		// 			}
-		// 			or, err := bkt.Object(p).NewReader(ctx)
-		// 			if err != nil {
-		// 				return err
-		// 			}
-		// 			if _, err = io.Copy(f, or); err != nil {
-		// 				return err
-		// 			}
-		// 			if err = f.Close(); err != nil {
-		// 				return err
-		// 			}
-		// 			return nil
-		// 		}(); err != nil {
-		// 			log.Sugar.Errorw("failed to download input file",
-		// 				"url", r.URL,
-		// 				"err", err.Error(),
-		// 				"jID", jID,
-		// 			)
-		// 			_ = db.SetJobInactive(r, jUUID)
-		// 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// 		}
-		// 	}
-		// }
-
-		userDockerfile := filepath.Join("Dockerfiles", "Dockerfile")
+		dockerDir := filepath.Join("Dockerfiles")
+		userDockerfile := filepath.Join(dockerDir, "Dockerfile")
 		if _, err = os.Stat(userDockerfile); os.IsNotExist(err) {
 			if err = func() error {
-				if err = os.Mkdir("Dockerfiles", 0755); err != nil {
+				if err = os.MkdirAll(dockerDir, 0755); err != nil {
 					return err
 				}
 				f, err := os.Create(userDockerfile)
@@ -102,6 +76,9 @@ func buildImage() app.Handler {
 				if _, err = io.Copy(f, or); err != nil {
 					return err
 				}
+				if err = or.Close(); err != nil {
+					return err
+				}
 				if err = f.Close(); err != nil {
 					return err
 				}
@@ -112,7 +89,9 @@ func buildImage() app.Handler {
 					"err", err.Error(),
 					"jID", jID,
 				)
-				_ = db.SetJobInactive(r, jUUID)
+				if err := db.SetJobInactive(r, jUUID); err != nil {
+					log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+				}
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 		}
@@ -124,7 +103,9 @@ func buildImage() app.Handler {
 				"err", err.Error(),
 				"jID", jID,
 			)
-			_ = db.SetJobInactive(r, jUUID)
+			if err := db.SetJobInactive(r, jUUID); err != nil {
+				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
@@ -135,30 +116,10 @@ func buildImage() app.Handler {
 			filepath.Join(inputDir, reqs),
 			filepath.Join(inputDir, "Dockerfile"),
 		}
-		// sourcePath := path.Join("job", jID, "input", "source.tar.gz")
-		// ow := bkt.Object(sourcePath).NewWriter(ctx)
-		// if err = archiver.TarGz.Write(ow, ctxFiles); err != nil {
-		// 	log.Sugar.Errorw("failed to tar-gzip docker context",
-		// 		"url", r.URL,
-		// 		"err", err.Error(),
-		// 		"jID", jID,
-		// 	)
-		// 	_ = db.SetJobInactive(r, jUUID)
-		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// }
-		// if err = ow.Close(); err != nil {
-		// 	log.Sugar.Errorw("failed to close cloud storage writer",
-		// 		"url", r.URL,
-		// 		"err", err.Error(),
-		// 		"jID", jID,
-		// 	)
-		// 	_ = db.SetJobInactive(r, jUUID)
-		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// }
 		pr, pw := io.Pipe()
 		go func() {
 			defer app.CheckErr(r, pw.Close)
-			if err = archiver.TarGz.Write(pw, ctxFiles); err != nil {
+			if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
 				log.Sugar.Errorw("failed to tar-gzip docker context",
 					"url", r.URL,
 					"err", err.Error(),
@@ -184,198 +145,24 @@ func buildImage() app.Handler {
 				"err", err.Error(),
 				"jID", jID,
 			)
-			_ = db.SetJobInactive(r, jUUID)
+			if err := db.SetJobInactive(r, jUUID); err != nil {
+				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		defer app.CheckErr(r, buildResp.Body.Close)
 
-		if err = job.ReadJSON(buildResp.Body); err != nil {
+		if err := job.ReadJSON(buildResp.Body); err != nil {
 			log.Sugar.Errorw("failed to build image",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			_ = db.SetJobInactive(r, jUUID)
+			if err := db.SetJobInactive(r, jUUID); err != nil {
+				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-
-		// m := "POST"
-		// project := "emrys-12"
-		// p := path.Join("v1", "projects", project, "builds")
-		// u := url.URL{
-		// 	Scheme: "https",
-		// 	Host:   "cloudbuild.googleapis.com",
-		// 	Path:   p,
-		// }
-		// userHome := "/home/user"
-		// b := fmt.Sprintf(`
-		// {
-		// 	"source": {
-		// 		"storageSource": {
-		// 			"bucket": "emrys-dev",
-		// 			"object": "%s"
-		// 		}
-		// 	}
-		// 	"steps": [
-		// 		{
-		// 			"name": "gcr.io/cloud-builders/docker",
-		// 			"args": [
-		// 				"build",
-		// 				"--build-arg",
-		// 				"HOME=%s"
-		// 				"--build-arg",
-		// 				"REQUIREMENTS=%s"
-		// 				"--build-arg",
-		// 				"MAIN=%s"
-		// 				"-t",
-		// 				"gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD",
-		// 				"-t",
-		// 				"gcr.io/$PROJECT_ID/$_IMAGE:latest",
-		// 				"."
-		// 			]
-		// 		}
-		// 	],
-		// 	"images": [
-		// 		"gcr.io/$PROJECT_ID/$_IMAGE:$_BUILD",
-		// 		"gcr.io/$PROJECT_ID/$_IMAGE:latest"
-		// 	],
-		// 	"tags": [
-		// 		"$_IMAGE",
-		// 		"$_BUILD"
-		// 	],
-		// 	"substitutions": {
-		// 		"_IMAGE": "%s",
-		// 		"_BUILD": "%s"
-		// 	}
-		// }
-		// `, sourcePath, userHome, reqs, main, jID, string(time.Now().Unix()))
-		// body := strings.NewReader(b)
-		// req, err := http.NewRequest(m, u.String(), body)
-		// if err != nil {
-		// 	log.Sugar.Errorw("failed to create request",
-		// 		"url", r.URL,
-		// 		"err", err.Error(),
-		// 		"jID", jID,
-		// 		"method", m,
-		// 		"path", u.String(),
-		// 	)
-		// 	_ = db.SetJobInactive(r, jUUID)
-		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// }
-		// req = req.WithContext(ctx)
-		//
-		// resp, err := oauthClient.Do(req)
-		// if err != nil {
-		// 	log.Sugar.Errorw("failed to execute request",
-		// 		"url", r.URL,
-		// 		"err", err.Error(),
-		// 		"jID", jID,
-		// 		"method", m,
-		// 		"path", u.String(),
-		// 	)
-		// 	_ = db.SetJobInactive(r, jUUID)
-		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// }
-		//
-		// opResp := &operation{}
-		// if err := json.NewDecoder(resp.Body).Decode(opResp); err != nil {
-		// 	log.Sugar.Errorw("failed to decode json",
-		// 		"url", r.URL,
-		// 		"err", err.Error(),
-		// 		"jID", jID,
-		// 		"method", m,
-		// 		"path", u.String(),
-		// 	)
-		// 	_ = db.SetJobInactive(r, jUUID)
-		// 	app.CheckErr(r, resp.Body.Close)
-		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// }
-		// buildID := opResp.Metadata.Build.ID
-		// status := opResp.Metadata.Build.Status
-		// fmt.Printf("opResp: %+v\n", opResp)
-		// app.CheckErr(r, resp.Body.Close)
-		//
-		// m = "GET"
-		// p = path.Join(p, buildID)
-		// u = url.URL{
-		// 	Scheme: "https",
-		// 	Host:   "cloudbuild.googleapis.com",
-		// 	Path:   p,
-		// }
-		// req, err = http.NewRequest(m, u.String(), nil)
-		// if err != nil {
-		// 	log.Sugar.Errorw("failed to create request",
-		// 		"url", r.URL,
-		// 		"err", err.Error(),
-		// 		"jID", jID,
-		// 		"method", m,
-		// 		"path", u.String(),
-		// 	)
-		// 	_ = db.SetJobInactive(r, jUUID)
-		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// }
-		// req = req.WithContext(ctx)
-		//
-		// // responsibly ping google until build is successful, throw error otherwise
-		// for status != "SUCCESS" {
-		// 	time.Sleep(10 * time.Second)
-		// 	resp, err = oauthClient.Do(req)
-		// 	if err != nil {
-		// 		log.Sugar.Errorw("failed to execute request",
-		// 			"url", r.URL,
-		// 			"err", err.Error(),
-		// 			"jID", jID,
-		// 			"method", m,
-		// 			"path", u.String(),
-		// 		)
-		// 		_ = db.SetJobInactive(r, jUUID)
-		// 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// 	}
-		//
-		// 	buildResp := &build{}
-		// 	if err = json.NewDecoder(resp.Body).Decode(buildResp); err != nil {
-		// 		log.Sugar.Errorw("failed to decode json",
-		// 			"url", r.URL,
-		// 			"err", err.Error(),
-		// 			"jID", jID,
-		// 			"method", m,
-		// 			"path", u.String(),
-		// 		)
-		// 		_ = db.SetJobInactive(r, jUUID)
-		// 		app.CheckErr(r, resp.Body.Close)
-		// 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// 	}
-		// 	status = buildResp.Status
-		// 	fmt.Printf("buildResp: %+v\n", buildResp)
-		// 	app.CheckErr(r, resp.Body.Close)
-		//
-		// 	// Possible statuses: https://cloud.google.com/container-builder/docs/api/reference/rest/v1/projects.builds#Build.Status
-		// 	switch status {
-		// 	case "FAILURE", "INTERNAL_ERROR", "TIMEOUT", "CANCELLED":
-		// 		log.Sugar.Errorw("failed to build image",
-		// 			"url", r.URL,
-		// 			"err", err.Error(),
-		// 			"jID", jID,
-		// 			"method", m,
-		// 			"path", u.String(),
-		// 			"buildStatus", status,
-		// 		)
-		// 		_ = db.SetJobInactive(r, jUUID)
-		// 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// 	case "SUCCESS":
-		// 		log.Sugar.Infow("image built",
-		// 			"url", r.URL,
-		// 			"jID", jID,
-		// 			"buildStatus", status,
-		// 		)
-		// 	default:
-		// 		log.Sugar.Infow("image building...",
-		// 			"url", r.URL,
-		// 			"jID", jID,
-		// 			"buildStatus", status,
-		// 		)
-		// 	}
-		// }
 
 		return db.SetStatusImageBuilt(r, jUUID)
 	}

@@ -17,8 +17,7 @@ var (
 	dbName     = os.Getenv("DBNAME")
 )
 
-// Db is the database
-var Db *sql.DB
+var db *sql.DB
 
 // Init initializes the database connection
 func Init() {
@@ -26,12 +25,12 @@ func Init() {
 
 	var err error
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbNetloc, dbPort, dbName)
-	if Db, err = sql.Open("postgres", connStr); err != nil {
+	if db, err = sql.Open("postgres", connStr); err != nil {
 		log.Sugar.Errorf("Error opening database: %v", err)
 		panic(err)
 	}
 
-	if err = Db.Ping(); err != nil {
+	if err = db.Ping(); err != nil {
 		log.Sugar.Errorf("Error pinging database: %v", err)
 		panic(err)
 	}
@@ -41,7 +40,7 @@ func Init() {
 func Close() {
 	log.Sugar.Infof("Closing database...")
 
-	if err := Db.Close(); err != nil {
+	if err := db.Close(); err != nil {
 		log.Sugar.Errorf("Error closing database: %v", err)
 	}
 }

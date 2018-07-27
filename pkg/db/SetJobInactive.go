@@ -14,7 +14,7 @@ func SetJobInactive(r *http.Request, jUUID uuid.UUID) error {
 	SET (active) = ($1)
 	WHERE job_uuid = $2
 	`
-	if _, err := Db.Exec(sqlStmt, false, jUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, false, jUUID); err != nil {
 		pqErr := err.(*pq.Error)
 		log.Sugar.Errorw("failed to update job",
 			"url", r.URL,

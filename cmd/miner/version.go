@@ -21,15 +21,13 @@ func getVersion() app.Handler {
 		resp := creds.VersionResp{
 			Version: latestMinerVer.String(),
 		}
-		err := json.NewEncoder(w).Encode(&resp)
-		if err != nil {
+		if err := json.NewEncoder(w).Encode(&resp); err != nil {
 			log.Sugar.Errorw("failed to encode miner semver",
 				"url", r.URL,
 				"err", err.Error(),
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-
 		return nil
 	}
 }

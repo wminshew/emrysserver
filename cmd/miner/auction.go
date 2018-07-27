@@ -51,6 +51,9 @@ func (a *auction) run(r *http.Request) *app.Error {
 			"err", err.Error(),
 			"jID", a.jobID,
 		)
+		if err := db.SetJobInactive(r, a.jobID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
+		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	auctions[a.jobID] = a
@@ -68,6 +71,9 @@ func (a *auction) run(r *http.Request) *app.Error {
 
 	rows, err := db.GetValidBids(r, a.jobID)
 	if err != nil {
+		if err := db.SetJobInactive(r, a.jobID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
+		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	defer app.CheckErr(r, rows.Close)
@@ -85,6 +91,9 @@ func (a *auction) run(r *http.Request) *app.Error {
 				"err", err.Error(),
 				"jID", a.jobID,
 			)
+			if err := db.SetJobInactive(r, a.jobID); err != nil {
+				log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
+			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		if bidRate < winRate {
@@ -101,10 +110,16 @@ func (a *auction) run(r *http.Request) *app.Error {
 			"err", err.Error(),
 			"jID", a.jobID,
 		)
+		if err := db.SetJobInactive(r, a.jobID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
+		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	if n == 0 {
 		log.Sugar.Infof("no bids received")
+		if err := db.SetJobInactive(r, a.jobID); err != nil {
+			log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
+		}
 		return &app.Error{Code: http.StatusPaymentRequired, Message: "no bids received"}
 	} else if n == 1 {
 		payRate = winRate

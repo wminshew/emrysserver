@@ -14,7 +14,7 @@ func InsertMiner(r *http.Request, email, hashedPassword string, mUUID uuid.UUID)
 	INSERT INTO miners (miner_email, password, miner_uuid)
 	VALUES ($1, $2, $3)
 	`
-	if _, err := Db.Exec(sqlStmt, email, hashedPassword, mUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, email, hashedPassword, mUUID); err != nil {
 		pqErr := err.(*pq.Error)
 		log.Sugar.Errorw("failed to insert miner",
 			"url", r.URL,

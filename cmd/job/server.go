@@ -1,45 +1,54 @@
-// package main begins the emrys-job server
+// package main begins a job server
 package main
 
 import (
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
+	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
+	"os"
 )
 
+var userSecret = os.Getenv("USERSECRET")
+var minerSecret = os.Getenv("MINERSECRET")
+
 func main() {
-	app.InitLogger()
-	defer func() { _ = app.Sugar.Sync() }()
+	log.Init()
+	defer func() {
+		err := log.Sugar.Sync()
+		log.Sugar.Errorf("Error syncing log: %v\n", err)
+	}()
 	db.Init()
 	defer db.Close()
-	initStorage()
+	storage.Init()
 
 	r := mux.NewRouter()
-	r.Handle("/healthz", app.Handler(app.HealthCheck)).Methods("GET")
-	sr := r.PathPrefix("/job").Subrouter()
-	// r.Handle("", app.Handler(newJob)).Methods("POST")
-	// r.Handle("/", app.Handler(newJob)).Methods("POST")
-	// TODO: proxy bid to job service
-	sr.Handle("/{jID}/bid", app.Handler(postBid)).Methods("POST")
-	// TODO: proxy auction to job service
-	sr.Handle("/{jID}/auction", app.Handler(postAuction)).Methods("POST")
-	// TODO: i think i won't need this anymore......
-	sr.Handle("/{jID}/auction/success", app.Handler(getAuctionSuccess)).Methods("GET")
-	// TODO: proxy data to job service
-	// TODO: proxy output to job service
-	sr.Handle("/{jID}/log", app.Handler(postOutputLog)).Methods("POST")
-	sr.Handle("/{jID}/dir", app.Handler(postOutputDir)).Methods("POST")
-	sr.Handle("/{jID}/log", app.Handler(getOutputLog)).Methods("GET")
-	sr.Handle("/{jID}/dir", app.Handler(getOutputDir)).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+
+	rJob := r.PathPrefix("/job").Subrouter()
+
+	rJobMiner := rJob.NewRoute().Methods("POST").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rJobMiner.Handle("/{jID}/log", postOutputLog())
+	rJobMiner.Handle("/{jID}/dir", postOutputDir())
+	rJobMiner.Use(auth.Jwt(minerSecret))
+	rJobMiner.Use(auth.MinerJobMiddleware())
+
+	rJobUser := rJob.NewRoute().Methods("GET").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rJobUser.Handle("/{jID}/log", getOutputLog())
+	rJobUser.Handle("/{jID}/dir", getOutputDir())
+	rJobUser.Use(auth.Jwt(userSecret))
+	rJobUser.Use(auth.UserJobMiddleware())
 
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: app.Log(r),
+		Handler: log.Log(r),
 	}
 
-	app.Sugar.Infof("Listening on port %s...", server.Addr)
+	log.Sugar.Infof("Listening on port %s...", server.Addr)
 	if err := server.ListenAndServe(); err != nil {
-		app.Sugar.Fatalf("Server error: %v", err)
+		log.Sugar.Fatalf("Server error: %v", err)
 	}
 }

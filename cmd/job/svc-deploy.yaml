@@ -57,6 +57,16 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
+        - name: MINERSECRET
+          valueFrom:
+            secretKeyRef:
+              name: miner-secret
+              key: secret
+        - name: USERSECRET
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: secret
         volumeMounts:
           - name: job-creds
             mountPath: /secrets/google_application_credentials

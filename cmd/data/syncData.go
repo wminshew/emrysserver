@@ -6,7 +6,10 @@
 // 				"err", err.Error(),
 // 				"jID", j.ID,
 // 			)
-// 			_ = db.SetJobInactive(r, j.ID)
+//if err := db.SetJobInactive(r, j.ID); err != nil {
+ 			// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+//if err := db.SetJobInactive(r, j.ID); err != nil {
+ 			// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 // 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 // 		}
 //
@@ -19,7 +22,10 @@
 // 					"err", err.Error(),
 // 					"jID", j.ID,
 // 				)
-// 				_ = db.SetJobInactive(r, j.ID)
+//if err := db.SetJobInactive(r, j.ID); err != nil {
+ 				// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+//if err := db.SetJobInactive(r, j.ID); err != nil {
+ 				// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 // 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 // 			}
 // 		}
@@ -50,7 +56,10 @@
 // 					"pq_detail", pqErr.Detail,
 // 				)
 // 			}
-// 			_ = db.SetJobInactive(r, j.ID)
+//if err := db.SetJobInactive(r, j.ID); err != nil {
+ 			// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+//if err := db.SetJobInactive(r, j.ID); err != nil {
+ 			// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 // 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 // 		}
 //

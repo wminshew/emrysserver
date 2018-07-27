@@ -11,15 +11,23 @@ import (
 	"os"
 )
 
-var secret = os.Getenv("USERSECRET")
+var userSecret = os.Getenv("USERSECRET")
+var minerSecret = os.Getenv("MINERSECRET")
 
 func main() {
 	log.Init()
-	defer func() { _ = log.Sugar.Sync() }()
+	defer func() {
+		err := log.Sugar.Sync()
+		log.Sugar.Errorf("Error syncing log: %v\n", err)
+	}()
 	db.Init()
 	defer db.Close()
 	initStorage()
 	initDocker()
+	defer func() {
+		err := dClient.Close()
+		log.Sugar.Errorf("Error closing docker client: %v\n", err)
+	}()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
@@ -29,18 +37,26 @@ func main() {
 	rUser.Handle("/", newUser()).Methods("POST")
 	rUser.Handle("/login", login()).Methods("POST")
 	rUser.Handle("/version", getVersion()).Methods("GET")
-	rUser.Handle("/{uID}/job", postJob()).Methods("POST").
-		HeadersRegexp("Authorization", "^Bearer ").
-		Subrouter().Use(auth.Jwt(secret))
+
+	rUserAuth := rUser.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rUserAuth.Handle("/{uID}/job", postJob()).Methods("POST")
+	rUserAuth.Use(auth.Jwt(userSecret))
 
 	rImage := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rImage.Handle("/{jID}", buildImage()).Methods("POST")
-	rImage.Use(auth.Jwt(secret))
-	rImage.Use(auth.UserJobMiddleware())
+	rImageUser := rImage.Methods("POST").Subrouter()
+	rImageUser.Handle("/{jID}", buildImage())
+	rImageUser.Use(auth.Jwt(userSecret))
+	rImageUser.Use(auth.UserJobMiddleware())
+
+	// rImageMiner := rImage.Methods("GET").Subrouter()
+	// rImageMiner.Handle("/{jID}", buildImage())
+	// rImageMiner.Use(auth.Jwt(minerSecret))
+	// rImageMiner.Use(auth.MinerJobMiddleware())
 
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: log.Log(r),
+		// ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	log.Sugar.Infof("Listening on port %s...", server.Addr)
