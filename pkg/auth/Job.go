@@ -62,6 +62,7 @@ func userJob(h http.Handler) app.Handler {
 			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt"}
 		}
 
+		log.Sugar.Infof("valid user, owns job")
 		h.ServeHTTP(w, r)
 		return nil
 	}
@@ -106,6 +107,7 @@ func minerJob(h http.Handler) app.Handler {
 			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt"}
 		}
 
+		log.Sugar.Infof("valid miner, won job")
 		h.ServeHTTP(w, r)
 		return nil
 	}

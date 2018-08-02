@@ -1,0 +1,190 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-svc
+  labels:
+    app: image
+spec:
+  selector:
+    app: image
+  type: NodePort
+  externalTrafficPolicy: Local
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: registry
+    port: 5000
+    targetPort: 5000
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-deploy
+  labels:
+    app: image
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: image
+  template:
+    metadata:
+      labels:
+        app: image
+    spec:
+      terminationGracePeriodSeconds: 10
+      restartPolicy: Always
+      containers:
+      - name: image-container
+        image: gcr.io/emrys-12/image:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: "100Mi"
+          # limits:
+          #   cpu: 250m
+          #   memory: "500Mi"
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DBNAME
+          value: "emrysserver"
+        - name: DBNETLOC
+          value: "sqlproxy-svc"
+        - name: DBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: password
+        - name: DBPORT
+          value: "5432"
+        - name: DBUSER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: username
+        - name: DOCKER_API_VERSION
+          value: "1.37"
+        - name: DOCKER_HOST
+          value: "tcp://127.0.0.1:2375"
+        - name: DOCKER_PATH
+          value: "Dockerfiles/Dockerfile"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/secrets/google_application_credentials/credentials.json"
+        - name: MINERSECRET
+          valueFrom:
+            secretKeyRef:
+              name: miner-secret
+              key: secret
+        - name: REGISTRY_HOST
+          value: "127.0.0.1:5000"
+        - name: USERSECRET
+          valueFrom:
+            secretKeyRef:
+              name: user-secret
+              key: secret
+        volumeMounts:
+          - name: image-creds
+            mountPath: /secrets/google_application_credentials
+            readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+      - name: dind-daemon 
+        image: docker:18.03.1-ce-dind 
+        # args: [ "--log-driver=gcplogs",
+        #   "--log-opt", "gcp-project=emrys12",
+        #   "--log-opt", "gcp-log-cmd=true" ]
+        resources:
+          requests:
+            cpu: 100m
+            memory: "1Gi"
+          # limits:
+          #   cpu: 500m
+          #   memory: "2Gi"
+        securityContext: 
+          privileged: true 
+        ports:
+        - containerPort: 2375
+        # env:
+        # - name: GOOGLE_APPLICATION_CREDENTIALS
+        #   value: "/secrets/google_application_credentials/credentials.json"
+        volumeMounts: 
+          - name: docker-graph-storage 
+            mountPath: /var/lib/docker 
+          # - name: image-creds
+          #   mountPath: /secrets/google_application_credentials
+          #   readOnly: true
+      - name: registry
+        image: registry:2
+        args: [ "/etc/docker/registry/registry-config.yaml" ]
+        resources:
+          requests:
+            cpu: 100m
+            memory: "1Gi"
+          # limits:
+          #   cpu: 500m
+          #   memory: "2Gi"
+        ports:
+        - containerPort: 5000
+        env:
+        # - name: REGISTRY_ACCESSLOG_DISABLED
+        #   value: "false"
+        - name: REGISTRY_HTTP_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: registry-secret
+              key: secret
+        # - name: REGISTRY_LOG_LEVEL
+        #   value: "DEBUG"
+        - name: REGISTRY_LOG_FIELDS_ENVIRONMENT
+          value: "production"
+        volumeMounts: 
+          - name: image-creds
+            mountPath: /secrets/google_application_credentials
+            readOnly: true
+          - name: registry-config
+            mountPath: /etc/docker/registry
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: image-creds
+        secret:
+          secretName: image-creds
+      - name: docker-graph-storage
+        emptyDir: {}
+      - name: registry-config
+        configMap:
+          name: registry-config

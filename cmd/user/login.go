@@ -51,8 +51,9 @@ func login() app.Handler {
 			days = d
 		}
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"aud":   "emrys.io",
 			"exp":   time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(),
-			"iss":   "auth.service",
+			"iss":   "emrys.io",
 			"iat":   time.Now().Unix(),
 			"email": c.Email,
 			"sub":   uUUID,

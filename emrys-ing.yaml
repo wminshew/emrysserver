@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: gce-ing
+  name: emrys-ing
   annotations:
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "emrys-static-ip"
@@ -23,7 +23,7 @@ spec:
           servicePort: 8080
       - path: /image/*
         backend:
-          serviceName: user-svc
+          serviceName: image-svc
           servicePort: 8080
       # - path: /data/*
       #   backend:
@@ -45,3 +45,9 @@ spec:
         backend:
           serviceName: job-svc
           servicePort: 8080
+  - host: registry.emrys.io
+    http:
+      paths:
+      - backend:
+          serviceName: image-svc
+          servicePort: 5000

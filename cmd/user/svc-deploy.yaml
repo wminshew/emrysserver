@@ -41,10 +41,6 @@ spec:
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
-        - name: DOCKER_HOST
-          value: "tcp://docker-svc:2375"
-        - name: DOCKER_API_VERSION
-          value: "1.37"
         - name: DBNAME
           value: "emrysserver"
         - name: DBNETLOC

@@ -7,6 +7,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
 	"os"
 	"time"
@@ -17,10 +18,14 @@ var userSecret = os.Getenv("USERSECRET")
 
 func main() {
 	log.Init()
-	defer func() { _ = log.Sugar.Sync() }()
+	defer func() {
+		if err := log.Sugar.Sync(); err != nil {
+			log.Sugar.Errorf("Error syncing log: %v\n", err)
+		}
+	}()
 	db.Init()
 	defer db.Close()
-	initStorage()
+	storage.Init()
 	initJobsManager()
 
 	r := mux.NewRouter()

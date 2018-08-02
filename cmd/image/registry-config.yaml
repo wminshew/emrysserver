@@ -1,0 +1,54 @@
+version: 0.1
+# https://docs.docker.com/registry/configuration/
+log:
+  level: info
+  # formatter: json # TODO: is this better for stackdriver?
+  fields:
+    service: registry
+    # environment: # set in env
+# hooks:
+storage:
+  cache:
+    blobdescriptor: inmemory # TODO: redis
+  gcs:
+    bucket: emrys-registry
+    keyfile: /secrets/google_application_credentials/credentials.json
+    rootdirectory: /
+  maintenance:
+    uploadpurging:
+      enabled: true
+      age: 168h # 1 week
+      interval: 24h
+      dryrun: false
+  redirect:
+    disable: true
+# auth:
+# middleware:
+# reporting:
+http:
+  addr: :5000
+  host: https://registry.emrys.io:443
+  # secret: # set in env
+  debug:
+    addr: localhost:5001
+  relativeurls: true
+  headers:
+    X-Content-Type-Options: [nosniff]
+  http2:
+    disabled: false
+# redis: # TODO: configure redis w/ allkeys-lru eviction policy (registry doesn't set key expirations)
+#   addr: localhost:6379
+#   password: asecret
+#   db: 0
+#   dialtimeout: 10ms
+#   readtimeout: 10ms
+#   writetimeout: 10ms
+#   pool:
+#     maxidle: 16
+#     maxactive: 64
+#     idletimeout: 300s
+health:
+  storagedriver:
+    enabled: true
+    interval: 20s
+    threshold: 3

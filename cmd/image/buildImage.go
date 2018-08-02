@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"docker.io/go-docker/api/types"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
@@ -31,7 +32,7 @@ func buildImage() app.Handler {
 		}
 
 		inputDir := filepath.Join("job", jID, "input")
-		if err = os.MkdirAll(inputDir, 0755); err != nil {
+		if err := os.MkdirAll(inputDir, 0755); err != nil {
 			log.Sugar.Errorw("failed to create job input directory",
 				"url", r.URL,
 				"err", err.Error(),
@@ -43,10 +44,8 @@ func buildImage() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		// TODO: why does this throw errors with storage read and docker build?
-		// ctx := r.Context()
-		ctx := context.Background()
-		if err = archiver.TarGz.Read(r.Body, inputDir); err != nil {
+		log.Sugar.Infof("Storing input files on disk...")
+		if err := archiver.TarGz.Read(r.Body, inputDir); err != nil {
 			log.Sugar.Errorw("failed to un-targz request body to input dir",
 				"url", r.URL,
 				"err", err.Error(),
@@ -58,46 +57,8 @@ func buildImage() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		dockerDir := filepath.Join("Dockerfiles")
-		userDockerfile := filepath.Join(dockerDir, "Dockerfile")
-		if _, err = os.Stat(userDockerfile); os.IsNotExist(err) {
-			if err = func() error {
-				if err = os.MkdirAll(dockerDir, 0755); err != nil {
-					return err
-				}
-				f, err := os.Create(userDockerfile)
-				if err != nil {
-					return nil
-				}
-				or, err := bkt.Object(userDockerfile).NewReader(ctx)
-				if err != nil {
-					return err
-				}
-				if _, err = io.Copy(f, or); err != nil {
-					return err
-				}
-				if err = or.Close(); err != nil {
-					return err
-				}
-				if err = f.Close(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				log.Sugar.Errorw("failed to download dockerfile",
-					"url", r.URL,
-					"err", err.Error(),
-					"jID", jID,
-				)
-				if err := db.SetJobInactive(r, jUUID); err != nil {
-					log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-				}
-				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-			}
-		}
-
 		linkedDocker := filepath.Join(inputDir, "Dockerfile")
-		if err = os.Link(userDockerfile, linkedDocker); err != nil {
+		if err := os.Link(dockerfilePath, linkedDocker); err != nil {
 			log.Sugar.Errorw("failed link dockerfile into user dir",
 				"url", r.URL,
 				"err", err.Error(),
@@ -129,15 +90,20 @@ func buildImage() app.Handler {
 			}
 		}()
 
-		userHome := "/home/user"
+		log.Sugar.Infof("Sending ctxFiles to docker daemon...")
+		// TODO: why does this throw errors with storage read and docker build?
+		// ctx := r.Context()
+		ctx := context.Background()
+		strRef := fmt.Sprintf("%s/%s", registryHost, jID)
+		log.Sugar.Infof("Cache-from %s %s\n", dockerBaseCudaRef, localBaseJobRef)
 		buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
 			BuildArgs: map[string]*string{
-				"HOME": &userHome,
 				"MAIN": &main,
 				"REQS": &reqs,
 			},
+			CacheFrom:   []string{dockerBaseCudaRef, localBaseJobRef},
 			ForceRemove: true,
-			Tags:        []string{jID},
+			Tags:        []string{strRef},
 		})
 		if err != nil {
 			log.Sugar.Errorw("failed to build image",
@@ -152,8 +118,42 @@ func buildImage() app.Handler {
 		}
 		defer app.CheckErr(r, buildResp.Body.Close)
 
+		log.Sugar.Infof("Logging image build response...")
 		if err := job.ReadJSON(buildResp.Body); err != nil {
 			log.Sugar.Errorw("failed to build image",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			if err := db.SetJobInactive(r, jUUID); err != nil {
+				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+			}
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+
+		// TODO: tag and push image with mID
+		// pushAddr := fmt.Sprintf("%s/%s/%s", registryHost, mID, jID)
+		pushAddr := strRef
+		pushResp, err := dClient.ImagePush(ctx, pushAddr, types.ImagePushOptions{
+			RegistryAuth: "none",
+		})
+		if err != nil {
+			log.Sugar.Errorw("failed to push image",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"pushAddr", pushAddr,
+			)
+			if err := db.SetJobInactive(r, jUUID); err != nil {
+				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+			}
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		defer app.CheckErr(r, pushResp.Close)
+
+		log.Sugar.Infof("Logging image push response...")
+		if err := job.ReadJSON(pushResp); err != nil {
+			log.Sugar.Errorw("failed to push image",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,

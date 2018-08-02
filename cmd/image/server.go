@@ -1,4 +1,4 @@
-// package main begins a job server
+// package main begins an image server
 package main
 
 import (
@@ -10,10 +10,14 @@ import (
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
 	"os"
+	// "time"
 )
 
-var userSecret = os.Getenv("USERSECRET")
-var minerSecret = os.Getenv("MINERSECRET")
+var (
+	userSecret   = os.Getenv("USERSECRET")
+	minerSecret  = os.Getenv("MINERSECRET")
+	registryHost = os.Getenv("REGISTRY_HOST")
+)
 
 func main() {
 	log.Init()
@@ -25,27 +29,25 @@ func main() {
 	db.Init()
 	defer db.Close()
 	storage.Init()
+	initDocker()
+	defer func() {
+		if err := dClient.Close(); err != nil {
+			log.Sugar.Errorf("Error closing docker client: %v\n", err)
+		}
+	}()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	rJob := r.PathPrefix("/job").Subrouter()
-
-	rJobMiner := rJob.NewRoute().Methods("POST").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rJobMiner.Handle("/{jID}/log", postOutputLog())
-	rJobMiner.Handle("/{jID}/dir", postOutputDir())
-	rJobMiner.Use(auth.Jwt(minerSecret))
-	rJobMiner.Use(auth.MinerJobMiddleware())
-
-	rJobUser := rJob.NewRoute().Methods("GET").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rJobUser.Handle("/{jID}/log", getOutputLog())
-	rJobUser.Handle("/{jID}/dir", getOutputDir())
-	rJobUser.Use(auth.Jwt(userSecret))
-	rJobUser.Use(auth.UserJobMiddleware())
+	rImageUser := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
+	rImageUser.Handle("/{jID}", buildImage())
+	rImageUser.Use(auth.Jwt(userSecret))
+	rImageUser.Use(auth.UserJobMiddleware())
 
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: log.Log(r),
+		// ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	log.Sugar.Infof("Listening on port %s...", server.Addr)
