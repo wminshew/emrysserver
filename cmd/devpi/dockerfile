@@ -1,0 +1,20 @@
+FROM alpine:3.5@sha256:4d3ec631cdde98a03b91477b411a1fb42a9cadd8139c2e78029e44e199e58433
+
+# source: https://github.com/apihackers/docker-devpi/blob/master/Dockerfile
+RUN apk add --update --no-cache bash ca-certificates python3 \
+    && python3 -m ensurepip \
+    && rm -r /usr/lib/python*/ensurepip \
+    && pip3 install --upgrade pip setuptools \
+    && update-ca-certificates \
+    && rm -r /root/.cache
+
+RUN apk add --no-cache --virtual .build-deps gcc python3-dev libffi-dev musl-dev \
+    && pip install -U devpi-web \
+    && apk del .build-deps \
+    && rm -r /root/.cache
+
+EXPOSE 3141
+COPY docker-entrypoint.sh .
+RUN chmod +x ./docker-entrypoint.sh
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["devpi"]

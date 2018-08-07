@@ -29,6 +29,7 @@ spec:
   replicas: 1
   strategy:
     type: RollingUpdate
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: image
@@ -68,6 +69,8 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
+        - name: DEVPI_HOST
+          value: "http://devpi-svc:3141"
         - name: DOCKER_API_VERSION
           value: "1.37"
         - name: DOCKER_HOST
@@ -110,9 +113,6 @@ spec:
           failureThreshold: 3
       - name: dind-daemon 
         image: docker:18.03.1-ce-dind 
-        # args: [ "--log-driver=gcplogs",
-        #   "--log-opt", "gcp-project=emrys12",
-        #   "--log-opt", "gcp-log-cmd=true" ]
         resources:
           requests:
             cpu: 100m

@@ -12,6 +12,8 @@ job: build-job deploy-job rollout-job
 
 image: build-image deploy-image
 
+devpi: build-devpi deploy-devpi
+
 
 build: cloudbuild.yaml
 	# container-builder-local --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
@@ -38,8 +40,13 @@ build-image: cmd/image/cloudbuild.yaml cmd/image/dockerfile
 	# container-builder-local --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
 	gcloud container builds submit --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
+build-devpi: cmd/devpi/cloudbuild.yaml cmd/devpi/dockerfile
+	# container-builder-local --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
+	# container-builder-local --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
+	gcloud container builds submit --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) ./cmd/devpi/
 
-deploy: deploy-user deploy-miner deploy-job deploy-image deploy-sqlproxy deploy-ing
+
+deploy: deploy-user deploy-miner deploy-job deploy-image deploy-sqlproxy deploy-devpi deploy-ing
 
 deploy-user: cmd/user/svc-deploy.yaml
 	kubectl apply -f cmd/user/svc-deploy.yaml
@@ -58,6 +65,9 @@ deploy-image: cmd/image/svc-deploy.yaml
 
 deploy-sqlproxy: cmd/sqlproxy/svc-deploy.yaml
 	kubectl apply -f cmd/sqlproxy/svc-deploy.yaml
+
+deploy-devpi: cmd/devpi/svc-sts.yaml
+	kubectl apply -f cmd/devpi/svc-sts.yaml
 
 deploy-ing: emrys-ing.yaml
 	kubectl replace -f emrys-ing.yaml
@@ -81,6 +91,10 @@ rollout-image:
 	kubectl set image deploy/image-deploy image-container=gcr.io/emrys-12/image:latest
 	kubectl rollout status deploy/image-deploy
 
+rollout-devpi:
+	kubectl set image sts/devpi-sts devpi-container=gcr.io/emrys-12/devpi:latest
+	kubectl rollout status sts/devpi-sts
+
 
 rollback: rollback-user rollback-miner rollback-job rollback-image
 
@@ -99,3 +113,7 @@ rollback-job:
 rollback-image:
 	kubectl rollout undo deploy/image-deploy
 	kubectl rollout status deploy/image-deploy
+
+rollback-devpi:
+	kubectl rollout undo sts/devpi-sts
+	kubectl rollout status sts/devpi-sts

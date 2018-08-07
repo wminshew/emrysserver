@@ -19,10 +19,16 @@ steps:
     '-t', 'gcr.io/$PROJECT_ID/image:$_BUILD',
     '-t', 'gcr.io/$PROJECT_ID/image:latest',
     '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/devpi/dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/devpi:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/devpi:latest',
+    '.' ]
 images: [
   'gcr.io/$PROJECT_ID/user:$_BUILD', 'gcr.io/$PROJECT_ID/user:latest',
   'gcr.io/$PROJECT_ID/miner:$_BUILD', 'gcr.io/$PROJECT_ID/miner:latest',
   'gcr.io/$PROJECT_ID/job:$_BUILD', 'gcr.io/$PROJECT_ID/job:latest'
   'gcr.io/$PROJECT_ID/image:$_BUILD', 'gcr.io/$PROJECT_ID/image:latest'
+  'gcr.io/$PROJECT_ID/devpi:$_BUILD', 'gcr.io/$PROJECT_ID/devpi:latest'
 ]
-tags: [ 'user', 'miner', 'job', 'image', '$_BUILD' ]
+tags: [ 'user', 'miner', 'job', 'image', 'devpi', '$_BUILD' ]

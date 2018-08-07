@@ -1,0 +1,14 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'pull', 'alpine:3.5@sha256:4d3ec631cdde98a03b91477b411a1fb42a9cadd8139c2e78029e44e199e58433']
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'pull', 'gcr.io/$PROJECT_ID/devpi:latest' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/devpi:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/devpi:latest',
+    '--cache-from', 'alpine:3.5@sha256:4d3ec631cdde98a03b91477b411a1fb42a9cadd8139c2e78029e44e199e58433',
+    '--cache-from', 'gcr.io/$PROJECT_ID/devpi:latest',
+    '.' ]
+images: [ 'gcr.io/$PROJECT_ID/devpi:$_BUILD', 'gcr.io/$PROJECT_ID/devpi:latest' ]
+tags: [ 'devpi', '$_BUILD' ]

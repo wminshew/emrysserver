@@ -9,14 +9,17 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
+	"net/url"
 	"os"
 	// "time"
 )
 
 var (
-	userSecret   = os.Getenv("USERSECRET")
-	minerSecret  = os.Getenv("MINERSECRET")
-	registryHost = os.Getenv("REGISTRY_HOST")
+	userSecret       = os.Getenv("USERSECRET")
+	minerSecret      = os.Getenv("MINERSECRET")
+	registryHost     = os.Getenv("REGISTRY_HOST")
+	devpiHost        = os.Getenv("DEVPI_HOST")
+	devpiTrustedHost string
 )
 
 func main() {
@@ -35,6 +38,12 @@ func main() {
 			log.Sugar.Errorf("Error closing docker client: %v\n", err)
 		}
 	}()
+	if u, err := url.Parse(devpiHost); err != nil {
+		log.Sugar.Errorf("Error parsing devpiHost %s: %v\n", devpiHost, err)
+		panic(err)
+	} else {
+		devpiTrustedHost = u.Hostname()
+	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")

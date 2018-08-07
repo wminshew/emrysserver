@@ -91,19 +91,20 @@ func buildImage() app.Handler {
 		}()
 
 		log.Sugar.Infof("Sending ctxFiles to docker daemon...")
-		// TODO: why does this throw errors with storage read and docker build?
-		// ctx := r.Context()
+		// ctx := r.Context() // TODO: why does this throw errors with storage read and docker build?
 		ctx := context.Background()
 		strRef := fmt.Sprintf("%s/%s", registryHost, jID)
-		log.Sugar.Infof("Cache-from %s %s\n", dockerBaseCudaRef, localBaseJobRef)
 		buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
 			BuildArgs: map[string]*string{
-				"MAIN": &main,
-				"REQS": &reqs,
+				"DEVPI_HOST":         &devpiHost,
+				"DEVPI_TRUSTED_HOST": &devpiTrustedHost,
+				"MAIN":               &main,
+				"REQS":               &reqs,
 			},
-			CacheFrom:   []string{dockerBaseCudaRef, localBaseJobRef},
-			ForceRemove: true,
-			Tags:        []string{strRef},
+			CacheFrom:      []string{dockerBaseCudaRef, localBaseJobRef},
+			ForceRemove:    true,
+			SuppressOutput: true,
+			Tags:           []string{strRef},
 		})
 		if err != nil {
 			log.Sugar.Errorw("failed to build image",
@@ -131,8 +132,7 @@ func buildImage() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		// TODO: tag and push image with mID
-		// pushAddr := fmt.Sprintf("%s/%s/%s", registryHost, mID, jID)
+		// pushAddr := fmt.Sprintf("%s/%s/%s", registryHost, mID, jID) // TODO: tag and push image to mID repo
 		pushAddr := strRef
 		pushResp, err := dClient.ImagePush(ctx, pushAddr, types.ImagePushOptions{
 			RegistryAuth: "none",

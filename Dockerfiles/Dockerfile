@@ -26,10 +26,11 @@ RUN virtualenv venv
 
 
 FROM base
-ARG DEVPI_HOST="http://127.0.0.1:3141"
+ARG DEVPI_HOST="http://devpi-svc:3141"
+ARG DEVPI_TRUSTED_HOST="devpi-svc"
 ARG REQS
 COPY $REQS $REQS
-RUN ./venv/bin/pip --no-cache-dir install -i $DEVPI_HOST/root/pypi/+simple/ -r $REQS
+RUN ./venv/bin/pip --no-cache-dir install -i $DEVPI_HOST/root/pypi/+simple/ --trusted-host $DEVPI_TRUSTED_HOST -r $REQS
 USER user
 
 ARG MAIN

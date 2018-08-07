@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: devpi-svc
+  labels:
+    app: devpi
+spec:
+  selector:
+    app: devpi
+  type: NodePort
+  externalTrafficPolicy: Local
+  ports:
+  - name: http
+    port: 3141
+    targetPort: 3141
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: devpi-sts
+  labels:
+    app: devpi
+spec:
+  replicas: 1
+  serviceName: "devpi-svc"
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: devpi
+  template:
+    metadata:
+      labels:
+        app: devpi
+    spec:
+      terminationGracePeriodSeconds: 10
+      restartPolicy: Always
+      containers:
+      - name: devpi-container
+        image: gcr.io/emrys-12/devpi:latest
+        resources:
+          requests:
+            cpu: 100m
+            memory: "100Mi"
+          # limits:
+          #   cpu: 200m
+          #   memory: "200Mi"
+        ports:
+        - containerPort: 3141
+        env:
+        - name: DEVPI_SERVERDIR
+          value: "/devpi/server"
+        volumeMounts:
+          - name: devpi-pvc
+            mountPath: /devpi
+        readinessProbe:
+          httpGet:
+            path: /+api
+            port: 3141
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /+api
+            port: 3141
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+  volumeClaimTemplates:
+  - metadata:
+      name: devpi-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
