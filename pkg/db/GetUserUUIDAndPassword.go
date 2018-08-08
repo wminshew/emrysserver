@@ -32,15 +32,24 @@ func GetUserUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, e
 			)
 			return uuid.UUID{}, "", ErrUnauthorizedUser
 		}
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to query database",
-			"url", r.URL,
-			"err", err.Error(),
-			"email", email,
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		message := "failed to query for user uuid and password"
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"email", email,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"email", email,
+			)
+		}
 		return uuid.UUID{}, "", err
 	}
 	return uUUID, storedC.Password, nil

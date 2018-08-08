@@ -11,20 +11,30 @@ import (
 func GetJobOwner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
 	uUUID := uuid.UUID{}
 	sqlStmt := `
-	SELECT user_uuid
-	FROM jobs
-	WHERE job_uuid = $1
+	SELECT p.user_uuid
+	FROM projects p
+	INNER JOIN jobs j ON (j.project_uuid = p.project_uuid)
+	WHERE j.job_uuid = $1
 	`
 	if err := db.QueryRow(sqlStmt, jUUID).Scan(&uUUID); err != nil {
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to query db",
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID.String(),
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		message := "failed to query for job owner"
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+		}
 		return uuid.UUID{}, err
 	}
 	return uUUID, nil

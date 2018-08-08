@@ -17,15 +17,24 @@ func GetJobWinner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
 	WHERE j.job_uuid = $1
 	`
 	if err := db.QueryRow(sqlStmt, jUUID).Scan(&mUUID); err != nil {
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to query for job winning bid",
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID.String(),
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		message := "failed to query for job winning bid"
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+		}
 		return uuid.UUID{}, err
 	}
 	return mUUID, nil

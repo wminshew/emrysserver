@@ -14,15 +14,24 @@ func InsertBid(r *http.Request, b *job.Bid) error {
 	VALUES ($1, $2, $3, $4, $5)
 	`
 	if _, err := db.Exec(sqlStmt, b.ID, b.JobID, b.MinerID, b.MinRate, b.Late); err != nil {
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to insert miner",
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", b.JobID,
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		message := "failed to insert bid"
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", b.JobID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", b.JobID,
+			)
+		}
 		return err
 	}
 	return nil

@@ -26,15 +26,24 @@ func GetValidBids(r *http.Request, jUUID uuid.UUID) (*sql.Rows, error) {
 	`
 	rows, err := db.Query(sqlStmt, jUUID)
 	if err != nil {
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to query for valid bids",
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID.String(),
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		message := "failed to query for valid bids"
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+		}
 	}
 	return rows, err
 }

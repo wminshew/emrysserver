@@ -15,16 +15,26 @@ func InsertMiner(r *http.Request, email, hashedPassword string, mUUID uuid.UUID)
 	VALUES ($1, $2, $3)
 	`
 	if _, err := db.Exec(sqlStmt, email, hashedPassword, mUUID); err != nil {
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to insert miner",
-			"url", r.URL,
-			"err", err.Error(),
-			"mID", mUUID,
-			"email", email,
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		message := "failed to insert miner"
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"mID", mUUID,
+				"email", email,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"mID", mUUID,
+				"email", email,
+			)
+		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 

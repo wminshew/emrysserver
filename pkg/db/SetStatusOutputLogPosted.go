@@ -12,19 +12,28 @@ import (
 func SetStatusOutputLogPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses
-	SET (output_log_posted) = ($1)
+	SET output_log_posted = $1
 	WHERE job_uuid = $2
 	`
 	if _, err := db.Exec(sqlStmt, true, jUUID); err != nil {
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to update job status",
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID,
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		message := "failed to update job status to output log posted"
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+		}
 		if err := SetJobInactive(r, jUUID); err != nil {
 			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		}

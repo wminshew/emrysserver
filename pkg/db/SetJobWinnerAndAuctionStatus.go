@@ -41,15 +41,23 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 
 		return "", nil
 	}(); err != nil {
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw(message,
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID,
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+		}
 		if txerr == nil {
 			if err := tx.Rollback(); err != nil {
 				log.Sugar.Errorf("Error rolling tx back job %v: %v\n", jUUID, err)

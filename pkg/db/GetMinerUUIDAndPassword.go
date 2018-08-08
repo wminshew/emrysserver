@@ -32,15 +32,24 @@ func GetMinerUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, 
 			)
 			return uuid.UUID{}, "", ErrUnauthorizedMiner
 		}
-		pqErr := err.(*pq.Error)
-		log.Sugar.Errorw("failed to query database",
-			"url", r.URL,
-			"err", err.Error(),
-			"email", email,
-			"pq_sev", pqErr.Severity,
-			"pq_code", pqErr.Code,
-			"pq_detail", pqErr.Detail,
-		)
+		message := "failed to query for miner uuid and password"
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"email", email,
+				"pq_sev", pqErr.Severity,
+				"pq_code", pqErr.Code,
+				"pq_detail", pqErr.Detail,
+			)
+		} else {
+			log.Sugar.Errorw(message,
+				"url", r.URL,
+				"err", err.Error(),
+				"email", email,
+			)
+		}
 		return uuid.UUID{}, "", err
 	}
 	return mUUID, storedC.Password, nil
