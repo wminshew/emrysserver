@@ -34,7 +34,7 @@ func main() {
 	rUser.Handle("/version", getVersion()).Methods("GET")
 
 	rUserAuth := rUser.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rUserAuth.Handle("/{uID}/job", postJob()).Methods("POST")
+	rUserAuth.Handle("/{uID}/project/{project}/job", postJob()).Methods("POST")
 	rUserAuth.Use(auth.Jwt(userSecret))
 
 	server := http.Server{

@@ -1,3 +1,4 @@
+package main
 
 // 		inputDir := filepath.Join("job", j.ID.String(), "input")
 // 		if err = os.MkdirAll(inputDir, 0755); err != nil {
@@ -7,9 +8,9 @@
 // 				"jID", j.ID,
 // 			)
 //if err := db.SetJobInactive(r, j.ID); err != nil {
- 			// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 //if err := db.SetJobInactive(r, j.ID); err != nil {
- 			// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 // 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 // 		}
 //
@@ -23,9 +24,9 @@
 // 					"jID", j.ID,
 // 				)
 //if err := db.SetJobInactive(r, j.ID); err != nil {
- 				// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 //if err := db.SetJobInactive(r, j.ID); err != nil {
- 				// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 // 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 // 			}
 // 		}
@@ -57,9 +58,9 @@
 // 				)
 // 			}
 //if err := db.SetJobInactive(r, j.ID); err != nil {
- 			// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 //if err := db.SetJobInactive(r, j.ID); err != nil {
- 			// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
+// log.Sugar.Errorf("Error setting job %v inactive: %v\n", j.ID, err)
 // 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 // 		}
 //

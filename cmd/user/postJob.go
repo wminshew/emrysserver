@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -14,6 +13,7 @@ import (
 func postJob() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		vars := mux.Vars(r)
+		project := vars["project"]
 		uID := vars["uID"]
 		uUUID, err := uuid.FromString(uID)
 		if err != nil {
@@ -25,12 +25,8 @@ func postJob() app.Handler {
 		}
 
 		jobID := uuid.NewV4()
-		j := &job.Job{
-			ID:     jobID,
-			UserID: uUUID,
-		}
-		w.Header().Set("X-Job-ID", j.ID.String())
+		w.Header().Set("X-Job-ID", jobID.String())
 
-		return db.InsertJob(r, j.UserID, j.ID)
+		return db.InsertJob(r, uUUID, project, jobID)
 	}
 }

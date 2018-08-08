@@ -99,14 +99,14 @@ spec:
           httpGet:
             path: /healthz
             port: 8080
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 1
         livenessProbe:
           httpGet:
             path: /healthz
             port: 8080
-          initialDelaySeconds: 120
+          initialDelaySeconds: 60
           periodSeconds: 20
           timeoutSeconds: 1
           successThreshold: 1

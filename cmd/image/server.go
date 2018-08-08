@@ -49,7 +49,7 @@ func main() {
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rImageUser := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
-	rImageUser.Handle("/{jID}", buildImage())
+	rImageUser.Handle("/{uID}/{project}/{jID}", buildImage())
 	rImageUser.Use(auth.Jwt(userSecret))
 	rImageUser.Use(auth.UserJobMiddleware())
 

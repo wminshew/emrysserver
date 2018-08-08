@@ -18,32 +18,32 @@ devpi: build-devpi deploy-devpi
 build: cloudbuild.yaml
 	# container-builder-local --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
-	gcloud container builds submit --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+	gcloud builds submit --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
 build-user: cmd/user/cloudbuild.yaml cmd/user/dockerfile
 	# container-builder-local --config ./cmd/user/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/user/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
-	gcloud container builds submit --config ./cmd/user/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+	gcloud builds submit --config ./cmd/user/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
 build-miner: cmd/miner/cloudbuild.yaml cmd/miner/dockerfile
 	# container-builder-local --config ./cmd/miner/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/miner/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
-	gcloud container builds submit --config ./cmd/miner/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+	gcloud builds submit --config ./cmd/miner/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
 build-job: cmd/job/cloudbuild.yaml cmd/job/dockerfile
 	# container-builder-local --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
-	gcloud container builds submit --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+	gcloud builds submit --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
 build-image: cmd/image/cloudbuild.yaml cmd/image/dockerfile
 	# container-builder-local --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
-	gcloud container builds submit --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+	gcloud builds submit --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
 build-devpi: cmd/devpi/cloudbuild.yaml cmd/devpi/dockerfile
 	# container-builder-local --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
-	gcloud container builds submit --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) ./cmd/devpi/
+	gcloud builds submit --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) ./cmd/devpi/
 
 
 deploy: deploy-user deploy-miner deploy-job deploy-image deploy-sqlproxy deploy-devpi deploy-ing
