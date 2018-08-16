@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 )
 
 // uploadData receives the map of the user's data set metadata and determines which files needed to be re-uploaded
@@ -43,13 +45,36 @@ func uploadData() app.Handler {
 
 		project := vars["project"]
 		projectDir := filepath.Join("data", uID, project)
-		// TODO: make sure project dir exists; if it doesn't, download from gcs?
-		// TODO: it would be very odd if it didn't, but it seems .. possible; then again, maybe just throw an error so user
-		// has to re-submit job
+		if _, err = os.Stat(projectDir); os.IsNotExist(err) {
+			log.Sugar.Errorw("project dir doesn't exist on disk",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"project", project,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+
 		relPath := vars["relPath"]
-		// TODO: more validation on relPath? e.g. avoid '..' and stuff..
+		relPathRegexp := validate.RelPathRegexp()
+		relPathAntiRegexp := validate.RelPathAntiRegexp()
+		if !relPathRegexp.MatchString(relPath) || relPathAntiRegexp.MatchString(relPath) {
+			log.Sugar.Errorw("invalid upload path",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"relPath", relPath,
+			)
+			return &app.Error{Code: http.StatusBadRequest, Message: "invalid upload path"}
+		}
+
 		uploadPath := filepath.Join(projectDir, "data", relPath)
 		uploadDir := filepath.Dir(uploadPath)
+		if _, ok := diskSync[uploadPath]; !ok {
+			diskSync[uploadPath] = &sync.Mutex{}
+		}
+		diskSync[uploadPath].Lock()
+		defer diskSync[uploadPath].Unlock()
 
 		if _, err = os.Stat(uploadDir); os.IsNotExist(err) {
 			if err := os.MkdirAll(uploadDir, 0755); err != nil {
