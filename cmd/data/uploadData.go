@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/zlib"
 	"crypto/md5"
 	"encoding/base64"
 	"github.com/gorilla/mux"
@@ -79,16 +80,39 @@ func uploadData() app.Handler {
 		}
 		defer app.CheckErr(r, f.Close)
 
-		h := md5.New()
-		tee := io.TeeReader(r.Body, h)
-		if _, err := io.Copy(f, tee); err != nil {
-			log.Sugar.Errorw("failed to copy request body to disk",
+		pr, pw := io.Pipe()
+		go func() {
+			defer app.CheckErr(r, pw.Close)
+			if _, err := io.Copy(pw, r.Body); err != nil {
+				log.Sugar.Errorw("failed to copy request body to pipe writer",
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return
+			}
+		}()
+
+		zr, err := zlib.NewReader(pr)
+		if err != nil {
+			log.Sugar.Errorw("failed to create zlib reader",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
+		h := md5.New()
+		tee := io.TeeReader(zr, h)
+		if _, err := io.Copy(f, tee); err != nil {
+			log.Sugar.Errorw("failed to copy zlib reader to disk",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		app.CheckErr(r, zr.Close)
 
 		hStr := base64.StdEncoding.EncodeToString(h.Sum(nil))
 		uIDProject := path.Join(uID, project)
