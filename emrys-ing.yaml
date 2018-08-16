@@ -25,10 +25,6 @@ spec:
         backend:
           serviceName: image-svc
           servicePort: 8080
-      # - path: /data/*
-      #   backend:
-      #     serviceName: data-svc
-      #     servicePort: 8080
       - path: /auction/*
         backend:
           serviceName: miner-svc
@@ -51,3 +47,9 @@ spec:
       - backend:
           serviceName: image-svc
           servicePort: 5000
+  - host: data.emrys.io
+    http:
+      paths:
+      - backend:
+          serviceName: data-svc
+          servicePort: 8080

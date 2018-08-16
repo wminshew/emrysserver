@@ -1,4 +1,4 @@
-// package main begins an image server
+// package main begins a data server
 package main
 
 import (
@@ -11,17 +11,13 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
-	"net/url"
 	"os"
-	// "time"
+	"path"
 )
 
 var (
-	userSecret       = os.Getenv("USERSECRET")
-	minerSecret      = os.Getenv("MINERSECRET")
-	registryHost     = os.Getenv("REGISTRY_HOST")
-	devpiHost        = os.Getenv("DEVPI_HOST")
-	devpiTrustedHost string
+	userSecret  = os.Getenv("USERSECRET")
+	minerSecret = os.Getenv("MINERSECRET")
 )
 
 func main() {
@@ -34,28 +30,24 @@ func main() {
 	db.Init()
 	defer db.Close()
 	storage.Init()
-	initDocker()
-	defer func() {
-		if err := dClient.Close(); err != nil {
-			log.Sugar.Errorf("Error closing docker client: %v\n", err)
-		}
-	}()
-	if u, err := url.Parse(devpiHost); err != nil {
-		log.Sugar.Errorf("Error parsing devpiHost %s: %v\n", devpiHost, err)
-		panic(err)
-	} else {
-		devpiTrustedHost = u.Hostname()
-	}
+	initMetadataSync()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	rImageUser := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
+	rDataUser := r.PathPrefix("/user").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	projectRegexpMux := validate.ProjectRegexpMux()
-	buildImagePath := fmt.Sprintf("/{uID}/{project:%s}/{jID}", projectRegexpMux)
-	rImageUser.Handle(buildImagePath, buildImage())
-	rImageUser.Use(auth.Jwt(userSecret))
-	rImageUser.Use(auth.UserJobMiddleware())
+	syncDataPath := fmt.Sprintf("/{uID}/project/{project:%s}/job/{jID}", projectRegexpMux)
+	rDataUser.Handle(syncDataPath, syncData()).Methods("POST")
+	uploadDataPath := path.Join(syncDataPath, "{relPath:.*}")
+	rDataUser.Handle(uploadDataPath, uploadData()).Methods("PUT")
+	rDataUser.Use(auth.Jwt(userSecret))
+	rDataUser.Use(auth.UserJobMiddleware())
+
+	rDataMiner := r.PathPrefix("/miner").HeadersRegexp("Authorization", "^Bearer ").Methods("GET").Subrouter()
+	rDataMiner.Handle("/job/{jID}", getData())
+	rDataMiner.Use(auth.Jwt(minerSecret))
+	rDataMiner.Use(auth.MinerJobMiddleware())
 
 	server := http.Server{
 		Addr:    ":8080",

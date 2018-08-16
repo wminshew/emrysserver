@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
@@ -19,6 +20,7 @@ var (
 
 // seedDockerdCache downloads and possibly builds early-stage docker images
 func seedDockerdCache(ctx context.Context) {
+	time.Sleep(10 * time.Second) // wait for dockerd to boot
 	log.Sugar.Infof("Seeding dockerd cache...")
 
 	var pullResp io.ReadCloser
@@ -98,10 +100,10 @@ func seedDockerdCache(ctx context.Context) {
 		pr, pw := io.Pipe()
 		go func() {
 			if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
-				log.Sugar.Errorw("failed to tar-gzip docker context: %v", err)
+				log.Sugar.Errorf("failed to tar-gzip docker context: %v", err)
 			}
 			if err := pw.Close(); err != nil {
-				log.Sugar.Errorw("failed to close tar-gzip pw: %v", err)
+				log.Sugar.Errorf("failed to close tar-gzip pw: %v", err)
 			}
 		}()
 

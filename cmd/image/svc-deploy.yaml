@@ -124,7 +124,9 @@ spec:
           privileged: true 
         ports:
         - containerPort: 2375
-        # env:
+        env:
+        - name: REGISTRY_HOST
+          value: "127.0.0.1:5000"
         # - name: GOOGLE_APPLICATION_CREDENTIALS
         #   value: "/secrets/google_application_credentials/credentials.json"
         volumeMounts: 

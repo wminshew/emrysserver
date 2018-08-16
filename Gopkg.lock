@@ -235,9 +235,10 @@
   packages = [
     "pkg/creds",
     "pkg/job",
-    "pkg/jsonmessage"
+    "pkg/jsonmessage",
+    "pkg/validate"
   ]
-  revision = "928f2643408170fa9d9b4886dc04b128b99e0f07"
+  revision = "6d6d07fcc0f775b9ca3f07bfbf83cd7d077e6e14"
 
 [[projects]]
   name = "go.opencensus.io"
@@ -427,6 +428,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "14158e60a77436049a95cd3bdb5290205df781997fdf24b05da4039b9360ef5c"
+  inputs-digest = "1e0f9c9f7fb919922000da32ea7294bd352703206f59a964f2da8af8dd0da46d"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -2,7 +2,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -34,7 +36,9 @@ func main() {
 	rUser.Handle("/version", getVersion()).Methods("GET")
 
 	rUserAuth := rUser.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rUserAuth.Handle("/{uID}/project/{project}/job", postJob()).Methods("POST")
+	projectRegexpMux := validate.ProjectRegexpMux()
+	postJobPath := fmt.Sprintf("/{uID}/project/{project:%s}/job", projectRegexpMux)
+	rUserAuth.Handle(postJobPath, postJob()).Methods("POST")
 	rUserAuth.Use(auth.Jwt(userSecret))
 
 	server := http.Server{

@@ -55,8 +55,8 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 			return "failed to insert payment", err
 		}
 		sqlStmt = `
-	INSERT INTO statuses (job_uuid, user_data_stored,
-	image_built, auction_completed,
+	INSERT INTO statuses (job_uuid,
+	image_built, auction_completed, data_synced,
 	image_downloaded, data_downloaded,
 	output_log_posted, output_dir_posted)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

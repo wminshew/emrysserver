@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-svc
+  name: data-svc
   labels:
-    app: user
+    app: data
 spec:
   selector:
-    app: user
+    app: data
   type: NodePort
   externalTrafficPolicy: Local
   ports:
@@ -16,33 +16,39 @@ spec:
     protocol: TCP
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: user-deploy
+  name: data-sts
   labels:
-    app: user
+    app: data
 spec:
   replicas: 1
-  strategy:
+  serviceName: "data-svc"
+  updateStrategy:
     type: RollingUpdate
-  revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: user
+      app: data
   template:
     metadata:
       labels:
-        app: user
+        app: data
     spec:
+      terminationGracePeriodSeconds: 10
       restartPolicy: Always
       containers:
-      - name: user-container
-        image: gcr.io/emrys-12/user
+      - name: data-container
+        image: gcr.io/emrys-12/data:latest
+        resources:
+          requests:
+            cpu: 200m
+            memory: "1Gi"
+          # limits:
+          #   cpu: 200m
+          #   memory: "200Mi"
         ports:
         - containerPort: 8080
         env:
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/secrets/google_application_credentials/credentials.json"
         - name: DBNAME
           value: "emrysserver"
         - name: DBNETLOC
@@ -59,6 +65,8 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/secrets/google_application_credentials/credentials.json"
         - name: MINERSECRET
           valueFrom:
             secretKeyRef:
@@ -70,9 +78,11 @@ spec:
               name: user-secret
               key: secret
         volumeMounts:
-          - name: user-creds
+          - name: data-creds
             mountPath: /secrets/google_application_credentials
             readOnly: true
+          - name: data-pvc
+            mountPath: /data
         readinessProbe:
           httpGet:
             path: /healthz
@@ -90,6 +100,14 @@ spec:
           successThreshold: 1
           failureThreshold: 3
       volumes:
-      - name: user-creds
+      - name: data-creds
         secret:
-          secretName: user-creds
+          secretName: data-creds
+  volumeClaimTemplates:
+  - metadata:
+      name: data-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 100Gi
