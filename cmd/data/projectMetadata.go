@@ -23,11 +23,6 @@ func initMetadataSync() {
 }
 
 func getProjectMetadata(r *http.Request, uID, project string, md *map[string]*job.FileMetadata) error {
-	// uIDProject := path.Join(uID, project)
-	// if _, ok := diskSync[uIDProject]; !ok {
-	// 	diskSync[uIDProject] = &sync.Mutex{}
-	// }
-	// diskSync[uIDProject].Lock()
 	p := filepath.Join("data", uID, project, ".data_sync_metadata")
 	if _, ok := diskSync[p]; !ok {
 		diskSync[p] = &sync.Mutex{}
@@ -37,12 +32,10 @@ func getProjectMetadata(r *http.Request, uID, project string, md *map[string]*jo
 	if os.IsNotExist(err) {
 		return nil
 	} else if err != nil {
-		// diskSync[uIDProject].Unlock()
 		diskSync[p].Unlock()
 		return err
 	}
 	if err := json.NewDecoder(f).Decode(md); err != nil && err != io.EOF {
-		// diskSync[uIDProject].Unlock()
 		diskSync[p].Unlock()
 		return err
 	}
@@ -50,8 +43,6 @@ func getProjectMetadata(r *http.Request, uID, project string, md *map[string]*jo
 }
 
 func storeProjectMetadata(r *http.Request, uID, project string, md *map[string]*job.FileMetadata) error {
-	// uIDProject := path.Join(uID, project)
-	// defer diskSync[uIDProject].Unlock()
 	p := path.Join("data", uID, project, ".data_sync_metadata")
 	defer diskSync[p].Unlock()
 	f, err := os.Create(p)

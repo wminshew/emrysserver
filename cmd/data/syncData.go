@@ -52,6 +52,14 @@ func syncData() app.Handler {
 				)
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
+			if err := downloadProject(projectDir); err != nil {
+				log.Sugar.Errorw("failed to download project from gcs",
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+			}
 		} else if err != nil {
 			log.Sugar.Errorw("failed to get server project metadata",
 				"url", r.URL,
