@@ -1,0 +1,2 @@
+[Credentials]
+gs_service_key_file = /secrets/google_application_credentials/credentials.json

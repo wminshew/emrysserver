@@ -164,9 +164,24 @@ func uploadData() app.Handler {
 
 		if len(mdSync[uIDProject]) == 0 {
 			delete(diskSync, uIDProject)
+			go func() {
+				if err := uploadProject(projectDir); err != nil {
+					log.Sugar.Errorw("failed to upload project dir",
+						"url", r.URL,
+						"err", err.Error(),
+						"jID", jID,
+						"project", project,
+					)
+					return
+				}
+			}()
+			go func() {
+				if err := runDiskManager(); err != nil {
+					log.Sugar.Errorf("Error managing disk utilization: %v\n", err)
+				}
+			}()
 			return db.SetStatusDataSynced(r, jUUID)
 		}
-		// TODO: upload file, metadata to gcs? [ideally as job not tied to returning here]
 		return nil
 	}
 }

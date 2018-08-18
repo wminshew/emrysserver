@@ -31,15 +31,22 @@ func main() {
 	defer db.Close()
 	storage.Init()
 	initMetadataSync()
+	go func() {
+		for {
+			if err := runDiskManager(); err != nil {
+				log.Sugar.Errorf("Error managing disk utilization: %v\n", err)
+			}
+		}
+	}()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rDataUser := r.PathPrefix("/user").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	projectRegexpMux := validate.ProjectRegexpMux()
-	syncDataPath := fmt.Sprintf("/{uID}/project/{project:%s}/job/{jID}", projectRegexpMux)
-	rDataUser.Handle(syncDataPath, syncData()).Methods("POST")
-	uploadDataPath := path.Join(syncDataPath, "{relPath:.*}")
+	syncUserPath := fmt.Sprintf("/{uID}/project/{project:%s}/job/{jID}", projectRegexpMux)
+	rDataUser.Handle(syncUserPath, syncUser()).Methods("POST")
+	uploadDataPath := path.Join(syncUserPath, "{relPath:.*}")
 	rDataUser.Handle(uploadDataPath, uploadData()).Methods("PUT")
 	rDataUser.Use(auth.Jwt(userSecret))
 	rDataUser.Use(auth.UserJobMiddleware())

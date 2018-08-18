@@ -12,6 +12,10 @@ import (
 	"sync"
 )
 
+const (
+	metadataExt = ".data_sync_metadata"
+)
+
 var (
 	mdSync   map[string]map[string]*job.FileMetadata
 	diskSync map[string]*sync.Mutex
@@ -23,7 +27,7 @@ func initMetadataSync() {
 }
 
 func getProjectMetadata(r *http.Request, uID, project string, md *map[string]*job.FileMetadata) error {
-	p := filepath.Join("data", uID, project, ".data_sync_metadata")
+	p := filepath.Join("data", uID, project, metadataExt)
 	if _, ok := diskSync[p]; !ok {
 		diskSync[p] = &sync.Mutex{}
 	}
@@ -43,7 +47,7 @@ func getProjectMetadata(r *http.Request, uID, project string, md *map[string]*jo
 }
 
 func storeProjectMetadata(r *http.Request, uID, project string, md *map[string]*job.FileMetadata) error {
-	p := path.Join("data", uID, project, ".data_sync_metadata")
+	p := path.Join("data", uID, project, metadataExt)
 	defer diskSync[p].Unlock()
 	f, err := os.Create(p)
 	if err != nil {

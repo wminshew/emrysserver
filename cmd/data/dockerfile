@@ -4,8 +4,18 @@ RUN go install github.com/wminshew/emrysserver/cmd/data
 
 FROM alpine:3.8
 RUN apk --update upgrade && \
-  apk add curl ca-certificates && \
+  apk add curl \
+  ca-certificates \
+  gcc \
+  python-dev \
+  py-setuptools \
+  libffi-dev \
+  musl-dev \
+  openssl-dev \
+  py-pip \
+  && \
   update-ca-certificates && \
   rm -rf /var/cache/apk/*
+RUN pip install gsutil
 COPY --from=builder /go/bin/data /go-data
 CMD ["/go-data"]

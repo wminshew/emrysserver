@@ -49,6 +49,8 @@ spec:
         ports:
         - containerPort: 8080
         env:
+        - name: BOTO_CONFIG
+          value: "/etc/gsutil/gsutil.boto"
         - name: DBNAME
           value: "emrysserver"
         - name: DBNETLOC
@@ -72,6 +74,12 @@ spec:
             secretKeyRef:
               name: miner-secret
               key: secret
+        - name: PVC_CAP_GB
+          value: "100"
+        - name: PVC_PERIOD_SEC
+          value: "300"
+        - name: PVC_THRESHOLD
+          value: "0.8"
         - name: USERSECRET
           valueFrom:
             secretKeyRef:
@@ -83,6 +91,8 @@ spec:
             readOnly: true
           - name: data-pvc
             mountPath: /data
+          - name: gsutil-config
+            mountPath: /etc/gsutil
         readinessProbe:
           httpGet:
             path: /healthz
@@ -103,6 +113,9 @@ spec:
       - name: data-creds
         secret:
           secretName: data-creds
+      - name: gsutil-config
+        configMap:
+          name: gsutil-config
   volumeClaimTemplates:
   - metadata:
       name: data-pvc

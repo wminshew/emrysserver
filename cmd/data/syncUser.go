@@ -15,8 +15,8 @@ import (
 	"path/filepath"
 )
 
-// syncData receives the map of the user's data set metadata and determines which files needed to be re-uploaded
-func syncData() app.Handler {
+// syncUser receives the map of the user's data set metadata and determines which files needed to be re-uploaded
+func syncUser() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		vars := mux.Vars(r)
 		jID := vars["jID"]
@@ -43,7 +43,6 @@ func syncData() app.Handler {
 		project := vars["project"]
 		projectDir := filepath.Join("data", uID, project)
 		if _, err = os.Stat(projectDir); os.IsNotExist(err) {
-			// TODO: download from gcs
 			if err := os.MkdirAll(projectDir, 0755); err != nil {
 				log.Sugar.Errorw("failed to get server project metadata",
 					"url", r.URL,
@@ -60,8 +59,13 @@ func syncData() app.Handler {
 				)
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
+			go func() {
+				if err := runDiskManager(); err != nil {
+					log.Sugar.Errorf("Error managing disk utilization: %v\n", err)
+				}
+			}()
 		} else if err != nil {
-			log.Sugar.Errorw("failed to get server project metadata",
+			log.Sugar.Errorw("failed to get project directory",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -85,7 +89,7 @@ func syncData() app.Handler {
 					"err", err.Error(),
 					"jID", jID,
 				)
-				// return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+				return
 			}
 		}()
 
