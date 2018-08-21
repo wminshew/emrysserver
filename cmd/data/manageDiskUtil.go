@@ -1,49 +1,60 @@
 package main
 
 import (
+	"bytes"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"time"
 )
 
 var (
-	pvcPath         = "/data"
-	pvcCapGbStr     = os.Getenv("PVC_CAP_GB")
-	pvcPeriodSecStr = os.Getenv("PVC_PERIOD_SEC")
-	pvcThresholdStr = os.Getenv("PVC_THRESHOLD")
+	pvcPath            = "/data"
+	pvcCapGbStr        = os.Getenv("PVC_CAP_GB")
+	pvcCapGb           float64
+	pvcMaxProjectGbStr = os.Getenv("PVC_MAX_PROJECT_GB")
+	pvcMaxProjectGb    float64
+	pvcPeriodSecStr    = os.Getenv("PVC_PERIOD_SEC")
+	pvcPeriodSec       int
+	pvcThresholdStr    = os.Getenv("PVC_THRESHOLD")
+	pvcThreshold       float64
 )
 
-func runDiskManager() error {
-	pvcCapGb, err := strconv.ParseFloat(pvcCapGbStr, 64)
-	if err != nil {
+// TODO: should probably refactor this to some kind of select on multiple channels, and then when I want
+// to manually trigger it I send something thru a channel
+func startDiskManager() error {
+	var err error
+	if pvcCapGb, err = strconv.ParseFloat(pvcCapGbStr, 64); err != nil {
 		log.Sugar.Errorf("Error converting PVC_CAP_GB to float64")
 		return err
 	}
-	pvcPeriodSec, err := strconv.Atoi(pvcPeriodSecStr)
-	if err != nil {
+	if pvcMaxProjectGb, err = strconv.ParseFloat(pvcMaxProjectGbStr, 64); err != nil {
+		log.Sugar.Errorf("Error converting PVC_MAX_PROJECT_GB to float64")
+		return err
+	}
+	if pvcPeriodSec, err = strconv.Atoi(pvcPeriodSecStr); err != nil {
 		log.Sugar.Errorf("Error converting PVC_PERIOD_SEC to integer")
 		return err
 	}
-	pvcThreshold, err := strconv.ParseFloat(pvcThresholdStr, 64)
-	if err != nil {
+	if pvcThreshold, err = strconv.ParseFloat(pvcThresholdStr, 64); err != nil {
 		log.Sugar.Errorf("Error converting PVC_THRESHOLD to float64")
 		return err
 	}
 	for {
-		if err := checkAndEvict(pvcCapGb, pvcThreshold); err != nil {
+		if err := checkAndEvictProjects(); err != nil {
 			return err
 		}
 		time.Sleep(time.Duration(pvcPeriodSec) * time.Second)
 	}
 }
 
-func checkAndEvict(pvcCapGb float64, pvcThreshold float64) error {
+func checkAndEvictProjects() error {
 	var diskSizeGb float64
 	var err error
-	for diskSizeGb, err = getDiskSizeGb(pvcPath); err != nil && diskSizeGb > pvcThreshold*pvcCapGb; diskSizeGb, err = getDiskSizeGb(pvcPath) {
+	for diskSizeGb, err = getDirSizeGb(pvcPath); err != nil && diskSizeGb > pvcThreshold*pvcCapGb; diskSizeGb, err = getDirSizeGb(pvcPath) {
 		log.Sugar.Infof("Disk size: %.1f, evicting...", diskSizeGb)
 		if err := evictLRUProjectFromDisk(); err != nil {
 			return err
@@ -56,21 +67,21 @@ func checkAndEvict(pvcCapGb float64, pvcThreshold float64) error {
 	return nil
 }
 
-func getDiskSizeGb(dir string) (float64, error) {
-	var diskSize float64
+func getDirSizeGb(dir string) (float64, error) {
+	var dirSize float64
 	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if !info.IsDir() {
-			diskSize += float64(info.Size())
+			dirSize += float64(info.Size())
 		}
 		return nil
 	}); err != nil {
 		return 0, err
 	}
-	diskSizeGb := diskSize / 1024.0 / 1024.0 / 1024.0
-	return diskSizeGb, nil
+	dirSizeGb := dirSize / 1024.0 / 1024.0 / 1024.0
+	return dirSizeGb, nil
 }
 
 func evictLRUProjectFromDisk() error {
@@ -125,4 +136,16 @@ func projects(userPath string) ([]string, error) {
 		projects = append(projects, path)
 	}
 	return projects, nil
+}
+
+func touchProjectMd(projectDir string) {
+	cmdStr := "touch"
+	projectMdPath := filepath.Join(projectDir, metadataExt)
+	cmd := exec.Command(cmdStr, projectMdPath)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		log.Sugar.Errorf("Error touching %s: %s: %s", projectMdPath, err, stderr.String())
+	}
 }

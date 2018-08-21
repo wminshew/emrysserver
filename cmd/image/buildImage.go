@@ -42,7 +42,6 @@ func buildImage() app.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 
-		// TODO: update w/ data sync... add projects? don't save down?
 		inputDir := filepath.Join("job", jID, "input")
 		if err := os.MkdirAll(inputDir, 0755); err != nil {
 			log.Sugar.Errorw("failed to create job input directory",

@@ -76,6 +76,8 @@ spec:
               key: secret
         - name: PVC_CAP_GB
           value: "100"
+        - name: PVC_MAX_PROJECT_GB
+          value: "10"
         - name: PVC_PERIOD_SEC
           value: "300"
         - name: PVC_THRESHOLD

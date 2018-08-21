@@ -33,7 +33,7 @@ func main() {
 	initMetadataSync()
 	go func() {
 		for {
-			if err := runDiskManager(); err != nil {
+			if err := startDiskManager(); err != nil {
 				log.Sugar.Errorf("Error managing disk utilization: %v\n", err)
 			}
 		}

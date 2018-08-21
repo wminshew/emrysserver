@@ -54,6 +54,23 @@ func uploadData() app.Handler {
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
+		if projectSize, err := getDirSizeGb(projectDir); err != nil {
+			log.Sugar.Errorw("failed to get size of project dir",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"project", project,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		} else if projectSize > pvcMaxProjectGb {
+			log.Sugar.Errorw("project is over maximum project size",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+				"project", project,
+			)
+			return &app.Error{Code: http.StatusBadRequest, Message: "project data set is over limit, cannot upload"}
+		}
 
 		relPath := vars["relPath"]
 		relPathRegexp := validate.RelPathRegexp()
@@ -176,8 +193,9 @@ func uploadData() app.Handler {
 				}
 			}()
 			go func() {
-				if err := runDiskManager(); err != nil {
+				if err := checkAndEvictProjects(); err != nil {
 					log.Sugar.Errorf("Error managing disk utilization: %v\n", err)
+					return
 				}
 			}()
 			return db.SetStatusDataSynced(r, jUUID)

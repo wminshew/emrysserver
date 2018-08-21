@@ -8,6 +8,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
+	"os"
 	"path/filepath"
 )
 
@@ -34,9 +35,43 @@ func getData() app.Handler {
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		// TODO: check if datadir exists, if not, pipe from gcs [and cache locally..?]
 
-		dataDir := filepath.Join("data", uUUID.String(), project, "data")
+		projectDir := filepath.Join("data", uUUID.String(), project)
+		if _, err = os.Stat(projectDir); os.IsNotExist(err) {
+			if err := os.MkdirAll(projectDir, 0755); err != nil {
+				log.Sugar.Errorw("failed to get server project metadata",
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+			}
+			if err := downloadProject(projectDir); err != nil {
+				log.Sugar.Errorw("failed to download project from gcs",
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+			}
+			go func() {
+				if err := checkAndEvictProjects(); err != nil {
+					log.Sugar.Errorf("Error managing disk utilization: %v\n", err)
+					return
+				}
+			}()
+		} else if err != nil {
+			log.Sugar.Errorw("failed to get project directory",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		go func() {
+			touchProjectMd(projectDir)
+		}()
+		dataDir := filepath.Join(projectDir, "data")
 		if err := archiver.TarGz.Write(w, []string{dataDir}); err != nil {
 			log.Sugar.Errorw("failed to get job owner and project",
 				"url", r.URL,
@@ -47,66 +82,5 @@ func getData() app.Handler {
 		}
 
 		return db.SetStatusDataDownloaded(r, jUUID)
-
-		// jobDataDir := filepath.Join("data", "job", jID)
-		// var tee io.Reader
-		// var dataFile *os.File
-		// if _, err := os.Stat(dataPath); os.IsNotExist(err) {
-		// 	// if not cached to disk, stream from cloud storage and cache
-		// 	ctx := r.Context()
-		// 	or, err := bkt.Object(dataPath).NewReader(ctx)
-		// 	if err != nil {
-		// 		log.Sugar.Errorw("failed to open cloud storage reader",
-		// 			"url", r.URL,
-		// 			"path", dataPath,
-		// 			"err", err.Error(),
-		// 			"jID", jID,
-		// 		)
-		// 		if err := db.SetJobInactive(r, jUUID); err != nil {
-		// 			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-		// 		}
-		// 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// 	}
-		// 	if dataFile, err = os.Create(dataPath); err != nil {
-		// 		log.Sugar.Errorw("failed to create disk cache",
-		// 			"url", r.URL,
-		// 			"path", dataPath,
-		// 			"err", err.Error(),
-		// 			"jID", jID,
-		// 		)
-		// 		if err := db.SetJobInactive(r, jUUID); err != nil {
-		// 			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-		// 		}
-		// 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// 	}
-		// 	tee = io.TeeReader(or, dataFile)
-		// } else {
-		// 	if dataFile, err = os.Open(dataPath); err != nil {
-		// 		log.Sugar.Errorw("failed to open data file",
-		// 			"url", r.URL,
-		// 			"path", dataPath,
-		// 			"err", err.Error(),
-		// 			"jID", jID,
-		// 		)
-		// 		if err := db.SetJobInactive(r, jUUID); err != nil {
-		// 			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-		// 		}
-		// 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// 	}
-		// 	tee = io.TeeReader(dataFile, ioutil.Discard)
-		// }
-		// defer app.CheckErr(r, dataFile.Close)
-		//
-		// if _, err := io.Copy(w, tee); err != nil {
-		// 	log.Sugar.Errorw("failed to copy data file to response writer",
-		// 		"url", r.URL,
-		// 		"err", err.Error(),
-		// 		"jID", jID,
-		// 	)
-		// 	if err := db.SetJobInactive(r, jUUID); err != nil {
-		// 		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-		// 	}
-		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "Internal error"}
-		// }
 	}
 }
