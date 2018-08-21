@@ -32,7 +32,7 @@ type winner struct {
 
 const (
 	buffer      = 500 * time.Millisecond
-	duration    = 5 * time.Second
+	duration    = 3 * time.Second
 	deleteAfter = duration + buffer
 )
 
