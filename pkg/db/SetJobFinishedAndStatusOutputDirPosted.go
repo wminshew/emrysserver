@@ -8,8 +8,8 @@ import (
 	"net/http"
 )
 
-// SetJobFinishedAndStatusOutputDirPosted sets job completed (and inactive) and status for job jUUID
-func SetJobFinishedAndStatusOutputDirPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
+// SetJobFinishedAndStatusOutputDataPosted sets job completed (and inactive) and status for job jUUID
+func SetJobFinishedAndStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
 	ctx := r.Context()
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
@@ -28,7 +28,7 @@ func SetJobFinishedAndStatusOutputDirPosted(r *http.Request, jUUID uuid.UUID) *a
 
 		sqlStmt = `
 	UPDATE statuses
-	SET (output_dir_posted) = ($1)
+	SET (output_data_posted) = ($1)
 	WHERE job_uuid = $2
 	`
 		if _, err := tx.Exec(sqlStmt, true, jUUID); err != nil {

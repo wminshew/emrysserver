@@ -11,11 +11,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
-	"time"
 )
 
-// postOutputDir receives the miner's container execution for the user
-func postOutputDir() app.Handler {
+// postOutputData receives the miner's container execution for the user
+func postOutputData() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		vars := mux.Vars(r)
 		jID := vars["jID"]
@@ -27,7 +26,6 @@ func postOutputDir() app.Handler {
 			)
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
-		time.Sleep(5 * time.Second)
 
 		var tee io.Reader
 		if pipe, ok := dirPipes[jUUID]; ok {
@@ -38,7 +36,7 @@ func postOutputDir() app.Handler {
 		}
 
 		ctx := r.Context()
-		p := path.Join("job", jID, "output", "dir")
+		p := path.Join("job", jID, "output", "data")
 		ow := storage.NewWriter(ctx, p)
 		if _, err = io.Copy(ow, tee); err != nil {
 			log.Sugar.Errorw("failed to copy tee reader to cloud storage object writer",
@@ -64,6 +62,6 @@ func postOutputDir() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		return db.SetJobFinishedAndStatusOutputDirPosted(r, jUUID)
+		return db.SetJobFinishedAndStatusOutputDataPosted(r, jUUID)
 	}
 }

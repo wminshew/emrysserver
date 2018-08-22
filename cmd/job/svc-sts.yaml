@@ -16,16 +16,16 @@ spec:
     protocol: TCP
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: job-deploy
+  name: job-sts
   labels:
     app: job
 spec:
   replicas: 1
-  strategy:
+  serviceName: "job-svc"
+  updateStrategy:
     type: RollingUpdate
-  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: job
@@ -34,10 +34,18 @@ spec:
       labels:
         app: job
     spec:
+      terminationGracePeriodSeconds: 10
       restartPolicy: Always
       containers:
       - name: job-container
         image: gcr.io/emrys-12/job
+        resources:
+          requests:
+            cpu: 100m
+            memory: "1Gi"
+          # limits:
+          #   cpu: 200m
+          #   memory: "200Mi"
         ports:
         - containerPort: 8080
         env:
@@ -73,6 +81,8 @@ spec:
           - name: job-creds
             mountPath: /secrets/google_application_credentials
             readOnly: true
+          - name: job-pvc
+            mountPath: /output
         readinessProbe:
           httpGet:
             path: /healthz
@@ -93,3 +103,11 @@ spec:
       - name: job-creds
         secret:
           secretName: job-creds
+  volumeClaimTemplates:
+  - metadata:
+      name: job-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 20Gi

@@ -25,6 +25,7 @@ func main() {
 	db.Init()
 	defer db.Close()
 	storage.Init()
+	initJobsManager()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
@@ -33,13 +34,13 @@ func main() {
 
 	rJobMiner := rJob.NewRoute().Methods("POST").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rJobMiner.Handle("/{jID}/log", postOutputLog())
-	rJobMiner.Handle("/{jID}/dir", postOutputDir())
+	rJobMiner.Handle("/{jID}/data", postOutputData())
 	rJobMiner.Use(auth.Jwt(minerSecret))
 	rJobMiner.Use(auth.MinerJobMiddleware())
 
 	rJobUser := rJob.NewRoute().Methods("GET").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rJobUser.Handle("/{jID}/log", getOutputLog())
-	rJobUser.Handle("/{jID}/dir", getOutputDir())
+	rJobUser.Handle("/{jID}/data", getOutputData())
 	rJobUser.Use(auth.Jwt(userSecret))
 	rJobUser.Use(auth.UserJobMiddleware())
 

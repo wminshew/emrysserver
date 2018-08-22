@@ -11,8 +11,8 @@ import (
 	"path"
 )
 
-// getOutputDir streams the miner's container execution to the user
-func getOutputDir() app.Handler {
+// getOutputData streams the miner's container execution to the user
+func getOutputData() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		vars := mux.Vars(r)
 		jID := vars["jID"]
@@ -26,7 +26,7 @@ func getOutputDir() app.Handler {
 		}
 
 		var reader io.Reader
-		p := path.Join("job", jID, "output", "dir")
+		p := path.Join("job", jID, "output", "data")
 		ctx := r.Context()
 		reader, err = storage.NewReader(ctx, p)
 		if err == storage.ErrObjectNotExist {

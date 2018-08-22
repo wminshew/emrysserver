@@ -12,7 +12,7 @@ func GetJobOwnerAndProject(r *http.Request, jUUID uuid.UUID) (uuid.UUID, string,
 	uUUID := uuid.UUID{}
 	var project string
 	sqlStmt := `
-	SELECT (p.user_uuid, p.project_name)
+	SELECT p.user_uuid, p.project_name
 	FROM projects p
 	INNER JOIN jobs j ON (j.project_uuid = p.project_uuid)
 	WHERE j.job_uuid = $1

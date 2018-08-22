@@ -55,6 +55,8 @@ func buildImage() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
+		// TODO: store input files on gcs?
+
 		log.Sugar.Infof("Storing input files on disk...")
 		if err := archiver.TarGz.Read(r.Body, inputDir); err != nil {
 			log.Sugar.Errorw("failed to un-targz request body to input dir",

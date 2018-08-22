@@ -7,20 +7,21 @@ import (
 
 var (
 	jobsManager *golongpoll.LongpollManager
-	maxTimeout  = 60 * 10
+	maxTimeout  = 60 * 2
 )
 
-// initJobsManager initializes the longpoll manager that handles miner
-// connections while waiting for job auctions
+// initJobsManager initializes the longpoll manager that handles user and miner
+// connections while distributing output logs
 func initJobsManager() {
 	log.Sugar.Infof("Initializing longpoll manager...")
 
 	var err error
 	if jobsManager, err = golongpoll.StartLongpoll(golongpoll.Options{
-		LoggingEnabled:            true,
-		MaxLongpollTimeoutSeconds: maxTimeout,
-		MaxEventBufferSize:        100,
-		EventTimeToLiveSeconds:    10,
+		LoggingEnabled:                 true,
+		MaxLongpollTimeoutSeconds:      maxTimeout,
+		MaxEventBufferSize:             100,
+		EventTimeToLiveSeconds:         60 * 2,
+		DeleteEventAfterFirstRetrieval: true,
 	}); err != nil {
 		log.Sugar.Errorf("Longpoll manager failed to initialize! Panic!")
 		panic(err)

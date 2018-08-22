@@ -1,15 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"github.com/wminshew/emrysserver/pkg/storage"
+	// "github.com/wminshew/emrysserver/pkg/storage"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
 )
 
@@ -27,41 +28,97 @@ func postOutputLog() app.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 
-		var tee io.Reader
-		if pipe, ok := logPipes[jUUID]; ok {
-			tee = io.TeeReader(r.Body, pipe.w)
-			defer app.CheckErr(r, pipe.w.Close)
-		} else {
-			tee = io.TeeReader(r.Body, ioutil.Discard)
+		// TODO: handle errors / set job inactive?
+
+		if r.ContentLength == 0 {
+			if err := jobsManager.Publish(jID, struct{}{}); err != nil {
+				log.Sugar.Errorw("failed to publish bytes",
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+			}
+			// TODO: upload final log file to gcs?
+			return db.SetStatusOutputLogPosted(r, jUUID)
 		}
 
-		ctx := r.Context()
-		p := path.Join("job", jID, "output", "log")
-		ow := storage.NewWriter(ctx, p)
-		if _, err = io.Copy(ow, tee); err != nil {
-			log.Sugar.Errorw("failed to copy tee reader to cloud storage object writer",
+		var buf bytes.Buffer
+		if _, err := io.Copy(&buf, r.Body); err != nil {
+			log.Sugar.Errorw("failed to copy request body to buffer",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			if err := db.SetJobInactive(r, jUUID); err != nil {
-				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
+		b := buf.Bytes()
 
-		if err = ow.Close(); err != nil {
-			log.Sugar.Errorw("failed to close cloud storage object writer",
+		outputDir := path.Join("output", jID)
+		if err := os.MkdirAll(outputDir, 0755); err != nil {
+			log.Sugar.Errorw("failed to make output dir",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			if err := db.SetJobInactive(r, jUUID); err != nil {
-				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-			}
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		p := path.Join(outputDir, "log")
+		f, err := os.OpenFile(p, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Sugar.Errorw("failed to create or open append only file",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		defer app.CheckErr(r, f.Close)
+		if _, err := io.Copy(f, bytes.NewReader(b)); err != nil {
+			log.Sugar.Errorw("failed to copy buffer to file",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		return db.SetStatusOutputLogPosted(r, jUUID)
+		if err := jobsManager.Publish(jID, b); err != nil {
+			log.Sugar.Errorw("failed to publish bytes",
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+
+		// ctx := r.Context()
+		// p := path.Join("job", jID, "output", "log")
+		// ow := storage.NewWriter(ctx, p)
+		// if _, err = io.Copy(ow, tee); err != nil {
+		// 	log.Sugar.Errorw("failed to copy tee reader to cloud storage object writer",
+		// 		"url", r.URL,
+		// 		"err", err.Error(),
+		// 		"jID", jID,
+		// 	)
+		// 	if err := db.SetJobInactive(r, jUUID); err != nil {
+		// 		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+		// 	}
+		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		// }
+		//
+		// if err = ow.Close(); err != nil {
+		// 	log.Sugar.Errorw("failed to close cloud storage object writer",
+		// 		"url", r.URL,
+		// 		"err", err.Error(),
+		// 		"jID", jID,
+		// 	)
+		// 	if err := db.SetJobInactive(r, jUUID); err != nil {
+		// 		log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+		// 	}
+		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		// }
+
+		return nil
 	}
 }

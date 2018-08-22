@@ -1,5 +1,6 @@
 DATE := $(shell date +%Y-%m-%d_%H-%M-%S)
 MINERTIMEOUT := 605
+JOBTIMEOUT := 125
 IMAGETIMEOUT := 305
 DATATIMEOUT := 305
 
@@ -65,8 +66,9 @@ deploy-miner: cmd/miner/svc-deploy.yaml
 	kubectl apply -f cmd/miner/svc-deploy.yaml
 	gcloud compute backend-services list --filter='miner' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(MINERTIMEOUT)
 
-deploy-job: cmd/job/svc-deploy.yaml
-	kubectl apply -f cmd/job/svc-deploy.yaml
+deploy-job: cmd/job/svc-sts.yaml
+	kubectl apply -f cmd/job/svc-sts.yaml
+	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(JOBTIMEOUT)
 
 deploy-image: cmd/image/svc-deploy.yaml
 	kubectl create configmap registry-config --dry-run -o yaml --from-file=cmd/image/registry-config.yaml | kubectl apply -f -
@@ -98,8 +100,8 @@ rollout-miner:
 	kubectl rollout status deploy/miner-deploy
 
 rollout-job:
-	kubectl set image deploy/job-deploy job-container=gcr.io/emrys-12/job:latest
-	kubectl rollout status deploy/job-deploy
+	kubectl set image sts/job-sts job-container=gcr.io/emrys-12/job:latest
+	kubectl rollout status sts/job-sts
 
 rollout-image:
 	kubectl set image deploy/image-deploy image-container=gcr.io/emrys-12/image:latest
@@ -125,8 +127,8 @@ rollback-miner:
 	kubectl rollout status deploy/miner-deploy
 
 rollback-job:
-	kubectl rollout undo deploy/job-deploy
-	kubectl rollout status deploy/job-deploy
+	kubectl rollout undo sts/job-sts
+	kubectl rollout status sts/job-sts
 
 rollback-image:
 	kubectl rollout undo deploy/image-deploy

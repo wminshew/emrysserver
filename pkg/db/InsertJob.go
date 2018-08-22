@@ -58,7 +58,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 	INSERT INTO statuses (job_uuid,
 	image_built, auction_completed, data_synced,
 	image_downloaded, data_downloaded,
-	output_log_posted, output_dir_posted)
+	output_log_posted, output_data_posted)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 		if _, err := tx.Exec(sqlStmt, jUUID, false, false, false, false, false, false, false); err != nil {

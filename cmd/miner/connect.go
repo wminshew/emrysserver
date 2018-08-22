@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
@@ -15,7 +16,7 @@ func connect() app.Handler {
 
 		q := r.URL.Query()
 		q.Set("category", "jobs")
-		q.Set("timeout", "600")
+		q.Set("timeout", fmt.Sprintf("%d", maxTimeout))
 		r.URL.RawQuery = q.Encode()
 		jobsManager.SubscriptionHandler(w, r)
 		return nil
