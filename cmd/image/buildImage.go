@@ -4,6 +4,7 @@ import (
 	"context"
 	"docker.io/go-docker/api/types"
 	"fmt"
+	"github.com/cenkalti/backoff"
 	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
@@ -11,6 +12,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/storage"
 	"io"
 	"net/http"
 	"os"
@@ -55,8 +57,6 @@ func buildImage() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		// TODO: store input files on gcs?
-
 		log.Sugar.Infof("Storing input files on disk...")
 		if err := archiver.TarGz.Read(r.Body, inputDir); err != nil {
 			log.Sugar.Errorw("failed to un-targz request body to input dir",
@@ -70,21 +70,91 @@ func buildImage() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		linkedDocker := filepath.Join(inputDir, "Dockerfile")
-		if err := os.Link(dockerfilePath, linkedDocker); err != nil {
-			log.Sugar.Errorw("failed link dockerfile into user dir",
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			if err := db.SetJobInactive(r, jUUID); err != nil {
-				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+		ctx := r.Context()
+		if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
+			if err := downloadDockerfile(ctx); err != nil {
+				log.Sugar.Errorw("failed to download dockerfile",
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				if err := db.SetJobInactive(r, jUUID); err != nil {
+					log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+				}
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		// ctx := r.Context() // TODO: why does this throw errors with storage read and docker build?
-		ctx := context.Background()
+		linkedDocker := filepath.Join(inputDir, "Dockerfile")
+		if _, err := os.Stat(linkedDocker); os.IsNotExist(err) {
+			if err := os.Link(dockerfilePath, linkedDocker); err != nil {
+				log.Sugar.Errorw("failed link dockerfile into user dir",
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				if err := db.SetJobInactive(r, jUUID); err != nil {
+					log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
+				}
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+			}
+		}
+
+		main := r.Header.Get("X-Main")
+		reqs := r.Header.Get("X-Reqs")
+		ctxFiles := []string{
+			filepath.Join(inputDir, main),
+			filepath.Join(inputDir, reqs),
+			filepath.Join(inputDir, "Dockerfile"),
+		}
+
+		defer func() {
+			defer app.CheckErr(r, func() error { return os.RemoveAll(inputDir) })
+			operation := func() error {
+				pr, pw := io.Pipe()
+				go func() {
+					defer app.CheckErr(r, pw.Close)
+					if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
+						log.Sugar.Errorw("failed to tar-gzip docker context for cloud storage",
+							"url", r.URL,
+							"err", err.Error(),
+							"jID", jID,
+						)
+						return
+					}
+				}()
+
+				ctx := context.Background()
+				p := filepath.Join("image", jID, "dockerContext.tar.gz")
+				ow := storage.NewWriter(ctx, p)
+				if _, err = io.Copy(ow, pr); err != nil {
+					log.Sugar.Errorw("failed to copy pipe reader to cloud storage object writer",
+						"url", r.URL,
+						"err", err.Error(),
+						"jID", jID,
+					)
+					return err
+				}
+				if err = ow.Close(); err != nil {
+					log.Sugar.Errorw("failed to close cloud storage object writer",
+						"url", r.URL,
+						"err", err.Error(),
+						"jID", jID,
+					)
+					return err
+				}
+				return nil
+			}
+			if err := backoff.Retry(operation, backoff.NewExponentialBackOff()); err != nil {
+				log.Sugar.Errorw("failed to upload output data.tar.gz to gcs",
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return
+			}
+		}()
+
 		cacheSlice := []string{dockerBaseCudaRef, localBaseJobRef}
 		latestProjectBuild := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
 		if pullResp, err := dClient.ImagePull(ctx, latestProjectBuild, types.ImagePullOptions{}); err != nil {
@@ -101,13 +171,6 @@ func buildImage() app.Handler {
 		}
 
 		log.Sugar.Infof("Sending ctxFiles to docker daemon...")
-		main := r.Header.Get("X-Main")
-		reqs := r.Header.Get("X-Reqs")
-		ctxFiles := []string{
-			filepath.Join(inputDir, main),
-			filepath.Join(inputDir, reqs),
-			filepath.Join(inputDir, "Dockerfile"),
-		}
 		pr, pw := io.Pipe()
 		go func() {
 			defer app.CheckErr(r, pw.Close)

@@ -72,7 +72,7 @@ func getData() app.Handler {
 			touchProjectMd(projectDir)
 		}()
 		dataDir := filepath.Join(projectDir, "data")
-		if _, err = os.Stat(dataDir); os.IsExist(err) {
+		if _, err = os.Stat(dataDir); !os.IsNotExist(err) {
 			if err := archiver.TarGz.Write(w, []string{dataDir}); err != nil {
 				log.Sugar.Errorw("failed to write tar gzipped data dir",
 					"url", r.URL,
@@ -81,10 +81,6 @@ func getData() app.Handler {
 				)
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
-		} else {
-			log.Sugar.Infof("Setting header content-length")
-			w.Header().Set("Content-length", "0")
-			log.Sugar.Infof("Response header: %+v", w.Header())
 		}
 
 		return db.SetStatusDataDownloaded(r, jUUID)

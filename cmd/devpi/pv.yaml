@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: devpi-pv
+  labels:
+    app: devpi
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  capacity:
+    storage: 10Gi
+  gcePersistentDisk:
+    fsType: ext4
+    pdName: gke-emrys-9c80fd71-dyn-pvc-45c20220-972e-11e8-b365-42010a800192
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    namespace: default
+    name: devpi-pvc-devpi-sts-0
+  storageClassName: standard

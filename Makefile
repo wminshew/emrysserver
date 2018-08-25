@@ -3,6 +3,7 @@ MINERTIMEOUT := 605
 JOBTIMEOUT := 125
 IMAGETIMEOUT := 305
 DATATIMEOUT := 305
+# DEVPITIMEOUT := 305
 
 all: build deploy rollout
 
@@ -84,6 +85,7 @@ deploy-sqlproxy: cmd/sqlproxy/svc-deploy.yaml
 
 deploy-devpi: cmd/devpi/svc-sts.yaml
 	kubectl apply -f cmd/devpi/svc-sts.yaml
+	# gcloud compute backend-services list --filter='devpi' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(DEVPITIMEOUT)
 
 deploy-ing: emrys-ing.yaml
 	kubectl replace -f emrys-ing.yaml
