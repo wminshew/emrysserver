@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/cenkalti/backoff"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 )
 
 // postOutputData receives the miner's container execution for the user
@@ -63,36 +65,29 @@ func postOutputData() app.Handler {
 			operation := func() error {
 				f, err := os.Open(p)
 				if err != nil {
-					log.Sugar.Errorw("failed to open output data.tar.gz",
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jID,
-					)
-					return err
+					return fmt.Errorf("opening output data.tar.gz: %v", err)
 				}
 				defer app.CheckErr(r, f.Close)
 				ctx := context.Background()
 				ow := storage.NewWriter(ctx, p)
 				if _, err = io.Copy(ow, f); err != nil {
-					log.Sugar.Errorw("failed to copy tee reader to cloud storage object writer",
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jID,
-					)
-					return err
+					return fmt.Errorf("copying tee reader to cloud storage object writer: %v", err)
 				}
 				if err = ow.Close(); err != nil {
-					log.Sugar.Errorw("failed to close cloud storage object writer",
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jID,
-					)
-					return err
+					return fmt.Errorf("closing cloud storage object writer: %v", err)
 				}
 				return nil
 			}
-			if err := backoff.Retry(operation, backoff.NewExponentialBackOff()); err != nil {
-				log.Sugar.Errorw("failed to upload output data.tar.gz to gcs",
+			if err := backoff.RetryNotify(operation,
+				backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10),
+				func(err error, t time.Duration) {
+					log.Sugar.Errorw("failed to upload output data.tar.gz to gcs--retrying",
+						"url", r.URL,
+						"err", err.Error(),
+						"jID", jID,
+					)
+				}); err != nil {
+				log.Sugar.Errorw("failed to upload output data.tar.gz to gcs--abort",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,

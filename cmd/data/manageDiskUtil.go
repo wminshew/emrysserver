@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"io/ioutil"
 	"os"
@@ -23,31 +24,24 @@ var (
 	pvcThreshold       float64
 )
 
-// TODO: should probably refactor this to some kind of select on multiple channels, and then when I want
-// to manually trigger it I send something thru a channel
-func startDiskManager() error {
-	var err error
-	if pvcCapGb, err = strconv.ParseFloat(pvcCapGbStr, 64); err != nil {
-		log.Sugar.Errorf("Error converting PVC_CAP_GB to float64")
-		return err
-	}
-	if pvcMaxProjectGb, err = strconv.ParseFloat(pvcMaxProjectGbStr, 64); err != nil {
-		log.Sugar.Errorf("Error converting PVC_MAX_PROJECT_GB to float64")
-		return err
-	}
-	if pvcPeriodSec, err = strconv.Atoi(pvcPeriodSecStr); err != nil {
-		log.Sugar.Errorf("Error converting PVC_PERIOD_SEC to integer")
-		return err
-	}
-	if pvcThreshold, err = strconv.ParseFloat(pvcThresholdStr, 64); err != nil {
-		log.Sugar.Errorf("Error converting PVC_THRESHOLD to float64")
-		return err
-	}
-	for {
-		if err := checkAndEvictProjects(); err != nil {
-			return err
+func initDiskManager() {
+	if err := func() error {
+		var err error
+		if pvcCapGb, err = strconv.ParseFloat(pvcCapGbStr, 64); err != nil {
+			return fmt.Errorf("converting PVC_CAP_GB to float64")
 		}
-		time.Sleep(time.Duration(pvcPeriodSec) * time.Second)
+		if pvcMaxProjectGb, err = strconv.ParseFloat(pvcMaxProjectGbStr, 64); err != nil {
+			return fmt.Errorf("converting PVC_MAX_PROJECT_GB to float64")
+		}
+		if pvcPeriodSec, err = strconv.Atoi(pvcPeriodSecStr); err != nil {
+			return fmt.Errorf("converting PVC_PERIOD_SEC to integer")
+		}
+		if pvcThreshold, err = strconv.ParseFloat(pvcThresholdStr, 64); err != nil {
+			return fmt.Errorf("converting PVC_THRESHOLD to float64")
+		}
+		return nil
+	}(); err != nil {
+		panic(err)
 	}
 }
 

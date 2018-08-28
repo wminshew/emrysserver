@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // buildImage handles building images for jobs posted by users
@@ -128,25 +129,23 @@ func buildImage() app.Handler {
 				p := filepath.Join("image", jID, "dockerContext.tar.gz")
 				ow := storage.NewWriter(ctx, p)
 				if _, err = io.Copy(ow, pr); err != nil {
-					log.Sugar.Errorw("failed to copy pipe reader to cloud storage object writer",
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jID,
-					)
-					return err
+					return fmt.Errorf("copying pipe reader to cloud storage object writer: %v", err)
 				}
 				if err = ow.Close(); err != nil {
-					log.Sugar.Errorw("failed to close cloud storage object writer",
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jID,
-					)
-					return err
+					return fmt.Errorf("closing cloud storage object writer: %v", err)
 				}
 				return nil
 			}
-			if err := backoff.Retry(operation, backoff.NewExponentialBackOff()); err != nil {
-				log.Sugar.Errorw("failed to upload output data.tar.gz to gcs",
+			if err := backoff.RetryNotify(operation,
+				backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10), ctx),
+				func(err error, t time.Duration) {
+					log.Sugar.Errorw("failed to upload output data.tar.gz to gcs--retrying",
+						"url", r.URL,
+						"err", err.Error(),
+						"jID", jID,
+					)
+				}); err != nil {
+				log.Sugar.Errorw("failed to upload output data.tar.gz to gcs--abort",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,

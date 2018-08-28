@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -10,6 +11,8 @@ import (
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -53,8 +56,18 @@ func main() {
 		ReadTimeout: 5 * time.Second,
 	}
 
-	log.Sugar.Infof("Miner listening on port %s...", server.Addr)
-	if err := server.ListenAndServe(); err != nil {
-		log.Sugar.Fatalf("Server error: %v", err)
+	go func() {
+		log.Sugar.Infof("Miner listening on port %s...", server.Addr)
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			log.Sugar.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	ctx := context.Background()
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	<-stop
+	if err := server.Shutdown(ctx); err != nil {
+		log.Sugar.Errorf("shutting server down: %v", err)
 	}
 }
