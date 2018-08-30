@@ -25,7 +25,7 @@ func uploadData() app.Handler {
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("error parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -35,7 +35,7 @@ func uploadData() app.Handler {
 		uID := vars["uID"]
 		_, err = uuid.FromString(uID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse user ID",
+			log.Sugar.Errorw("error parsing user ID",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -55,7 +55,7 @@ func uploadData() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		if projectSize, err := getDirSizeGb(projectDir); err != nil {
-			log.Sugar.Errorw("failed to get size of project dir",
+			log.Sugar.Errorw("error retrieving size of project dir",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -95,7 +95,7 @@ func uploadData() app.Handler {
 
 		if _, err = os.Stat(uploadDir); os.IsNotExist(err) {
 			if err := os.MkdirAll(uploadDir, 0755); err != nil {
-				log.Sugar.Errorw("failed to create upload dir",
+				log.Sugar.Errorw("error creating upload dir",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -103,7 +103,7 @@ func uploadData() app.Handler {
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 		} else if err != nil {
-			log.Sugar.Errorw("failed to get upload dir stat",
+			log.Sugar.Errorw("error retrieving upload dir stat",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -113,7 +113,7 @@ func uploadData() app.Handler {
 
 		f, err := os.Create(uploadPath)
 		if err != nil {
-			log.Sugar.Errorw("failed to create file",
+			log.Sugar.Errorw("error creating file",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -126,7 +126,7 @@ func uploadData() app.Handler {
 		go func() {
 			defer app.CheckErr(r, pw.Close)
 			if _, err := io.Copy(pw, r.Body); err != nil {
-				log.Sugar.Errorw("failed to copy request body to pipe writer",
+				log.Sugar.Errorw("error copying request body to pipe writer",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -137,7 +137,7 @@ func uploadData() app.Handler {
 
 		zr, err := zlib.NewReader(pr)
 		if err != nil {
-			log.Sugar.Errorw("failed to create zlib reader",
+			log.Sugar.Errorw("error creating zlib reader",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -147,7 +147,7 @@ func uploadData() app.Handler {
 		h := md5.New()
 		tee := io.TeeReader(zr, h)
 		if _, err := io.Copy(f, tee); err != nil {
-			log.Sugar.Errorw("failed to copy zlib reader to disk",
+			log.Sugar.Errorw("error copying zlib reader to disk",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -170,7 +170,7 @@ func uploadData() app.Handler {
 		}
 
 		if err := updateProjectMetadata(r, uID, project, relPath, fileMd); err != nil {
-			log.Sugar.Errorw("failed to store project metatdata",
+			log.Sugar.Errorw("error storing project metatdata",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -183,7 +183,7 @@ func uploadData() app.Handler {
 			delete(diskSync, uIDProject)
 			go func() {
 				if err := uploadProject(projectDir); err != nil {
-					log.Sugar.Errorw("failed to upload project dir",
+					log.Sugar.Errorw("error uploading project dir",
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,

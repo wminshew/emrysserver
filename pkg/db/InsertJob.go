@@ -15,7 +15,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
 		if txerr != nil {
-			return "failed to begin tx", txerr
+			return "error beginning tx", txerr
 		}
 		pUUID := uuid.UUID{}
 		sqlStmt := `
@@ -31,11 +31,11 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 	VALUES ($1, $2, $3)
 	`
 				if _, err := tx.Exec(sqlStmt, pUUID, project, uUUID); err != nil {
-					return "failed to insert project", err
+					return "error inserting project", err
 				}
 
 			} else {
-				return "failed to find project", err
+				return "error finding project", err
 			}
 		}
 
@@ -44,7 +44,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 	VALUES ($1, $2, $3)
 	`
 		if _, err := tx.Exec(sqlStmt, jUUID, pUUID, true); err != nil {
-			return "failed to insert job", err
+			return "error inserting job", err
 		}
 
 		sqlStmt = `
@@ -52,7 +52,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 	VALUES ($1, $2, $3)
 	`
 		if _, err := tx.Exec(sqlStmt, jUUID, false, false); err != nil {
-			return "failed to insert payment", err
+			return "error inserting payment", err
 		}
 		sqlStmt = `
 	INSERT INTO statuses (job_uuid,
@@ -62,11 +62,11 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 		if _, err := tx.Exec(sqlStmt, jUUID, false, false, false, false, false, false, false); err != nil {
-			return "failed to insert status", err
+			return "error inserting status", err
 		}
 
 		if err := tx.Commit(); err != nil {
-			return "failed to commit tx", err
+			return "error committing tx", err
 		}
 
 		return "", nil

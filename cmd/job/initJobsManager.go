@@ -23,7 +23,7 @@ func initJobsManager() {
 		EventTimeToLiveSeconds:         60 * 2,
 		DeleteEventAfterFirstRetrieval: true,
 	}); err != nil {
-		log.Sugar.Errorf("Longpoll manager failed to initialize! Panic!")
+		log.Sugar.Errorf("error initializing longpoll manager: %v", err)
 		panic(err)
 	}
 }

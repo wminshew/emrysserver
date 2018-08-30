@@ -14,7 +14,7 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
 		if txerr != nil {
-			return "failed to begin tx", txerr
+			return "error beginning tx", txerr
 		}
 
 		sqlStmt := `
@@ -23,7 +23,7 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 		WHERE job_uuid = $3
 		`
 		if _, err := tx.Exec(sqlStmt, wbUUID, payRate, jUUID); err != nil {
-			return "failed to update job winner", err
+			return "error updating job winner", err
 		}
 
 		sqlStmt = `
@@ -32,11 +32,11 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 		WHERE job_uuid = $2
 		`
 		if _, err := tx.Exec(sqlStmt, true, jUUID); err != nil {
-			return "failed to update job status", err
+			return "error updating job status", err
 		}
 
 		if err := tx.Commit(); err != nil {
-			return "failed to commit tx", err
+			return "error committing tx", err
 		}
 
 		return "", nil
@@ -62,9 +62,6 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 			if err := tx.Rollback(); err != nil {
 				log.Sugar.Errorf("Error rolling tx back job %v: %v\n", jUUID, err)
 			}
-		}
-		if err := SetJobInactive(r, jUUID); err != nil {
-			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}

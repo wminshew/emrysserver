@@ -9,6 +9,47 @@ import (
 	"net/http"
 )
 
+// JobActive is router middleware to check if the job is active
+func JobActive() func(http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return func(h http.Handler) app.Handler {
+			return func(w http.ResponseWriter, r *http.Request) *app.Error {
+				vars := mux.Vars(r)
+				jID := vars["jID"]
+				jUUID, err := uuid.FromString(jID)
+				if err != nil {
+					log.Sugar.Errorw("parsing job ID",
+						"url", r.URL,
+						"err", err.Error(),
+						"jID", jID,
+					)
+					return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
+				}
+
+				active, err := db.GetJobActive(r, jUUID)
+				if err != nil {
+					log.Sugar.Errorw("checking if job is active",
+						"url", r.URL,
+						"err", err.Error(),
+						"jID", jUUID,
+					)
+					return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+				}
+				if !active {
+					log.Sugar.Infow("inactive job",
+						"url", r.URL,
+						"jID", jUUID,
+					)
+					return &app.Error{Code: http.StatusBadRequest, Message: "inactive job"}
+				}
+
+				h.ServeHTTP(w, r)
+				return nil
+			}
+		}(h)
+	}
+}
+
 // UserJobMiddleware applies userJob as router middleware
 func UserJobMiddleware() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
@@ -30,7 +71,7 @@ func userJob(h http.Handler) app.Handler {
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -40,7 +81,7 @@ func userJob(h http.Handler) app.Handler {
 		uID := r.Header.Get("X-Jwt-Claims-Subject")
 		uUUID, err := uuid.FromString(uID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse user ID from valid jwt",
+			log.Sugar.Errorw("parsing user ID from valid jwt",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -50,7 +91,7 @@ func userJob(h http.Handler) app.Handler {
 
 		dbuUUID, err := db.GetJobOwner(r, jUUID)
 		if err != nil {
-			log.Sugar.Errorw("failed to get job owner",
+			log.Sugar.Errorw("retrieving job owner",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -75,7 +116,7 @@ func minerJob(h http.Handler) app.Handler {
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -85,7 +126,7 @@ func minerJob(h http.Handler) app.Handler {
 		mID := r.Header.Get("X-Jwt-Claims-Subject")
 		mUUID, err := uuid.FromString(mID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse miner ID from valid jwt",
+			log.Sugar.Errorw("parsing miner ID from valid jwt",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -95,7 +136,7 @@ func minerJob(h http.Handler) app.Handler {
 
 		dbmUUID, err := db.GetJobWinner(r, jUUID)
 		if err != nil {
-			log.Sugar.Errorw("failed to get job winner",
+			log.Sugar.Errorw("retrieving job winner",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,

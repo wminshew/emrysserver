@@ -18,7 +18,7 @@ func GetJobOwnerAndProject(r *http.Request, jUUID uuid.UUID) (uuid.UUID, string,
 	WHERE j.job_uuid = $1
 	`
 	if err := db.QueryRow(sqlStmt, jUUID).Scan(&uUUID, &project); err != nil {
-		message := "failed to query for job owner and project"
+		message := "error querying for job owner and project"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,

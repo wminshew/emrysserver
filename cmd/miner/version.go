@@ -22,7 +22,7 @@ func getVersion() app.Handler {
 			Version: latestMinerVer.String(),
 		}
 		if err := json.NewEncoder(w).Encode(&resp); err != nil {
-			log.Sugar.Errorw("failed to encode miner semver",
+			log.Sugar.Errorw("error encoding miner semver",
 				"url", r.URL,
 				"err", err.Error(),
 			)

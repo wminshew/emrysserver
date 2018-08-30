@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var (
@@ -58,11 +59,12 @@ func main() {
 	rImageUser.Handle(buildImagePath, buildImage())
 	rImageUser.Use(auth.Jwt(userSecret))
 	rImageUser.Use(auth.UserJobMiddleware())
+	rImageUser.Use(auth.JobActive())
 
 	server := http.Server{
-		Addr:    ":8080",
-		Handler: log.Log(r),
-		// ReadHeaderTimeout: 5 * time.Second,
+		Addr:              ":8080",
+		Handler:           log.Log(r),
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {

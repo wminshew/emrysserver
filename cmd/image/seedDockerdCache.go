@@ -34,13 +34,13 @@ func seedDockerdCache(ctx context.Context) {
 	localBaseCudaRef := fmt.Sprintf("%s/%s:%s@%s:%s", registryHost, img, tag, digestAlgo, digest)
 	log.Sugar.Infof("Pulling %s...", localBaseCudaRef)
 	if pullResp, err = dClient.ImagePull(ctx, localBaseCudaRef, types.ImagePullOptions{}); err != nil {
-		log.Sugar.Infof("failed to find %s: %v", localBaseCudaRef, err)
+		log.Sugar.Infof("error finding %s: %v", localBaseCudaRef, err)
 		local = false
 	} else {
 		if err = jsonmessage.DisplayJSONMessagesStream(pullResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-			log.Sugar.Errorf("failed to pull %s: %v", localBaseCudaRef, err)
+			log.Sugar.Errorf("error pulling %s: %v", localBaseCudaRef, err)
 			if err := pullResp.Close(); err != nil {
-				log.Sugar.Errorf("failed to close dockerd cache pull response: %v\n", err)
+				log.Sugar.Errorf("error closing dockerd cache pull response: %v\n", err)
 			}
 		}
 	}
@@ -48,28 +48,28 @@ func seedDockerdCache(ctx context.Context) {
 	dockerBaseCudaRef = fmt.Sprintf("%s:%s@%s:%s", img, tag, digestAlgo, digest)
 	log.Sugar.Infof("Pulling %s...", dockerBaseCudaRef)
 	if pullResp, err = dClient.ImagePull(ctx, dockerBaseCudaRef, types.ImagePullOptions{}); err != nil {
-		log.Sugar.Infof("failed to find %s: %v", dockerBaseCudaRef, err)
+		log.Sugar.Infof("error finding %s: %v", dockerBaseCudaRef, err)
 	} else {
 		if err = jsonmessage.DisplayJSONMessagesStream(pullResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-			log.Sugar.Errorf("failed to pull %s: %v", dockerBaseCudaRef, err)
+			log.Sugar.Errorf("error pulling %s: %v", dockerBaseCudaRef, err)
 			if err := pullResp.Close(); err != nil {
-				log.Sugar.Errorf("failed to close dockerd cache pull response: %v\n", err)
+				log.Sugar.Errorf("error closing dockerd cache pull response: %v\n", err)
 			}
 		} else if !local {
 			localBaseRefNoDigest := strings.Split(localBaseCudaRef, "@")[0]
 			if err = dClient.ImageTag(ctx, dockerBaseCudaRef, localBaseRefNoDigest); err != nil {
-				log.Sugar.Errorf("failed to tag %s as %s: %v", dockerBaseCudaRef, localBaseRefNoDigest, err)
+				log.Sugar.Errorf("error tagging %s as %s: %v", dockerBaseCudaRef, localBaseRefNoDigest, err)
 			} else {
 				log.Sugar.Infof("Pushing %s...", localBaseRefNoDigest)
 				if pushResp, err := dClient.ImagePush(ctx, localBaseRefNoDigest, types.ImagePushOptions{
 					RegistryAuth: "none",
 				}); err != nil {
-					log.Sugar.Errorf("failed to push %s: %v", localBaseRefNoDigest, err)
+					log.Sugar.Errorf("error pushing %s: %v", localBaseRefNoDigest, err)
 				} else {
 					if err = jsonmessage.DisplayJSONMessagesStream(pushResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-						log.Sugar.Errorf("failed to push %s: %v", localBaseRefNoDigest, err)
+						log.Sugar.Errorf("error pushing %s: %v", localBaseRefNoDigest, err)
 						if err := pushResp.Close(); err != nil {
-							log.Sugar.Errorf("failed to close dockerd cache push response: %v\n", err)
+							log.Sugar.Errorf("error closing dockerd cache push response: %v\n", err)
 						}
 					}
 				}
@@ -83,13 +83,13 @@ func seedDockerdCache(ctx context.Context) {
 	localBaseJobRef = fmt.Sprintf("%s/%s:%s", registryHost, img, tag)
 	log.Sugar.Infof("Pulling %s...", localBaseJobRef)
 	if pullResp, err = dClient.ImagePull(ctx, localBaseJobRef, types.ImagePullOptions{}); err != nil {
-		log.Sugar.Infof("failed to find %s: %v", localBaseJobRef, err)
+		log.Sugar.Infof("error finding %s: %v", localBaseJobRef, err)
 		local = false
 	} else {
 		if err = jsonmessage.DisplayJSONMessagesStream(pullResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-			log.Sugar.Errorf("failed to pull %s: %v", localBaseJobRef, err)
+			log.Sugar.Errorf("error pulling %s: %v", localBaseJobRef, err)
 			if err := pullResp.Close(); err != nil {
-				log.Sugar.Errorf("failed to close dockerd cache pull response: %v\n", err)
+				log.Sugar.Errorf("error closing dockerd cache pull response: %v\n", err)
 			}
 		}
 	}
@@ -100,10 +100,10 @@ func seedDockerdCache(ctx context.Context) {
 		pr, pw := io.Pipe()
 		go func() {
 			if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
-				log.Sugar.Errorf("failed to tar-gzip docker context: %v", err)
+				log.Sugar.Errorf("error tar-gzipping docker context: %v", err)
 			}
 			if err := pw.Close(); err != nil {
-				log.Sugar.Errorf("failed to close tar-gzip pw: %v", err)
+				log.Sugar.Errorf("error closing tar-gzip pw: %v", err)
 			}
 		}()
 
@@ -113,24 +113,24 @@ func seedDockerdCache(ctx context.Context) {
 			Tags:      []string{localBaseJobRef},
 			Target:    "base",
 		}); err != nil {
-			log.Sugar.Infof("failed to build %s: %v", localBaseJobRef, err)
+			log.Sugar.Infof("error building %s: %v", localBaseJobRef, err)
 		} else {
 			if err = jsonmessage.DisplayJSONMessagesStream(buildResp.Body, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-				log.Sugar.Errorf("failed to build %s: %v", localBaseJobRef, err)
+				log.Sugar.Errorf("error building %s: %v", localBaseJobRef, err)
 				if err := buildResp.Body.Close(); err != nil {
-					log.Sugar.Errorf("failed to close dockerd cache build response: %v\n", err)
+					log.Sugar.Errorf("error closing dockerd cache build response: %v\n", err)
 				}
 			} else {
 				log.Sugar.Infof("Pushing %s...", localBaseJobRef)
 				if pushResp, err := dClient.ImagePush(ctx, localBaseJobRef, types.ImagePushOptions{
 					RegistryAuth: "none",
 				}); err != nil {
-					log.Sugar.Errorf("failed to push %s: %v", localBaseJobRef, err)
+					log.Sugar.Errorf("error pushing %s: %v", localBaseJobRef, err)
 				} else {
 					if err = jsonmessage.DisplayJSONMessagesStream(pushResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-						log.Sugar.Errorf("failed to push %s: %v", localBaseJobRef, err)
+						log.Sugar.Errorf("error pushing %s: %v", localBaseJobRef, err)
 						if err := pushResp.Close(); err != nil {
-							log.Sugar.Errorf("failed to close dockerd cache push response: %v\n", err)
+							log.Sugar.Errorf("error closing dockerd cache push response: %v\n", err)
 						}
 					}
 				}

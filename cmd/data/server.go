@@ -61,16 +61,18 @@ func main() {
 	rDataUser.Handle(uploadDataPath, uploadData()).Methods("PUT")
 	rDataUser.Use(auth.Jwt(userSecret))
 	rDataUser.Use(auth.UserJobMiddleware())
+	rDataUser.Use(auth.JobActive())
 
 	rDataMiner := r.PathPrefix("/miner").HeadersRegexp("Authorization", "^Bearer ").Methods("GET").Subrouter()
 	rDataMiner.Handle("/job/{jID}", getData())
 	rDataMiner.Use(auth.Jwt(minerSecret))
 	rDataMiner.Use(auth.MinerJobMiddleware())
+	rDataMiner.Use(auth.JobActive())
 
 	server := http.Server{
-		Addr:    ":8080",
-		Handler: log.Log(r),
-		// ReadHeaderTimeout: 5 * time.Second,
+		Addr:              ":8080",
+		Handler:           log.Log(r),
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {

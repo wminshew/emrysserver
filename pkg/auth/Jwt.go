@@ -33,7 +33,7 @@ func jwtAuth(h http.Handler, secret string) app.Handler {
 				return []byte(secret), nil
 			}, request.WithClaims(claims))
 		if err != nil {
-			log.Sugar.Errorw("failed to parse JWT",
+			log.Sugar.Errorw("error parsing JWT",
 				"url", r.URL,
 				"err", err.Error(),
 			)

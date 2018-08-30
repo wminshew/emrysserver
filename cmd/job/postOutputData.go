@@ -24,7 +24,7 @@ func postOutputData() app.Handler {
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("error parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -33,7 +33,7 @@ func postOutputData() app.Handler {
 
 		outputDir := path.Join("output", jID)
 		if err := os.MkdirAll(outputDir, 0755); err != nil {
-			log.Sugar.Errorw("failed to make output dir",
+			log.Sugar.Errorw("error making output dir",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -43,7 +43,7 @@ func postOutputData() app.Handler {
 		p := path.Join(outputDir, "data.tar.gz")
 		f, err := os.Create(p)
 		if err != nil {
-			log.Sugar.Errorw("failed to create output data.tar.gz",
+			log.Sugar.Errorw("error creating output data.tar.gz",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -51,7 +51,7 @@ func postOutputData() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		if _, err = io.Copy(f, r.Body); err != nil {
-			log.Sugar.Errorw("failed to copy data.tar.gz to file",
+			log.Sugar.Errorw("error copying data.tar.gz to file",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -81,13 +81,13 @@ func postOutputData() app.Handler {
 			if err := backoff.RetryNotify(operation,
 				backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10),
 				func(err error, t time.Duration) {
-					log.Sugar.Errorw("failed to upload output data.tar.gz to gcs--retrying",
+					log.Sugar.Errorw("error uploading output data.tar.gz to gcs--retrying",
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
 					)
 				}); err != nil {
-				log.Sugar.Errorw("failed to upload output data.tar.gz to gcs--abort",
+				log.Sugar.Errorw("error uploading output data.tar.gz to gcs--abort",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,

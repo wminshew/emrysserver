@@ -32,7 +32,7 @@ func GetMinerUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, 
 			)
 			return uuid.UUID{}, "", ErrUnauthorizedMiner
 		}
-		message := "failed to query for miner uuid and password"
+		message := "error querying for miner uuid and password"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,

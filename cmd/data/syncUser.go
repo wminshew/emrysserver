@@ -22,7 +22,7 @@ func syncUser() app.Handler {
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("error parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -32,7 +32,7 @@ func syncUser() app.Handler {
 		uID := vars["uID"]
 		_, err = uuid.FromString(uID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse user ID",
+			log.Sugar.Errorw("error parsing user ID",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -44,7 +44,7 @@ func syncUser() app.Handler {
 		projectDir := filepath.Join("data", uID, project)
 		if _, err = os.Stat(projectDir); os.IsNotExist(err) {
 			if err := os.MkdirAll(projectDir, 0755); err != nil {
-				log.Sugar.Errorw("failed to get server project metadata",
+				log.Sugar.Errorw("error retrieving server project metadata",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -52,7 +52,7 @@ func syncUser() app.Handler {
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 			if err := downloadProject(projectDir); err != nil {
-				log.Sugar.Errorw("failed to download project from gcs",
+				log.Sugar.Errorw("error downloading project from gcs",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -66,7 +66,7 @@ func syncUser() app.Handler {
 				}
 			}()
 		} else if err != nil {
-			log.Sugar.Errorw("failed to get project directory",
+			log.Sugar.Errorw("error retrieving project directory",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -79,7 +79,7 @@ func syncUser() app.Handler {
 
 		serverMetadata := make(map[string]*job.FileMetadata)
 		if err := getProjectMetadata(r, uID, project, &serverMetadata); err != nil {
-			log.Sugar.Errorw("failed to get server project metadata",
+			log.Sugar.Errorw("error retrieving server project metadata",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -88,7 +88,7 @@ func syncUser() app.Handler {
 		}
 		defer func() {
 			if err := storeProjectMetadata(r, uID, project, &serverMetadata); err != nil {
-				log.Sugar.Errorw("failed to store project metatdata",
+				log.Sugar.Errorw("error storing project metatdata",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -99,7 +99,7 @@ func syncUser() app.Handler {
 
 		userMetadata := make(map[string]*job.FileMetadata)
 		if err := json.NewDecoder(r.Body).Decode(&userMetadata); err != nil && err != io.EOF {
-			log.Sugar.Errorw("failed to decode user project metadata from request body",
+			log.Sugar.Errorw("error decoding user project metadata from request body",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -129,7 +129,7 @@ func syncUser() app.Handler {
 				mdSync[uIDProject][relPath] = userFileMd
 				p := filepath.Join(dataDir, relPath)
 				if err := os.Remove(p); err != nil {
-					log.Sugar.Errorw("failed to remove data set file",
+					log.Sugar.Errorw("error removing data set file",
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
@@ -146,7 +146,7 @@ func syncUser() app.Handler {
 			if _, ok := keepList[relPath]; !ok {
 				p := filepath.Join(dataDir, relPath)
 				if err := os.Remove(p); err != nil {
-					log.Sugar.Errorw("failed to remove data set file",
+					log.Sugar.Errorw("error removing data set file",
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
@@ -164,7 +164,7 @@ func syncUser() app.Handler {
 		}
 
 		if err := json.NewEncoder(w).Encode(uploadList); err != nil {
-			log.Sugar.Errorw("failed to encode upload list as json",
+			log.Sugar.Errorw("error encoding upload list as json",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,

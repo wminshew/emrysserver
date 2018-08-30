@@ -17,7 +17,7 @@ func getOutputLog() app.Handler {
 		jID := vars["jID"]
 		_, err := uuid.FromString(jID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("error parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -39,15 +39,9 @@ func getOutputLog() app.Handler {
 // ctx := r.Context()
 // reader, err = storage.NewReader(ctx, p)
 // if err == storage.ErrObjectNotExist {
-// 	pr, pw := io.Pipe()
-// 	logPipes[jUUID] = &pipe{
-// 		r: pr,
-// 		w: pw,
-// 	}
-// 	reader = pr
-// 	defer delete(logPipes, jUUID)
+//
 // } else if err != nil {
-// 	log.Sugar.Errorw("failed to read from cloud storage",
+// 	log.Sugar.Errorw("error reading from cloud storage",
 // 		"url", r.URL,
 // 		"err", err.Error(),
 // 		"jID", jID,
@@ -55,9 +49,8 @@ func getOutputLog() app.Handler {
 // 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 // }
 //
-// fw := app.NewFlushWriter(w)
-// if _, err = io.Copy(fw, reader); err != nil {
-// 	log.Sugar.Errorw("failed to copy pipe reader to flushwriter",
+// if _, err = io.Copy(w, reader); err != nil {
+// 	log.Sugar.Errorw("error copying pipe reader to response writer",
 // 		"url", r.URL,
 // 		"err", err.Error(),
 // 		"jID", jID,

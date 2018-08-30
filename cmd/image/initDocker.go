@@ -16,13 +16,13 @@ func initDocker() {
 
 	var err error
 	if dClient, err = docker.NewEnvClient(); err != nil {
-		log.Sugar.Errorf("failed to initialize docker client: %v", err)
+		log.Sugar.Errorf("error initializing docker client: %v", err)
 		panic(err)
 	}
 
 	ctx := context.Background()
 	if err = downloadDockerfile(ctx); err != nil {
-		log.Sugar.Errorf("failed to download dockerfile: %v", err)
+		log.Sugar.Errorf("error downloading dockerfile: %v", err)
 		panic(err)
 	}
 

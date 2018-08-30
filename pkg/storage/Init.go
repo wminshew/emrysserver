@@ -17,7 +17,7 @@ func Init() {
 	log.Sugar.Infof("Initializing cloud storage...")
 
 	if client, err := storage.NewClient(context.Background()); err != nil {
-		log.Sugar.Errorf("Cloud storage failed to initialize! Panic!")
+		log.Sugar.Errorf("error initializing gcs: %v", err)
 		panic(err)
 	} else {
 		bkt = client.Bucket(bktName)

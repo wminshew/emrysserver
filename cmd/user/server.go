@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var userSecret = os.Getenv("USERSECRET")
@@ -38,16 +39,21 @@ func main() {
 	rUser.Handle("/login", login()).Methods("POST")
 	rUser.Handle("/version", getVersion()).Methods("GET")
 
-	rUserAuth := rUser.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	projectRegexpMux := validate.ProjectRegexpMux()
-	postJobPath := fmt.Sprintf("/{uID}/project/{project:%s}/job", projectRegexpMux)
-	rUserAuth.Handle(postJobPath, postJob()).Methods("POST")
+	rUserAuth := rUser.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rUserAuth.Use(auth.Jwt(userSecret))
+	rUserAuth.Handle(fmt.Sprintf("/{uID}/project/{project:%s}/job", projectRegexpMux),
+		postJob()).Methods("POST").Subrouter()
+
+	rUserCancelJob := rUserAuth.Handle(fmt.Sprintf("/{uID}/project/{project:%s}/job/{jID}/cancel", projectRegexpMux),
+		postCancelJob()).Methods("POST").Subrouter()
+	rUserCancelJob.Use(auth.UserJobMiddleware())
+	rUserCancelJob.Use(auth.JobActive())
 
 	server := http.Server{
-		Addr:    ":8080",
-		Handler: log.Log(r),
-		// ReadHeaderTimeout: 5 * time.Second,
+		Addr:              ":8080",
+		Handler:           log.Log(r),
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {

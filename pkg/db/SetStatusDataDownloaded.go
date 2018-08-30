@@ -16,7 +16,7 @@ func SetStatusDataDownloaded(r *http.Request, jUUID uuid.UUID) *app.Error {
 	WHERE job_uuid = $2
 	`
 	if _, err := db.Exec(sqlStmt, true, jUUID); err != nil {
-		message := "failed to update job status to data downloaded"
+		message := "error updating job status to data downloaded"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -33,9 +33,6 @@ func SetStatusDataDownloaded(r *http.Request, jUUID uuid.UUID) *app.Error {
 				"err", err.Error(),
 				"jID", jUUID,
 			)
-		}
-		if err := SetJobInactive(r, jUUID); err != nil {
-			log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
 		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}

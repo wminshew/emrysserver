@@ -42,18 +42,21 @@ func main() {
 
 	rMinerAuth := rMiner.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rMinerAuth.Handle("/connect", connect()).Methods("GET")
-	rMinerAuth.Handle("/job/{jID}/bid", postBid()).Methods("POST")
 	rMinerAuth.Use(auth.Jwt(minerSecret))
+
+	rMinerBid := rMinerAuth.Handle("/job/{jID}/bid", postBid()).Methods("POST").Subrouter()
+	rMinerBid.Use(auth.JobActive())
 
 	rAuction := r.PathPrefix("/auction").Subrouter()
 	rAuction.Handle("/{jID}", postAuction()).Methods("POST")
 	rAuction.Use(auth.Jwt(userSecret))
 	rAuction.Use(auth.UserJobMiddleware())
+	rAuction.Use(auth.JobActive())
 
 	server := http.Server{
-		Addr:        ":8080",
-		Handler:     log.Log(r),
-		ReadTimeout: 5 * time.Second,
+		Addr:              ":8080",
+		Handler:           log.Log(r),
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {

@@ -18,7 +18,7 @@ func newUser() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		c := &creds.User{}
 		if err := json.NewDecoder(r.Body).Decode(c); err != nil {
-			log.Sugar.Errorw("failed to decode json request body",
+			log.Sugar.Errorw("error decoding json request body",
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -27,7 +27,7 @@ func newUser() app.Handler {
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), cost)
 		if err != nil {
-			log.Sugar.Errorw("failed to hash password",
+			log.Sugar.Errorw("error hashing password",
 				"url", r.URL,
 				"err", err.Error(),
 				"email", c.Email,

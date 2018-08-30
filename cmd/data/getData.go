@@ -19,7 +19,7 @@ func getData() app.Handler {
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("error parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -28,7 +28,7 @@ func getData() app.Handler {
 
 		uUUID, project, err := db.GetJobOwnerAndProject(r, jUUID)
 		if err != nil {
-			log.Sugar.Errorw("failed to get job owner and project",
+			log.Sugar.Errorw("error retrieving job owner and project",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -39,7 +39,7 @@ func getData() app.Handler {
 		projectDir := filepath.Join("data", uUUID.String(), project)
 		if _, err = os.Stat(projectDir); os.IsNotExist(err) {
 			if err := os.MkdirAll(projectDir, 0755); err != nil {
-				log.Sugar.Errorw("failed to make project dir",
+				log.Sugar.Errorw("error making project dir",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -47,7 +47,7 @@ func getData() app.Handler {
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 			if err := downloadProject(projectDir); err != nil {
-				log.Sugar.Errorw("failed to download project from gcs",
+				log.Sugar.Errorw("error downloading project from gcs",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -61,7 +61,7 @@ func getData() app.Handler {
 				}
 			}()
 		} else if err != nil {
-			log.Sugar.Errorw("failed to stat project dir",
+			log.Sugar.Errorw("error stating project dir",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -74,7 +74,7 @@ func getData() app.Handler {
 		dataDir := filepath.Join(projectDir, "data")
 		if _, err = os.Stat(dataDir); !os.IsNotExist(err) {
 			if err := archiver.TarGz.Write(w, []string{dataDir}); err != nil {
-				log.Sugar.Errorw("failed to write tar gzipped data dir",
+				log.Sugar.Errorw("error writing tar gzipped data dir",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,

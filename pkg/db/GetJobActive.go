@@ -7,15 +7,16 @@ import (
 	"net/http"
 )
 
-// SetJobInactive sets job jUUID in database to active=false
-func SetJobInactive(r *http.Request, jUUID uuid.UUID) error {
+// GetJobActive returns whether job is active
+func GetJobActive(r *http.Request, jUUID uuid.UUID) (bool, error) {
+	var active bool
 	sqlStmt := `
-	UPDATE jobs
-	SET active = $1
-	WHERE job_uuid = $2
+	SELECT j.active
+	FROM jobs j
+	WHERE j.job_uuid = $1
 	`
-	if _, err := db.Exec(sqlStmt, false, jUUID); err != nil {
-		message := "error updating job"
+	if err := db.QueryRow(sqlStmt, jUUID).Scan(&active); err != nil {
+		message := "error querying for job owner"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -33,7 +34,7 @@ func SetJobInactive(r *http.Request, jUUID uuid.UUID) error {
 				"jID", jUUID,
 			)
 		}
-		return err
+		return false, err
 	}
-	return nil
+	return active, nil
 }

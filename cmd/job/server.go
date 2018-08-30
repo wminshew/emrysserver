@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var userSecret = os.Getenv("USERSECRET")
@@ -40,6 +41,7 @@ func main() {
 	rJobMiner.Handle("/{jID}/data", postOutputData())
 	rJobMiner.Use(auth.Jwt(minerSecret))
 	rJobMiner.Use(auth.MinerJobMiddleware())
+	rJobMiner.Use(auth.JobActive())
 
 	rJobUser := rJob.NewRoute().Methods("GET").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rJobUser.Handle("/{jID}/log", getOutputLog())
@@ -48,8 +50,9 @@ func main() {
 	rJobUser.Use(auth.UserJobMiddleware())
 
 	server := http.Server{
-		Addr:    ":8080",
-		Handler: log.Log(r),
+		Addr:              ":8080",
+		Handler:           log.Log(r),
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {

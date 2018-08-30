@@ -22,7 +22,7 @@ func login() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		c := &creds.Miner{}
 		if err := json.NewDecoder(r.Body).Decode(c); err != nil {
-			log.Sugar.Errorw("failed to decode json request body",
+			log.Sugar.Errorw("error decoding json request body",
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -61,7 +61,7 @@ func login() app.Handler {
 
 		tokenString, err := token.SignedString([]byte(minerSecret))
 		if err != nil {
-			log.Sugar.Errorw("failed to sign token",
+			log.Sugar.Errorw("error signing token",
 				"url", r.URL,
 				"err", err.Error(),
 				"mID", mUUID,
@@ -74,7 +74,7 @@ func login() app.Handler {
 			Token: tokenString,
 		}
 		if err = json.NewEncoder(w).Encode(resp); err != nil {
-			log.Sugar.Errorw("failed to encode json response",
+			log.Sugar.Errorw("error encoding json response",
 				"url", r.URL,
 				"err", err.Error(),
 				"mID", mUUID,

@@ -28,7 +28,7 @@ func buildImage() app.Handler {
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("error parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -37,7 +37,7 @@ func buildImage() app.Handler {
 		uID := vars["uID"]
 		uUUID, err := uuid.FromString(uID)
 		if err != nil {
-			log.Sugar.Errorw("failed to parse job ID",
+			log.Sugar.Errorw("error parsing job ID",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -47,41 +47,32 @@ func buildImage() app.Handler {
 
 		inputDir := filepath.Join("job", jID, "input")
 		if err := os.MkdirAll(inputDir, 0755); err != nil {
-			log.Sugar.Errorw("failed to create job input directory",
+			log.Sugar.Errorw("error creating job input directory",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			if err := db.SetJobInactive(r, jUUID); err != nil {
-				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
 		log.Sugar.Infof("Storing input files on disk...")
 		if err := archiver.TarGz.Read(r.Body, inputDir); err != nil {
-			log.Sugar.Errorw("failed to un-targz request body to input dir",
+			log.Sugar.Errorw("error un-targzpping request body to input dir",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			if err := db.SetJobInactive(r, jUUID); err != nil {
-				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
 		ctx := r.Context()
 		if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
 			if err := downloadDockerfile(ctx); err != nil {
-				log.Sugar.Errorw("failed to download dockerfile",
+				log.Sugar.Errorw("error downloading dockerfile",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
 				)
-				if err := db.SetJobInactive(r, jUUID); err != nil {
-					log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-				}
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 		}
@@ -89,14 +80,11 @@ func buildImage() app.Handler {
 		linkedDocker := filepath.Join(inputDir, "Dockerfile")
 		if _, err := os.Stat(linkedDocker); os.IsNotExist(err) {
 			if err := os.Link(dockerfilePath, linkedDocker); err != nil {
-				log.Sugar.Errorw("failed link dockerfile into user dir",
+				log.Sugar.Errorw("error linking dockerfile into user dir",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
 				)
-				if err := db.SetJobInactive(r, jUUID); err != nil {
-					log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-				}
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 		}
@@ -111,12 +99,13 @@ func buildImage() app.Handler {
 
 		defer func() {
 			defer app.CheckErr(r, func() error { return os.RemoveAll(inputDir) })
+			ctx := context.Background()
 			operation := func() error {
 				pr, pw := io.Pipe()
 				go func() {
 					defer app.CheckErr(r, pw.Close)
 					if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
-						log.Sugar.Errorw("failed to tar-gzip docker context for cloud storage",
+						log.Sugar.Errorw("error tar-gzipping docker context for cloud storage",
 							"url", r.URL,
 							"err", err.Error(),
 							"jID", jID,
@@ -125,7 +114,6 @@ func buildImage() app.Handler {
 					}
 				}()
 
-				ctx := context.Background()
 				p := filepath.Join("image", jID, "dockerContext.tar.gz")
 				ow := storage.NewWriter(ctx, p)
 				if _, err = io.Copy(ow, pr); err != nil {
@@ -139,13 +127,13 @@ func buildImage() app.Handler {
 			if err := backoff.RetryNotify(operation,
 				backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10), ctx),
 				func(err error, t time.Duration) {
-					log.Sugar.Errorw("failed to upload output data.tar.gz to gcs--retrying",
+					log.Sugar.Errorw("error uploading input dockerContext.tar.gz to gcs--retrying",
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
 					)
 				}); err != nil {
-				log.Sugar.Errorw("failed to upload output data.tar.gz to gcs--abort",
+				log.Sugar.Errorw("error uploading input dockerContext.tar.gz to gcs--abort",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -157,15 +145,15 @@ func buildImage() app.Handler {
 		cacheSlice := []string{dockerBaseCudaRef, localBaseJobRef}
 		latestProjectBuild := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
 		if pullResp, err := dClient.ImagePull(ctx, latestProjectBuild, types.ImagePullOptions{}); err != nil {
-			log.Sugar.Infof("failed to find %s: %v", latestProjectBuild, err)
+			log.Sugar.Infof("error finding %s: %v", latestProjectBuild, err)
 		} else {
 			if err := jsonmessage.DisplayJSONMessagesStream(pullResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-				log.Sugar.Errorf("failed to pull %s: %v", latestProjectBuild, err)
+				log.Sugar.Errorf("error pulling %s: %v", latestProjectBuild, err)
 			} else {
 				cacheSlice = append(cacheSlice, latestProjectBuild)
 			}
 			if err := pullResp.Close(); err != nil {
-				log.Sugar.Errorf("failed to close cache pull response %s: %v\n", latestProjectBuild, err)
+				log.Sugar.Errorf("error closing cache pull response %s: %v\n", latestProjectBuild, err)
 			}
 		}
 
@@ -174,7 +162,7 @@ func buildImage() app.Handler {
 		go func() {
 			defer app.CheckErr(r, pw.Close)
 			if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
-				log.Sugar.Errorw("failed to tar-gzip docker context",
+				log.Sugar.Errorw("error tar-gzipping docker context",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -202,28 +190,22 @@ func buildImage() app.Handler {
 			Tags:           strRefs,
 		})
 		if err != nil {
-			log.Sugar.Errorw("failed to build image",
+			log.Sugar.Errorw("error building image",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			if err := db.SetJobInactive(r, jUUID); err != nil {
-				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		defer app.CheckErr(r, buildResp.Body.Close)
 
 		log.Sugar.Infof("Logging image build response...")
 		if err := jsonmessage.DisplayJSONMessagesStream(buildResp.Body, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-			log.Sugar.Errorw("failed to build image",
+			log.Sugar.Errorw("error building image",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			if err := db.SetJobInactive(r, jUUID); err != nil {
-				log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
@@ -234,28 +216,22 @@ func buildImage() app.Handler {
 				RegistryAuth: "none",
 			})
 			if err != nil {
-				log.Sugar.Errorw("failed to push image",
+				log.Sugar.Errorw("error pushing image",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
 					"pushAddr", pushAddr,
 				)
-				if err := db.SetJobInactive(r, jUUID); err != nil {
-					log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-				}
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 			defer app.CheckErr(r, pushResp.Close)
 
 			if err := jsonmessage.DisplayJSONMessagesStream(pushResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-				log.Sugar.Errorw("failed to push image",
+				log.Sugar.Errorw("error pushing image",
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
 				)
-				if err := db.SetJobInactive(r, jUUID); err != nil {
-					log.Sugar.Errorf("Error setting job %v inactive: %v\n", jUUID, err)
-				}
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
 		}

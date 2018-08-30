@@ -46,14 +46,12 @@ func (a *auction) run(r *http.Request) *app.Error {
 		Job:     j,
 	}
 	if err := jobsManager.Publish("jobs", jMsg); err != nil {
-		log.Sugar.Errorw("failed to publish job",
+		log.Sugar.Errorw("error publishing job",
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", a.jobID,
 		)
-		if err := db.SetJobInactive(r, a.jobID); err != nil {
-			log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
-		}
+		a.winner.mux.Unlock()
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	auctions[a.jobID] = a
@@ -71,9 +69,6 @@ func (a *auction) run(r *http.Request) *app.Error {
 
 	rows, err := db.GetValidBids(r, a.jobID)
 	if err != nil {
-		if err := db.SetJobInactive(r, a.jobID); err != nil {
-			log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
-		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	defer app.CheckErr(r, rows.Close)
@@ -86,14 +81,11 @@ func (a *auction) run(r *http.Request) *app.Error {
 		var bidRate float64
 		n++
 		if err = rows.Scan(&bidUUID, &bidRate); err != nil {
-			log.Sugar.Errorw("failed to scan bids",
+			log.Sugar.Errorw("error scanning bids",
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", a.jobID,
 			)
-			if err := db.SetJobInactive(r, a.jobID); err != nil {
-				log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
-			}
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 		if bidRate < winRate {
@@ -105,22 +97,16 @@ func (a *auction) run(r *http.Request) *app.Error {
 		}
 	}
 	if err = rows.Err(); err != nil {
-		log.Sugar.Errorw("failed to scan bids",
+		log.Sugar.Errorw("error scanning bids",
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", a.jobID,
 		)
-		if err := db.SetJobInactive(r, a.jobID); err != nil {
-			log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
-		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	if n == 0 {
 		log.Sugar.Infof("no bids received")
-		if err := db.SetJobInactive(r, a.jobID); err != nil {
-			log.Sugar.Errorf("Error setting job %v inactive: %v\n", a.jobID, err)
-		}
-		return &app.Error{Code: http.StatusPaymentRequired, Message: "no bids received"}
+		return &app.Error{Code: http.StatusPaymentRequired, Message: "no bids received, please try again"}
 	} else if n == 1 {
 		payRate = winRate
 	}
