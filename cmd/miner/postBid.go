@@ -56,7 +56,7 @@ func postBid() app.Handler {
 		if err := db.InsertBid(r, b); err != nil {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		log.Sugar.Infof("Bid %s (rate: %.2f, late: %s) for job %s received!", b.ID.String(), b.MinRate, b.Late, b.JobID.String())
+		log.Sugar.Infof("Bid %s (rate: %.2f, late: %s) for job %s received!", b.ID.String(), b.BidRate, b.Late, b.JobID.String())
 
 		if b.Late {
 			return &app.Error{Code: http.StatusBadRequest, Message: "your bid was late"}

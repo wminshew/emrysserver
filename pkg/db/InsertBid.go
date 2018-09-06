@@ -10,10 +10,10 @@ import (
 // InsertBid inserts a new bid into the db
 func InsertBid(r *http.Request, b *job.Bid) error {
 	sqlStmt := `
-	INSERT INTO bids (bid_uuid, job_uuid, miner_uuid, min_rate, late)
-	VALUES ($1, $2, $3, $4, $5)
+	INSERT INTO bids (bid_uuid, job_uuid, miner_uuid, worker_uuid, bid_rate, late)
+	VALUES ($1, $2, $3, $4, $5, $6)
 	`
-	if _, err := db.Exec(sqlStmt, b.ID, b.JobID, b.MinerID, b.MinRate, b.Late); err != nil {
+	if _, err := db.Exec(sqlStmt, b.ID, b.JobID, b.MinerID, b.WorkerID, b.BidRate, b.Late); err != nil {
 		message := "error inserting bid"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
