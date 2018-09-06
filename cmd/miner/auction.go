@@ -114,6 +114,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 	log.Sugar.Infof("%d bid(s) received", n)
 	log.Sugar.Infof("winning bid: %v", a.winner.bid)
 	log.Sugar.Infof("pay Rate: %v", payRate)
+	// TODO: add POST to /job that inits various channels / bools
 
 	return db.SetJobWinnerAndAuctionStatus(r, a.jobID, a.winner.bid, payRate)
 }
