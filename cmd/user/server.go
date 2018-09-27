@@ -40,13 +40,14 @@ func main() {
 	rUser.Handle("/version", getVersion()).Methods("GET")
 
 	projectRegexpMux := validate.ProjectRegexpMux()
-	rUserAuth := rUser.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rUserAuth := rUser.PathPrefix(fmt.Sprintf("/{uID}/project/{project:%s}/job", projectRegexpMux)).
+		HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rUserAuth.Handle("", postJob()).Methods("POST")
+	rUserAuth.Handle("/", postJob()).Methods("POST")
 	rUserAuth.Use(auth.Jwt(userSecret))
-	rUserAuth.Handle(fmt.Sprintf("/{uID}/project/{project:%s}/job", projectRegexpMux),
-		postJob()).Methods("POST").Subrouter()
 
-	rUserCancelJob := rUserAuth.Handle(fmt.Sprintf("/{uID}/project/{project:%s}/job/{jID}/cancel", projectRegexpMux),
-		postCancelJob()).Methods("POST").Subrouter()
+	rUserCancelJob := rUserAuth.PathPrefix("/{jID}").Subrouter()
+	rUserCancelJob.Handle("/cancel", postCancelJob()).Methods("POST")
 	rUserCancelJob.Use(auth.UserJobMiddleware())
 	rUserCancelJob.Use(auth.JobActive())
 

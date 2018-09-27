@@ -42,10 +42,12 @@ func main() {
 
 	rMinerAuth := rMiner.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rMinerAuth.Handle("/connect", connect()).Methods("GET")
+	rMinerAuth.Handle("/device_snapshot", postDeviceSnapshot()).Methods("POST")
 	rMinerAuth.Use(auth.Jwt(minerSecret))
 
-	rMinerBid := rMinerAuth.Handle("/job/{jID}/bid", postBid()).Methods("POST").Subrouter()
-	rMinerBid.Use(auth.JobActive())
+	rMinerJob := rMinerAuth.PathPrefix("/job/{jID}").Subrouter()
+	rMinerJob.Handle("/bid", postBid()).Methods("POST")
+	rMinerJob.Use(auth.JobActive())
 
 	rAuction := r.PathPrefix("/auction").Subrouter()
 	rAuction.Handle("/{jID}", postAuction()).Methods("POST")

@@ -37,7 +37,6 @@ func main() {
 	rJob := r.PathPrefix("/job/{jID}").Subrouter()
 
 	rJobMiner := rJob.NewRoute().Methods("POST").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rJobMiner.Handle("/device_snapshot", postDeviceSnapshot())
 	rJobMiner.Handle("/log", postOutputLog())
 	rJobMiner.Handle("/data", postOutputData())
 	rJobMiner.Use(auth.Jwt(minerSecret))

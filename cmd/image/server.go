@@ -55,8 +55,7 @@ func main() {
 
 	rImageUser := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
 	projectRegexpMux := validate.ProjectRegexpMux()
-	buildImagePath := fmt.Sprintf("/{uID}/{project:%s}/{jID}", projectRegexpMux)
-	rImageUser.Handle(buildImagePath, buildImage())
+	rImageUser.Handle(fmt.Sprintf("/{uID}/{project:%s}/{jID}", projectRegexpMux), buildImage())
 	rImageUser.Use(auth.Jwt(userSecret))
 	rImageUser.Use(auth.UserJobMiddleware())
 	rImageUser.Use(auth.JobActive())

@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-// postBid accepts a job.Bid from miner and calls handlers/job.PostBid
+// postBid accepts a job.Bid from a miner
 func postBid() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		var err error

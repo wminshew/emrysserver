@@ -55,9 +55,13 @@ func (a *auction) run(r *http.Request) *app.Error {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	auctions[a.jobID] = a
+	success := false
 	defer func() {
 		a.winner.mux.Unlock()
-		time.Sleep(deleteAfter)
+		log.Sugar.Infof("Auction success in defer: %v\n", success) // TODO: make sure success is handled correctly w/ deferred func
+		if success {                                               // if auction fails, delete immediately to start a new one
+			time.Sleep(deleteAfter)
+		}
 		delete(auctions, a.jobID)
 	}()
 
@@ -110,6 +114,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 	} else if n == 1 {
 		payRate = winRate
 	}
+	success = true
 
 	log.Sugar.Infof("%d bid(s) received", n)
 	log.Sugar.Infof("winning bid: %v", a.winner.bid)
