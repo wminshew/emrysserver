@@ -23,7 +23,8 @@ func postCancelJob() app.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 
-		if err := db.SetJobInactive(r, jUUID); err != nil {
+		// if err := db.SetJobInactive(r, jUUID); err != nil {
+		if err := db.SetJobInactive(jUUID); err != nil {
 			log.Sugar.Errorw("error setting job inactive",
 				"url", r.URL,
 				"err", err.Error(),

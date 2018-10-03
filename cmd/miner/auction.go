@@ -21,13 +21,13 @@ type auction struct {
 }
 
 type late struct {
-	late bool
-	mux  sync.Mutex
+	bool
+	sync.Mutex
 }
 
 type winner struct {
 	bid uuid.UUID
-	mux sync.Mutex
+	sync.Mutex
 }
 
 const (
@@ -37,7 +37,7 @@ const (
 )
 
 func (a *auction) run(r *http.Request) *app.Error {
-	a.winner.mux.Lock()
+	a.winner.Lock()
 	j := &job.Job{
 		ID: a.jobID,
 	}
@@ -51,13 +51,13 @@ func (a *auction) run(r *http.Request) *app.Error {
 			"err", err.Error(),
 			"jID", a.jobID,
 		)
-		a.winner.mux.Unlock()
+		a.winner.Unlock()
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	auctions[a.jobID] = a
 	success := false
 	defer func() {
-		a.winner.mux.Unlock()
+		a.winner.Unlock()
 		log.Sugar.Infof("Auction success in defer: %v\n", success) // TODO: make sure success is handled correctly w/ deferred func
 		if success {                                               // if auction fails, delete immediately to start a new one
 			time.Sleep(deleteAfter)
@@ -66,9 +66,9 @@ func (a *auction) run(r *http.Request) *app.Error {
 	}()
 
 	time.Sleep(duration)
-	a.late.mux.Lock()
-	a.late.late = true
-	a.late.mux.Unlock()
+	a.late.Lock()
+	a.late.bool = true
+	a.late.Unlock()
 	time.Sleep(buffer)
 
 	rows, err := db.GetValidBids(r, a.jobID)
@@ -115,23 +115,24 @@ func (a *auction) run(r *http.Request) *app.Error {
 		payRate = winRate
 	}
 	success = true
-
-	log.Sugar.Infof("%d bid(s) received", n)
-	log.Sugar.Infof("winning bid: %v", a.winner.bid)
-	log.Sugar.Infof("pay Rate: %v", payRate)
-	// TODO: add POST to /job that inits various channels / bools
+	log.Sugar.Infow("successful auction",
+		"bids", n,
+		"winner", a.winner.bid,
+		"rate", payRate,
+	)
+	go monitorJob(a.jobID)
 
 	return db.SetJobWinnerAndAuctionStatus(r, a.jobID, a.winner.bid, payRate)
 }
 
 func (a *auction) winBid() uuid.UUID {
-	a.winner.mux.Lock()
-	defer a.winner.mux.Unlock()
+	a.winner.Lock()
+	defer a.winner.Unlock()
 	return a.winner.bid
 }
 
 func (a *auction) lateBid() bool {
-	a.late.mux.Lock()
-	defer a.late.mux.Unlock()
-	return a.late.late
+	a.late.Lock()
+	defer a.late.Unlock()
+	return a.late.bool
 }

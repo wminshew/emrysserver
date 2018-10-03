@@ -34,7 +34,7 @@ func postAuction() app.Handler {
 
 		a = &auction{
 			jobID:  jUUID,
-			late:   late{late: false},
+			late:   late{bool: false},
 			winner: winner{},
 		}
 		return a.run(r)

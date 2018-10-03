@@ -4,11 +4,11 @@ import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"net/http"
+	// "net/http"
 )
 
 // SetJobInactive sets job jUUID in database to active=false
-func SetJobInactive(r *http.Request, jUUID uuid.UUID) error {
+func SetJobInactive(jUUID uuid.UUID) error {
 	sqlStmt := `
 	UPDATE jobs
 	SET active = $1
@@ -19,7 +19,7 @@ func SetJobInactive(r *http.Request, jUUID uuid.UUID) error {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
-				"url", r.URL,
+				// "url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 				"pq_sev", pqErr.Severity,
@@ -28,7 +28,7 @@ func SetJobInactive(r *http.Request, jUUID uuid.UUID) error {
 			)
 		} else {
 			log.Sugar.Errorw(message,
-				"url", r.URL,
+				// "url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 			)

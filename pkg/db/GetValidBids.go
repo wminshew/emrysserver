@@ -19,10 +19,12 @@ func GetValidBids(r *http.Request, jUUID uuid.UUID) (*sql.Rows, error) {
 			FROM bids b2
 			INNER JOIN jobs j ON (b2.bid_uuid = j.win_bid_uuid)
 			WHERE j.active = true 
-				AND b2.worker_uuid = b1.worker_uuid
+				AND b2.device_uuid = b1.device_uuid
 				AND b2.miner_uuid = b2.miner_uuid
 		)
-	ORDER BY b1.bid_rate
+	ORDER BY
+		b1.bid_rate ASC
+		b1.created_at ASC
 	LIMIT 2
 	`
 	rows, err := db.Query(sqlStmt, jUUID)

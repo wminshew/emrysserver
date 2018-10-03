@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
+	// "github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/pkg/app"
@@ -14,26 +14,13 @@ import (
 // postDeviceSnapshot receives a worker's GPU snapshot and resets the worker's timeout
 func postDeviceSnapshot() app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
-		vars := mux.Vars(r)
-		jID := vars["jID"]
-		// jUUID, err := uuid.FromString(jID)
-		_, err := uuid.FromString(jID)
-		if err != nil {
-			log.Sugar.Errorw("error parsing job ID",
-				"url", r.URL,
-				"err", err.Error(),
-			)
-			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
-		}
-
 		mID := r.Header.Get("X-Jwt-Claims-Subject")
 		// mUUID, err := uuid.FromString(mID)
-		_, err = uuid.FromString(mID)
+		_, err := uuid.FromString(mID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing miner ID",
 				"url", r.URL,
 				"err", err.Error(),
-				"jID", jID,
 			)
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing miner ID"}
 		}
@@ -43,18 +30,36 @@ func postDeviceSnapshot() app.Handler {
 			log.Sugar.Errorw("error decoding gpu snapshot",
 				"url", r.URL,
 				"err", err.Error(),
-				"jID", jID,
+				"mID", mID,
 			)
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json gpu snapshot request body"}
 		}
 
-		// if it doesn't exist, worker isn't active TODO: is this right?
-		// TODO: include snapshot in bids (or at least some info), and create activeworker upon winning
-		// if ch, ok := activeWorker[mUUID][d.ID]; ok {
-		// 	ch <- struct{}{}
-		// }
+		// TODO: store snapshots in files or DB instead of logger?
+		log.Sugar.Infow("device snapshot",
+			"mID", mID,
+			"dID", d.ID,
+			"snapshot", d,
+		)
 
-		// TODO: save device snapshot to database
+		jID := r.URL.Query().Get("jID")
+		if jID == "" {
+			return nil
+		}
+
+		jUUID, err := uuid.FromString(jID)
+		if err != nil {
+			log.Sugar.Errorw("error parsing job ID",
+				"url", r.URL,
+				"err", err.Error(),
+				"mID", mID,
+			)
+			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
+		}
+
+		if ch, ok := activeWorker[jUUID]; ok {
+			ch <- struct{}{}
+		}
 
 		return nil
 	}
