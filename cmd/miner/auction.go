@@ -58,8 +58,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 	success := false
 	defer func() {
 		a.winner.Unlock()
-		log.Sugar.Infof("Auction success in defer: %v\n", success) // TODO: make sure success is handled correctly w/ deferred func
-		if success {                                               // if auction fails, delete immediately to start a new one
+		if success { // if auction fails, delete immediately to start a new one
 			time.Sleep(deleteAfter)
 		}
 		delete(auctions, a.jobID)
