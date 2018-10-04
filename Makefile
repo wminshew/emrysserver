@@ -5,17 +5,17 @@ IMAGETIMEOUT := 305
 DATATIMEOUT := 305
 # DEVPITIMEOUT := 305
 
-all: build deploy rollout
+all: build deploy
 
-user: build-user deploy-user rollout-user
+user: build-user deploy-user
 
-miner: build-miner deploy-miner rollout-miner
+miner: build-miner deploy-miner
 
-job: build-job deploy-job rollout-job
+job: build-job deploy-job
 
 image: build-image deploy-image
 
-data: build-data deploy-data rollout-data
+data: build-data deploy-data
 
 devpi: build-devpi deploy-devpi
 
