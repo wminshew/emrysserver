@@ -12,10 +12,10 @@ import (
 func SetStatusDataDownloaded(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses
-	SET data_downloaded = $1
+	SET data_downloaded = NOW()
 	WHERE job_uuid = $2
 	`
-	if _, err := db.Exec(sqlStmt, true, jUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
 		message := "error updating job status to data downloaded"
 		pqErr, ok := err.(*pq.Error)
 		if ok {

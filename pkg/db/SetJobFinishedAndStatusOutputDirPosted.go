@@ -19,7 +19,7 @@ func SetJobFinishedAndStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *
 
 		sqlStmt := `
 	UPDATE jobs
-	SET (completed_at, active) = (NOW(), false)
+	SET (completed_at, active) = (NOW(), NOW())
 	WHERE job_uuid = $1
 	`
 		if _, err := tx.Exec(sqlStmt, jUUID); err != nil {

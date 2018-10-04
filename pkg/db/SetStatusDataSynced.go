@@ -12,10 +12,10 @@ import (
 func SetStatusDataSynced(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses
-	SET data_synced = $1
+	SET data_synced = NOW()
 	WHERE job_uuid = $2
 	`
-	if _, err := db.Exec(sqlStmt, true, jUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
 		message := "error updating job status to data synced"
 		pqErr, ok := err.(*pq.Error)
 		if ok {

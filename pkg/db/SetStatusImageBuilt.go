@@ -12,10 +12,10 @@ import (
 func SetStatusImageBuilt(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses
-	SET image_built = $1
+	SET image_built = NOW()
 	WHERE job_uuid = $2
 	`
-	if _, err := db.Exec(sqlStmt, true, jUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
 		message := "error updating job status to image built"
 		pqErr, ok := err.(*pq.Error)
 		if ok {

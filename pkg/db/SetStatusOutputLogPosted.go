@@ -12,10 +12,10 @@ import (
 func SetStatusOutputLogPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses
-	SET output_log_posted = $1
+	SET output_log_posted = NOW()
 	WHERE job_uuid = $2
 	`
-	if _, err := db.Exec(sqlStmt, true, jUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
 		message := "error updating job status to output log posted"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
