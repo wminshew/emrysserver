@@ -23,7 +23,7 @@ func GetValidBids(r *http.Request, jUUID uuid.UUID) (*sql.Rows, error) {
 				AND b2.miner_uuid = b2.miner_uuid
 		)
 	ORDER BY
-		b1.bid_rate ASC
+		b1.bid_rate ASC,
 		b1.created_at ASC
 	LIMIT 2
 	`
