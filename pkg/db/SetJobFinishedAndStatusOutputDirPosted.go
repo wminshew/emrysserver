@@ -19,7 +19,7 @@ func SetJobFinishedAndStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *
 
 		sqlStmt := `
 	UPDATE jobs
-	SET (completed_at, active) = (NOW(), NOW())
+	SET (completed_at, active) = (NOW(), false)
 	WHERE job_uuid = $1
 	`
 		if _, err := tx.Exec(sqlStmt, jUUID); err != nil {
@@ -28,10 +28,10 @@ func SetJobFinishedAndStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *
 
 		sqlStmt = `
 	UPDATE statuses
-	SET (output_data_posted) = ($1)
-	WHERE job_uuid = $2
+	SET output_data_posted = NOW()
+	WHERE job_uuid = $1
 	`
-		if _, err := tx.Exec(sqlStmt, true, jUUID); err != nil {
+		if _, err := tx.Exec(sqlStmt, jUUID); err != nil {
 			return "error updating job status", err
 		}
 

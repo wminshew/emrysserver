@@ -41,17 +41,17 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 
 		sqlStmt = `
 	INSERT INTO jobs (job_uuid, project_uuid, active)
-	VALUES ($1, $2, $3)
+	VALUES ($1, $2, true)
 	`
-		if _, err := tx.Exec(sqlStmt, jUUID, pUUID, true); err != nil {
+		if _, err := tx.Exec(sqlStmt, jUUID, pUUID); err != nil {
 			return "error inserting job", err
 		}
 
 		sqlStmt = `
-	INSERT INTO payments (job_uuid, user_paid, miner_paid)
-	VALUES ($1, $2, $3)
+	INSERT INTO payments (job_uuid)
+	VALUES ($1)
 	`
-		if _, err := tx.Exec(sqlStmt, jUUID, false, false); err != nil {
+		if _, err := tx.Exec(sqlStmt, jUUID); err != nil {
 			return "error inserting payment", err
 		}
 		sqlStmt = `

@@ -29,7 +29,7 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 		sqlStmt = `
 		UPDATE statuses
 		SET auction_completed = NOW()
-		WHERE job_uuid = $2
+		WHERE job_uuid = $1
 		`
 		if _, err := tx.Exec(sqlStmt, jUUID); err != nil {
 			return "error updating job status", err

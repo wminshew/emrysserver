@@ -11,10 +11,10 @@ import (
 func SetJobInactive(jUUID uuid.UUID) error {
 	sqlStmt := `
 	UPDATE jobs
-	SET active = $1
-	WHERE job_uuid = $2
+	SET active = false
+	WHERE job_uuid = $1
 	`
-	if _, err := db.Exec(sqlStmt, false, jUUID); err != nil {
+	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
 		message := "error updating job"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
