@@ -92,8 +92,11 @@ func postOutputLog() app.Handler {
 					)
 					return
 				}
+				go func() {
+					defer app.CheckErr(r, func() error { return os.Remove(outputLog) }) // no need to cache locally
+					time.Sleep(15 * time.Minute)
+				}()
 			}()
-			// TODO: add defer to remove log from disk; then maybe add 'active' flag and a defer to set to false, and in Get if not active (want to avoid querying DB every log call) pull from gcs
 
 			return db.SetStatusOutputLogPosted(r, jUUID)
 		}

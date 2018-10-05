@@ -8,9 +8,6 @@ import (
 var (
 	jobsManager *golongpoll.LongpollManager
 	maxTimeout  = 60 * 2
-	// TODO: activeJobs map[uuid.UUID]bool
-	// TODO: activeWorkers map[uuid.UUID][uuid.UUID]bool
-	// TODO: activeWorkers map[uuid.UUID][uuid.UUID]chan struct{}
 )
 
 // initJobsManager initializes the longpoll manager that handles user and miner
@@ -30,21 +27,3 @@ func initJobsManager() {
 		panic(err)
 	}
 }
-
-// TODO:
-// var workerTimeout = 30 * time.Second
-//
-// init job? maybe add http endpoint and sync.Once?
-// func activateWorker(mID, jID) {
-// for {
-// 	select {
-//  case <- jobFinishedMap:
-//		?minerSuccess() // not sure i need to do anything in case of success
-//		return
-// 	case <- workerActiveMap[mID][wID]:
-// 	case <- time.After(workerTimeout):
-//		minerFailed()
-//		return
-// 	}
-// }
-// }

@@ -94,6 +94,10 @@ func postOutputData() app.Handler {
 				)
 				return
 			}
+			go func() {
+				defer app.CheckErr(r, func() error { return os.Remove(p) }) // no need to cache locally
+				time.Sleep(15 * time.Minute)
+			}()
 		}()
 
 		return db.SetJobFinishedAndStatusOutputDataPosted(r, jUUID)

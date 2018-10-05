@@ -44,7 +44,8 @@ func main() {
 	rJobMiner.Use(auth.JobActive())
 
 	rJobUser := rJob.NewRoute().Methods("GET").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rJobUser.Handle("/log", getOutputLog())
+	rJobUser.Handle("/log", streamOutputLog())
+	rJobUser.Handle("/log/download", downloadOutputLog())
 	rJobUser.Handle("/data", getOutputData())
 	rJobUser.Use(auth.Jwt(userSecret))
 	rJobUser.Use(auth.UserJobMiddleware())
