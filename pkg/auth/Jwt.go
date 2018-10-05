@@ -21,7 +21,7 @@ func Jwt(secret string) func(http.Handler) http.Handler {
 	}
 }
 
-// jwtAuth authenticates JWTs, given a secret
+// jwtAuth authenticates jwts, given a secret
 func jwtAuth(h http.Handler, secret string) app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
 		claims := &jwtClaims{}
@@ -33,7 +33,7 @@ func jwtAuth(h http.Handler, secret string) app.Handler {
 				return []byte(secret), nil
 			}, request.WithClaims(claims))
 		if err != nil {
-			log.Sugar.Errorw("error parsing JWT",
+			log.Sugar.Errorw("error parsing jwt",
 				"url", r.URL,
 				"err", err.Error(),
 			)
