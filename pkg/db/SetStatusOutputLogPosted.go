@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// SetStatusOutputLogPosted sets job jUUID status in database to image_built=true
+// SetStatusOutputLogPosted sets job jUUID status in database to output_log_posted=NOW()
 func SetStatusOutputLogPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses

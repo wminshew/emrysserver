@@ -8,15 +8,15 @@ import (
 	"net/http"
 )
 
-// SetStatusDataSynced sets job jUUID status in database to data_synced=NOW()
-func SetStatusDataSynced(r *http.Request, jUUID uuid.UUID) *app.Error {
+// SetStatusImageDownloaded sets job jUUID status in database to image_downloaded=NOW()
+func SetStatusImageDownloaded(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses
-	SET data_synced = NOW()
+	SET image_downloaded = NOW()
 	WHERE job_uuid = $2
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
-		message := "error updating job status to data synced"
+		message := "error updating job status to image built"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
