@@ -26,11 +26,11 @@ storage:
 # middleware:
 # reporting:
 http:
-  addr: :5000
+  addr: :5001
   host: https://registry.emrys.io:443
   # secret: # set in env
   debug:
-    addr: localhost:5001
+    addr: localhost:5002
   relativeurls: true
   headers:
     X-Content-Type-Options: [nosniff]

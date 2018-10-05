@@ -52,6 +52,7 @@ spec:
           #   memory: "500Mi"
         ports:
         - containerPort: 8080
+        - containerPort: 5000
         env:
         - name: DBNAME
           value: "emrysserver"
@@ -85,7 +86,7 @@ spec:
               name: miner-secret
               key: secret
         - name: REGISTRY_HOST
-          value: "127.0.0.1:5000"
+          value: "127.0.0.1:5001"
         - name: USERSECRET
           valueFrom:
             secretKeyRef:
@@ -126,15 +127,10 @@ spec:
         - containerPort: 2375
         env:
         - name: REGISTRY_HOST
-          value: "127.0.0.1:5000"
-        # - name: GOOGLE_APPLICATION_CREDENTIALS
-        #   value: "/secrets/google_application_credentials/credentials.json"
+          value: "127.0.0.1:5001"
         volumeMounts: 
           - name: docker-graph-storage 
             mountPath: /var/lib/docker 
-          # - name: image-creds
-          #   mountPath: /secrets/google_application_credentials
-          #   readOnly: true
       - name: registry
         image: registry:2
         args: [ "/etc/docker/registry/registry-config.yaml" ]
@@ -146,10 +142,8 @@ spec:
           #   cpu: 500m
           #   memory: "2Gi"
         ports:
-        - containerPort: 5000
+        - containerPort: 5001
         env:
-        # - name: REGISTRY_ACCESSLOG_DISABLED
-        #   value: "false"
         - name: REGISTRY_HTTP_SECRET
           valueFrom:
             secretKeyRef:
@@ -165,22 +159,6 @@ spec:
             readOnly: true
           - name: registry-config
             mountPath: /etc/docker/registry
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 1
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 20
-          periodSeconds: 20
-          timeoutSeconds: 1
-          successThreshold: 1
-          failureThreshold: 3
       volumes:
       - name: image-creds
         secret:
