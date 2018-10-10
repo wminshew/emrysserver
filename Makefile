@@ -22,6 +22,8 @@ data: build-data deploy-data
 
 devpi: build-devpi deploy-devpi
 
+dep-ensure:
+	dep ensure -v
 
 build: cloudbuild.yaml dep-ensure
 	# container-builder-local --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
@@ -63,8 +65,6 @@ build-devpi: cmd/devpi/cloudbuild.yaml cmd/devpi/dockerfile dep-ensure
 	# container-builder-local --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
 	gcloud builds submit --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) ./cmd/devpi/
 
-dep-ensure:
-	dep ensure -v
 
 deploy: deploy-user deploy-miner deploy-job deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
 
