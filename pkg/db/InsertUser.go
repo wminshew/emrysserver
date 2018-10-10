@@ -19,6 +19,7 @@ func InsertUser(r *http.Request, email, hashedPassword string, uUUID uuid.UUID) 
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"uID", uUUID,
@@ -29,6 +30,7 @@ func InsertUser(r *http.Request, email, hashedPassword string, uUUID uuid.UUID) 
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"uID", uUUID,

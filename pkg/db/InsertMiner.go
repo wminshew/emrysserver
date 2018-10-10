@@ -19,6 +19,7 @@ func InsertMiner(r *http.Request, email, hashedPassword string, mUUID uuid.UUID)
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"mID", mUUID,
@@ -29,6 +30,7 @@ func InsertMiner(r *http.Request, email, hashedPassword string, mUUID uuid.UUID)
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"mID", mUUID,

@@ -21,6 +21,7 @@ func GetJobWinner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -30,6 +31,7 @@ func GetJobWinner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,

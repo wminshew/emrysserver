@@ -17,6 +17,7 @@ func postCancelJob() app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -26,6 +27,7 @@ func postCancelJob() app.Handler {
 		// if err := db.SetJobInactive(r, jUUID); err != nil {
 		if err := db.SetJobInactive(jUUID); err != nil {
 			log.Sugar.Errorw("error setting job inactive",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,

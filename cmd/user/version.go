@@ -23,6 +23,7 @@ func getVersion() app.Handler {
 		}
 		if err := json.NewEncoder(w).Encode(&resp); err != nil {
 			log.Sugar.Errorw("error encoding user semver",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)

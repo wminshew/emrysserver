@@ -25,6 +25,7 @@ func postOutputData() app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -34,6 +35,7 @@ func postOutputData() app.Handler {
 		outputDir := path.Join("output", jID)
 		if err := os.MkdirAll(outputDir, 0755); err != nil {
 			log.Sugar.Errorw("error making output dir",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -44,6 +46,7 @@ func postOutputData() app.Handler {
 		f, err := os.Create(p)
 		if err != nil {
 			log.Sugar.Errorw("error creating output data.tar.gz",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -52,6 +55,7 @@ func postOutputData() app.Handler {
 		}
 		if _, err = io.Copy(f, r.Body); err != nil {
 			log.Sugar.Errorw("error copying data.tar.gz to file",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -82,12 +86,14 @@ func postOutputData() app.Handler {
 				backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10),
 				func(err error, t time.Duration) {
 					log.Sugar.Errorw("error uploading output data.tar.gz to gcs--retrying",
+						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
 					)
 				}); err != nil {
 				log.Sugar.Errorw("error uploading output data.tar.gz to gcs--abort",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,

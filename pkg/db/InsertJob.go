@@ -71,6 +71,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -80,6 +81,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,

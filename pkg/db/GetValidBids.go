@@ -33,6 +33,7 @@ func GetValidBids(r *http.Request, jUUID uuid.UUID) (*sql.Rows, error) {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -42,6 +43,7 @@ func GetValidBids(r *http.Request, jUUID uuid.UUID) (*sql.Rows, error) {
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,

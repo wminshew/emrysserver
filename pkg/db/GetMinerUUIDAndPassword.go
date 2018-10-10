@@ -27,6 +27,7 @@ func GetMinerUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, 
 	if err := db.QueryRow(sqlStmt, email).Scan(&storedC.Password, &mUUID); err != nil {
 		if err == sql.ErrNoRows {
 			log.Sugar.Infow("unauthorized miner",
+				"method", r.Method,
 				"url", r.URL,
 				"email", email,
 			)
@@ -36,6 +37,7 @@ func GetMinerUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, 
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"email", email,
@@ -45,6 +47,7 @@ func GetMinerUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, 
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"email", email,

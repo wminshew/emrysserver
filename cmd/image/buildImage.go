@@ -29,6 +29,7 @@ func buildImage() app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -38,6 +39,7 @@ func buildImage() app.Handler {
 		uUUID, err := uuid.FromString(uID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -48,6 +50,7 @@ func buildImage() app.Handler {
 		inputDir := filepath.Join("job", jID, "input")
 		if err := os.MkdirAll(inputDir, 0755); err != nil {
 			log.Sugar.Errorw("error creating job input directory",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -58,6 +61,7 @@ func buildImage() app.Handler {
 		log.Sugar.Infof("Storing input files on disk...")
 		if err := archiver.TarGz.Read(r.Body, inputDir); err != nil {
 			log.Sugar.Errorw("error un-targzpping request body to input dir",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -69,6 +73,7 @@ func buildImage() app.Handler {
 		if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
 			if err := downloadDockerfile(ctx); err != nil {
 				log.Sugar.Errorw("error downloading dockerfile",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -81,6 +86,7 @@ func buildImage() app.Handler {
 		if _, err := os.Stat(linkedDocker); os.IsNotExist(err) {
 			if err := os.Link(dockerfilePath, linkedDocker); err != nil {
 				log.Sugar.Errorw("error linking dockerfile into user dir",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -106,6 +112,7 @@ func buildImage() app.Handler {
 					defer app.CheckErr(r, pw.Close)
 					if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
 						log.Sugar.Errorw("error tar-gzipping docker context for cloud storage",
+							"method", r.Method,
 							"url", r.URL,
 							"err", err.Error(),
 							"jID", jID,
@@ -128,12 +135,14 @@ func buildImage() app.Handler {
 				backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10), ctx),
 				func(err error, t time.Duration) {
 					log.Sugar.Errorw("error uploading input dockerContext.tar.gz to gcs--retrying",
+						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
 					)
 				}); err != nil {
 				log.Sugar.Errorw("error uploading input dockerContext.tar.gz to gcs--abort",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -163,6 +172,7 @@ func buildImage() app.Handler {
 			defer app.CheckErr(r, pw.Close)
 			if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
 				log.Sugar.Errorw("error tar-gzipping docker context",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -191,6 +201,7 @@ func buildImage() app.Handler {
 		})
 		if err != nil {
 			log.Sugar.Errorw("error building image",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -202,6 +213,7 @@ func buildImage() app.Handler {
 		log.Sugar.Infof("Logging image build response...")
 		if err := jsonmessage.DisplayJSONMessagesStream(buildResp.Body, os.Stdout, os.Stdout.Fd(), nil); err != nil {
 			log.Sugar.Errorw("error building image",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -217,6 +229,7 @@ func buildImage() app.Handler {
 			})
 			if err != nil {
 				log.Sugar.Errorw("error pushing image",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -228,6 +241,7 @@ func buildImage() app.Handler {
 
 			if err := jsonmessage.DisplayJSONMessagesStream(pushResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
 				log.Sugar.Errorw("error pushing image",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,

@@ -23,6 +23,7 @@ func login() app.Handler {
 		c := &creds.Miner{}
 		if err := json.NewDecoder(r.Body).Decode(c); err != nil {
 			log.Sugar.Errorw("error decoding json request body",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -39,6 +40,7 @@ func login() app.Handler {
 
 		if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(c.Password)); err != nil {
 			log.Sugar.Infow("unauthorized miner",
+				"method", r.Method,
 				"url", r.URL,
 				"mID", mUUID,
 				"email", c.Email,
@@ -62,6 +64,7 @@ func login() app.Handler {
 		tokenString, err := token.SignedString([]byte(minerSecret))
 		if err != nil {
 			log.Sugar.Errorw("error signing token",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"mID", mUUID,
@@ -75,6 +78,7 @@ func login() app.Handler {
 		}
 		if err = json.NewEncoder(w).Encode(resp); err != nil {
 			log.Sugar.Errorw("error encoding json response",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"mID", mUUID,
@@ -84,6 +88,7 @@ func login() app.Handler {
 		}
 
 		log.Sugar.Infow("miner login",
+			"method", r.Method,
 			"url", r.URL,
 			"sub", mUUID,
 			"email", c.Email,

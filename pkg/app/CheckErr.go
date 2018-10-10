@@ -9,6 +9,7 @@ import (
 func CheckErr(r *http.Request, deferredFunc func() error) {
 	if err := deferredFunc(); err != nil {
 		log.Sugar.Errorw("error in deferred function",
+			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
 		)

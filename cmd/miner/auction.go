@@ -47,6 +47,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 	}
 	if err := jobsManager.Publish("jobs", jMsg); err != nil {
 		log.Sugar.Errorw("error publishing job",
+			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", a.jobID,
@@ -85,6 +86,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 		n++
 		if err = rows.Scan(&bidUUID, &bidRate); err != nil {
 			log.Sugar.Errorw("error scanning bids",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", a.jobID,
@@ -101,6 +103,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 	}
 	if err = rows.Err(); err != nil {
 		log.Sugar.Errorw("error scanning bids",
+			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
 			"jID", a.jobID,

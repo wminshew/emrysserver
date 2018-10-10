@@ -27,6 +27,7 @@ func GetUserUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, e
 	if err := db.QueryRow(sqlStmt, email).Scan(&storedC.Password, &uUUID); err != nil {
 		if err == sql.ErrNoRows {
 			log.Sugar.Infow("unauthorized user",
+				"method", r.Method,
 				"url", r.URL,
 				"email", email,
 			)
@@ -36,6 +37,7 @@ func GetUserUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, e
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"email", email,
@@ -45,6 +47,7 @@ func GetUserUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, e
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"email", email,

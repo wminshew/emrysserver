@@ -44,6 +44,7 @@ func SetJobFinishedAndStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -53,6 +54,7 @@ func SetJobFinishedAndStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,

@@ -18,6 +18,7 @@ func postJob() app.Handler {
 		uUUID, err := uuid.FromString(uID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing user ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)

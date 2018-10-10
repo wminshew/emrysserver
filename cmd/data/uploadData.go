@@ -26,6 +26,7 @@ func uploadData() app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -36,6 +37,7 @@ func uploadData() app.Handler {
 		_, err = uuid.FromString(uID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing user ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -47,6 +49,7 @@ func uploadData() app.Handler {
 		projectDir := filepath.Join("data", uID, project)
 		if _, err = os.Stat(projectDir); os.IsNotExist(err) {
 			log.Sugar.Errorw("project dir doesn't exist on disk",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -56,6 +59,7 @@ func uploadData() app.Handler {
 		}
 		if projectSize, err := getDirSizeGb(projectDir); err != nil {
 			log.Sugar.Errorw("error retrieving size of project dir",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -64,6 +68,7 @@ func uploadData() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		} else if projectSize > pvcMaxProjectGb {
 			log.Sugar.Errorw("project is over maximum project size",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -77,6 +82,7 @@ func uploadData() app.Handler {
 		relPathAntiRegexp := validate.RelPathAntiRegexp()
 		if !relPathRegexp.MatchString(relPath) || relPathAntiRegexp.MatchString(relPath) {
 			log.Sugar.Errorw("invalid upload path",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -96,6 +102,7 @@ func uploadData() app.Handler {
 		if _, err = os.Stat(uploadDir); os.IsNotExist(err) {
 			if err := os.MkdirAll(uploadDir, 0755); err != nil {
 				log.Sugar.Errorw("error creating upload dir",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -104,6 +111,7 @@ func uploadData() app.Handler {
 			}
 		} else if err != nil {
 			log.Sugar.Errorw("error retrieving upload dir stat",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -114,6 +122,7 @@ func uploadData() app.Handler {
 		f, err := os.Create(uploadPath)
 		if err != nil {
 			log.Sugar.Errorw("error creating file",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -127,6 +136,7 @@ func uploadData() app.Handler {
 			defer app.CheckErr(r, pw.Close)
 			if _, err := io.Copy(pw, r.Body); err != nil {
 				log.Sugar.Errorw("error copying request body to pipe writer",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -138,6 +148,7 @@ func uploadData() app.Handler {
 		zr, err := zlib.NewReader(pr)
 		if err != nil {
 			log.Sugar.Errorw("error creating zlib reader",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -148,6 +159,7 @@ func uploadData() app.Handler {
 		tee := io.TeeReader(zr, h)
 		if _, err := io.Copy(f, tee); err != nil {
 			log.Sugar.Errorw("error copying zlib reader to disk",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -161,6 +173,7 @@ func uploadData() app.Handler {
 		fileMd := mdSync[uIDProject][relPath]
 		if hStr != fileMd.Hash {
 			log.Sugar.Errorw("uploaded file checksum doesn't match",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -171,6 +184,7 @@ func uploadData() app.Handler {
 
 		if err := updateProjectMetadata(r, uID, project, relPath, fileMd); err != nil {
 			log.Sugar.Errorw("error storing project metatdata",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -184,6 +198,7 @@ func uploadData() app.Handler {
 			go func() {
 				if err := uploadProject(projectDir); err != nil {
 					log.Sugar.Errorw("error uploading project dir",
+						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,

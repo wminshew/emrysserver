@@ -19,6 +19,7 @@ func JobActive() func(http.Handler) http.Handler {
 				jUUID, err := uuid.FromString(jID)
 				if err != nil {
 					log.Sugar.Errorw("parsing job ID",
+						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
@@ -29,6 +30,7 @@ func JobActive() func(http.Handler) http.Handler {
 				active, err := db.GetJobActive(r, jUUID)
 				if err != nil {
 					log.Sugar.Errorw("checking if job is active",
+						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jUUID,
@@ -37,6 +39,7 @@ func JobActive() func(http.Handler) http.Handler {
 				}
 				if !active {
 					log.Sugar.Infow("inactive job",
+						"method", r.Method,
 						"url", r.URL,
 						"jID", jUUID,
 					)
@@ -72,6 +75,7 @@ func userJob(h http.Handler) app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -82,6 +86,7 @@ func userJob(h http.Handler) app.Handler {
 		uUUID, err := uuid.FromString(uID)
 		if err != nil {
 			log.Sugar.Errorw("parsing user ID from valid jwt",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -92,6 +97,7 @@ func userJob(h http.Handler) app.Handler {
 		dbuUUID, err := db.GetJobOwner(r, jUUID)
 		if err != nil {
 			log.Sugar.Errorw("retrieving job owner",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -117,6 +123,7 @@ func minerJob(h http.Handler) app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -127,6 +134,7 @@ func minerJob(h http.Handler) app.Handler {
 		mUUID, err := uuid.FromString(mID)
 		if err != nil {
 			log.Sugar.Errorw("parsing miner ID from valid jwt",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -137,6 +145,7 @@ func minerJob(h http.Handler) app.Handler {
 		dbmUUID, err := db.GetJobWinner(r, jUUID)
 		if err != nil {
 			log.Sugar.Errorw("retrieving job winner",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,

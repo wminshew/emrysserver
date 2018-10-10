@@ -19,6 +19,7 @@ func postDeviceSnapshot() app.Handler {
 		_, err := uuid.FromString(mID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing miner ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -28,6 +29,7 @@ func postDeviceSnapshot() app.Handler {
 		d := &job.DeviceSnapshot{}
 		if err = json.NewDecoder(r.Body).Decode(d); err != nil {
 			log.Sugar.Errorw("error decoding gpu snapshot",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"mID", mID,
@@ -50,6 +52,7 @@ func postDeviceSnapshot() app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"mID", mID,

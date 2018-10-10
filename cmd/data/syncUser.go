@@ -23,6 +23,7 @@ func syncUser() app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -33,6 +34,7 @@ func syncUser() app.Handler {
 		_, err = uuid.FromString(uID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing user ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -45,6 +47,7 @@ func syncUser() app.Handler {
 		if _, err = os.Stat(projectDir); os.IsNotExist(err) {
 			if err := os.MkdirAll(projectDir, 0755); err != nil {
 				log.Sugar.Errorw("error retrieving server project metadata",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -53,6 +56,7 @@ func syncUser() app.Handler {
 			}
 			if err := downloadProject(projectDir); err != nil {
 				log.Sugar.Errorw("error downloading project from gcs",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -67,6 +71,7 @@ func syncUser() app.Handler {
 			}()
 		} else if err != nil {
 			log.Sugar.Errorw("error retrieving project directory",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -80,6 +85,7 @@ func syncUser() app.Handler {
 		serverMetadata := make(map[string]*job.FileMetadata)
 		if err := getProjectMetadata(r, uID, project, &serverMetadata); err != nil {
 			log.Sugar.Errorw("error retrieving server project metadata",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -89,6 +95,7 @@ func syncUser() app.Handler {
 		defer func() {
 			if err := storeProjectMetadata(r, uID, project, &serverMetadata); err != nil {
 				log.Sugar.Errorw("error storing project metatdata",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -100,6 +107,7 @@ func syncUser() app.Handler {
 		userMetadata := make(map[string]*job.FileMetadata)
 		if err := json.NewDecoder(r.Body).Decode(&userMetadata); err != nil && err != io.EOF {
 			log.Sugar.Errorw("error decoding user project metadata from request body",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -130,6 +138,7 @@ func syncUser() app.Handler {
 				p := filepath.Join(dataDir, relPath)
 				if err := os.Remove(p); err != nil {
 					log.Sugar.Errorw("error removing data set file",
+						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
@@ -147,6 +156,7 @@ func syncUser() app.Handler {
 				p := filepath.Join(dataDir, relPath)
 				if err := os.Remove(p); err != nil {
 					log.Sugar.Errorw("error removing data set file",
+						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
@@ -165,6 +175,7 @@ func syncUser() app.Handler {
 
 		if err := json.NewEncoder(w).Encode(uploadList); err != nil {
 			log.Sugar.Errorw("error encoding upload list as json",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,

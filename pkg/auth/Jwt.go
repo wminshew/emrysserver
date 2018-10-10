@@ -39,6 +39,7 @@ func jwtAuth(h http.Handler, secret string) app.Handler {
 			}, request.WithClaims(claims))
 		if err != nil {
 			log.Sugar.Infow("error parsing jwt",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -48,11 +49,13 @@ func jwtAuth(h http.Handler, secret string) app.Handler {
 
 		if token.Valid {
 			log.Sugar.Infow("valid jwt",
+				"method", r.Method,
 				"url", r.URL,
 				"sub", claims.Subject,
 			)
 		} else {
 			log.Sugar.Infow("unauthorized jwt",
+				"method", r.Method,
 				"url", r.URL,
 				"sub", claims.Subject,
 			)

@@ -20,6 +20,7 @@ func getData() app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -29,6 +30,7 @@ func getData() app.Handler {
 		uUUID, project, err := db.GetJobOwnerAndProject(r, jUUID)
 		if err != nil {
 			log.Sugar.Errorw("error retrieving job owner and project",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -40,6 +42,7 @@ func getData() app.Handler {
 		if _, err = os.Stat(projectDir); os.IsNotExist(err) {
 			if err := os.MkdirAll(projectDir, 0755); err != nil {
 				log.Sugar.Errorw("error making project dir",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -48,6 +51,7 @@ func getData() app.Handler {
 			}
 			if err := downloadProject(projectDir); err != nil {
 				log.Sugar.Errorw("error downloading project from gcs",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -62,6 +66,7 @@ func getData() app.Handler {
 			}()
 		} else if err != nil {
 			log.Sugar.Errorw("error stating project dir",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -75,6 +80,7 @@ func getData() app.Handler {
 		if _, err = os.Stat(dataDir); !os.IsNotExist(err) {
 			if err := archiver.TarGz.Write(w, []string{dataDir}); err != nil {
 				log.Sugar.Errorw("error writing tar gzipped data dir",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,

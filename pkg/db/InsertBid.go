@@ -18,6 +18,7 @@ func InsertBid(r *http.Request, b *job.Bid) error {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", b.JobID,
@@ -27,6 +28,7 @@ func InsertBid(r *http.Request, b *job.Bid) error {
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", b.JobID,

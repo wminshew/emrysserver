@@ -22,6 +22,7 @@ func GetJobOwnerAndProject(r *http.Request, jUUID uuid.UUID) (uuid.UUID, string,
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
@@ -31,6 +32,7 @@ func GetJobOwnerAndProject(r *http.Request, jUUID uuid.UUID) (uuid.UUID, string,
 			)
 		} else {
 			log.Sugar.Errorw(message,
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,

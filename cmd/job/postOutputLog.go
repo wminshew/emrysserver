@@ -26,6 +26,7 @@ func postOutputLog() app.Handler {
 		jUUID, err := uuid.FromString(jID)
 		if err != nil {
 			log.Sugar.Errorw("error parsing job ID",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
@@ -35,6 +36,7 @@ func postOutputLog() app.Handler {
 		outputDir := path.Join("output", jID)
 		if err := os.MkdirAll(outputDir, 0755); err != nil {
 			log.Sugar.Errorw("error making output dir",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -45,6 +47,7 @@ func postOutputLog() app.Handler {
 		f, err := os.OpenFile(outputLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Sugar.Errorw("error creating or open append only file",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -56,6 +59,7 @@ func postOutputLog() app.Handler {
 		if r.ContentLength == 0 {
 			if err := jobsManager.Publish(jID, struct{}{}); err != nil {
 				log.Sugar.Errorw("error publishing bytes",
+					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
@@ -80,12 +84,14 @@ func postOutputLog() app.Handler {
 					backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10),
 					func(err error, t time.Duration) {
 						log.Sugar.Errorw("error uploading output log to gcs--retrying",
+							"method", r.Method,
 							"url", r.URL,
 							"err", err.Error(),
 							"jID", jID,
 						)
 					}); err != nil {
 					log.Sugar.Errorw("error uploading output log to gcs--abort",
+						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
 						"jID", jID,
@@ -104,6 +110,7 @@ func postOutputLog() app.Handler {
 		var buf bytes.Buffer
 		if _, err := io.Copy(&buf, r.Body); err != nil {
 			log.Sugar.Errorw("error copying request body to buffer",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -113,6 +120,7 @@ func postOutputLog() app.Handler {
 		b := buf.Bytes()
 		if _, err := io.Copy(f, bytes.NewReader(b)); err != nil {
 			log.Sugar.Errorw("error copying buffer to file",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
@@ -121,6 +129,7 @@ func postOutputLog() app.Handler {
 		}
 		if err := jobsManager.Publish(jID, b); err != nil {
 			log.Sugar.Errorw("error publishing bytes",
+				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
