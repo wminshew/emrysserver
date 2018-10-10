@@ -32,7 +32,7 @@ storage:
 # reporting:
 http:
   addr: :5000
-  host: http://localhost
+  host: http://127.0.0.1:5000
   # secret: # set in env
   debug:
     addr: localhost:5001

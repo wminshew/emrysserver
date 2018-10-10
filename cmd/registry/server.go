@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
+	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 	"net/http/httputil"
@@ -28,6 +29,8 @@ func main() {
 			log.Sugar.Errorf("Error syncing log: %v\n", err)
 		}
 	}()
+	db.Init()
+	defer db.Close()
 
 	registryURL := url.URL{
 		Scheme: "http",
@@ -38,21 +41,17 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	// rRegistry := r.PathPrefix("/v2").Subrouter()
 	rRegistry := r.PathPrefix("/v2").Methods("GET", "HEAD").Subrouter()
-	rRegistry.NewRoute().Handler(registryRP)
 	rRegistry.Use(auth.Jwt(minerSecret))
-	// r.Handle("/v2", registryRP)
-	//
-	// rBase := r.PathPrefix("/v2/emrys/base").Methods("GET", "HEAD").Subrouter()
-	// rBase.NewRoute().Handler(registryRP)
-	// rBase.Use(auth.Jwt(minerSecret))
-	//
-	// rRegistry := r.PathPrefix("/v2/miner/{jID}").Methods("GET", "HEAD").Subrouter()
-	// rRegistry.NewRoute().Handler(registryRP)
-	// rRegistry.Use(auth.Jwt(minerSecret))
-	// rRegistry.Use(auth.MinerJobMiddleware())
-	// rRegistry.Use(auth.JobActive())
+	rRegistry.Handle("/", registryRP)
+
+	rBase := rRegistry.PathPrefix("/emrys/base").Subrouter()
+	rBase.NewRoute().Handler(registryRP)
+
+	rJob := rRegistry.PathPrefix("/miner/{jID}").Subrouter()
+	rJob.Use(auth.MinerJobMiddleware())
+	rJob.Use(auth.JobActive())
+	rJob.NewRoute().Handler(registryRP)
 
 	server := http.Server{
 		Addr:              ":5000",

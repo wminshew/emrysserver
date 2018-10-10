@@ -56,17 +56,17 @@ func main() {
 	rImage := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
 
 	rImageMiner := rImage.PathPrefix("/downloaded").Subrouter()
-	rImageMiner.Handle("/{jID}", imageDownloaded())
 	rImageMiner.Use(auth.Jwt(minerSecret))
 	rImageMiner.Use(auth.MinerJobMiddleware())
 	rImageMiner.Use(auth.JobActive())
+	rImageMiner.Handle("/{jID}", imageDownloaded())
 
 	projectRegexpMux := validate.ProjectRegexpMux()
 	rImageUser := rImage.PathPrefix(fmt.Sprintf("/{uID}/{project:%s}", projectRegexpMux)).Subrouter()
-	rImageUser.Handle("/{jID}", buildImage())
 	rImageUser.Use(auth.Jwt(userSecret))
 	rImageUser.Use(auth.UserJobMiddleware())
 	rImageUser.Use(auth.JobActive())
+	rImageUser.Handle("/{jID}", buildImage())
 
 	server := http.Server{
 		Addr:              ":8080",
