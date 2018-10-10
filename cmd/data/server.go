@@ -54,8 +54,9 @@ func main() {
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rDataUser := r.PathPrefix("/user").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	uuidRegexpMux := validate.UUIDRegexpMux()
 	projectRegexpMux := validate.ProjectRegexpMux()
-	syncUserPath := fmt.Sprintf("/{uID}/project/{project:%s}/job/{jID}", projectRegexpMux)
+	syncUserPath := fmt.Sprintf("/{uID:%s}/project/{project:%s}/job/{jID}", uuidRegexpMux, projectRegexpMux)
 	rDataUser.Handle(syncUserPath, syncUser()).Methods("POST")
 	rDataUser.Handle(path.Join(syncUserPath, "{relPath:.*}"), uploadData()).Methods("PUT")
 	rDataUser.Use(auth.Jwt(userSecret))
@@ -63,7 +64,7 @@ func main() {
 	rDataUser.Use(auth.JobActive())
 
 	rDataMiner := r.PathPrefix("/miner").HeadersRegexp("Authorization", "^Bearer ").Methods("GET").Subrouter()
-	rDataMiner.Handle("/job/{jID}", getData())
+	rDataMiner.Handle(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux), getData())
 	rDataMiner.Use(auth.Jwt(minerSecret))
 	rDataMiner.Use(auth.MinerJobMiddleware())
 	rDataMiner.Use(auth.JobActive())

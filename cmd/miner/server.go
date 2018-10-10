@@ -3,7 +3,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -45,12 +47,13 @@ func main() {
 	rMinerAuth.Handle("/device_snapshot", postDeviceSnapshot()).Methods("POST")
 	rMinerAuth.Use(auth.Jwt(minerSecret))
 
-	rMinerJob := rMinerAuth.PathPrefix("/job/{jID}").Subrouter()
+	uuidRegexpMux := validate.UUIDRegexpMux()
+	rMinerJob := rMinerAuth.PathPrefix(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)).Subrouter()
 	rMinerJob.Handle("/bid", postBid()).Methods("POST")
 	rMinerJob.Use(auth.JobActive())
 
 	rAuction := r.PathPrefix("/auction").Subrouter()
-	rAuction.Handle("/{jID}", postAuction()).Methods("POST")
+	rAuction.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), postAuction()).Methods("POST")
 	rAuction.Use(auth.Jwt(userSecret))
 	rAuction.Use(auth.UserJobMiddleware())
 	rAuction.Use(auth.JobActive())

@@ -3,7 +3,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -34,7 +36,8 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	rJob := r.PathPrefix("/job/{jID}").Subrouter()
+	uuidRegexpMux := validate.UUIDRegexpMux()
+	rJob := r.PathPrefix(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)).Subrouter()
 
 	rJobMiner := rJob.NewRoute().Methods("POST").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rJobMiner.Handle("/log", postOutputLog())

@@ -3,7 +3,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -48,7 +50,8 @@ func main() {
 	rBase := rRegistry.PathPrefix("/emrys/base").Subrouter()
 	rBase.NewRoute().Handler(registryRP)
 
-	rJob := rRegistry.PathPrefix("/miner/{jID}").Subrouter()
+	uuidRegexpMux := validate.UUIDRegexpMux()
+	rJob := rRegistry.PathPrefix(fmt.Sprintf("/miner/{jID:%s}", uuidRegexpMux)).Subrouter()
 	rJob.Use(auth.MinerJobMiddleware())
 	rJob.Use(auth.JobActive())
 	rJob.NewRoute().Handler(registryRP)
