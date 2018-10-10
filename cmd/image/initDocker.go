@@ -26,5 +26,6 @@ func initDocker() {
 		panic(err)
 	}
 
-	seedDockerdCache(ctx)
+	// TODO:
+	// seedDockerdCache(ctx)
 }

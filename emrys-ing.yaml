@@ -45,7 +45,7 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: image-svc
+          serviceName: registry-svc
           servicePort: 5000
   - host: data.emrys.io
     http:

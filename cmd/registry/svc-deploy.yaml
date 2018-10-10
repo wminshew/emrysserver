@@ -1,26 +1,26 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: image-svc
+  name: registry-svc
   labels:
-    app: image
+    app: registry
 spec:
   selector:
-    app: image
+    app: registry
   type: NodePort
   externalTrafficPolicy: Local
   ports:
-  - name: http
-    port: 8080
-    targetPort: 8080
+  - name: registry
+    port: 5000
+    targetPort: 5000
     protocol: TCP
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: image-deploy
+  name: registry-deploy
   labels:
-    app: image
+    app: registry
 spec:
   replicas: 1
   strategy:
@@ -28,17 +28,17 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: image
+      app: registry
   template:
     metadata:
       labels:
-        app: image
+        app: registry
     spec:
       terminationGracePeriodSeconds: 10
       restartPolicy: Always
       containers:
-      - name: image-container
-        image: gcr.io/emrys-12/image:latest
+      - name: registry-container
+        image: gcr.io/emrys-12/registry:latest
         resources:
           requests:
             cpu: 100m
@@ -47,7 +47,7 @@ spec:
           #   cpu: 250m
           #   memory: "500Mi"
         ports:
-        - containerPort: 8080
+        - containerPort: 5000
         env:
         - name: DBNAME
           value: "emrysserver"
@@ -65,14 +65,6 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
-        - name: DEVPI_HOST
-          value: "http://devpi-svc:3141"
-        - name: DOCKER_API_VERSION
-          value: "1.37"
-        - name: DOCKER_HOST
-          value: "tcp://127.0.0.1:2375"
-        - name: DOCKER_PATH
-          value: "Dockerfiles/Dockerfile"
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
         - name: MINERSECRET
@@ -81,52 +73,27 @@ spec:
               name: miner-secret
               key: secret
         - name: REGISTRY_HOST
-          value: "127.0.0.1:5000"
-        - name: USERSECRET
-          valueFrom:
-            secretKeyRef:
-              name: user-secret
-              key: secret
+          value: "127.0.0.1:5001"
         volumeMounts:
-          - name: image-creds
+          - name: registry-creds
             mountPath: /secrets/google_application_credentials
             readOnly: true
         readinessProbe:
           httpGet:
             path: /healthz
-            port: 8080
-          initialDelaySeconds: 30
+            port: 5000
+          initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 1
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 8080
-          initialDelaySeconds: 60
+            port: 5000
+          initialDelaySeconds: 10
           periodSeconds: 20
           timeoutSeconds: 1
           successThreshold: 1
           failureThreshold: 3
-      - name: dind-daemon 
-        image: docker:18.03.1-ce-dind 
-        resources:
-          requests:
-            cpu: 100m
-            memory: "200Mi"
-            # memory: "1Gi" TODO
-          # limits:
-          #   cpu: 500m
-          #   memory: "2Gi"
-        securityContext: 
-          privileged: true 
-        ports:
-        - containerPort: 2375
-        env:
-        - name: REGISTRY_HOST
-          value: "127.0.0.1:5000"
-        volumeMounts: 
-          - name: docker-graph-storage 
-            mountPath: /var/lib/docker 
       - name: registry
         image: registry:2
         args: [ "/etc/docker/registry/registry-config.yaml" ]
@@ -139,7 +106,7 @@ spec:
           #   cpu: 500m
           #   memory: "2Gi"
         ports:
-        - containerPort: 5000
+        - containerPort: 5001
         env:
         - name: REGISTRY_HTTP_SECRET
           valueFrom:
@@ -151,17 +118,15 @@ spec:
         - name: REGISTRY_LOG_FIELDS_ENVIRONMENT
           value: "production"
         volumeMounts: 
-          - name: image-creds
+          - name: registry-creds
             mountPath: /secrets/google_application_credentials
             readOnly: true
           - name: registry-config
             mountPath: /etc/docker/registry
       volumes:
-      - name: image-creds
+      - name: registry-creds
         secret:
-          secretName: image-creds
-      - name: docker-graph-storage
-        emptyDir: {}
+          secretName: registry-creds
       - name: registry-config
         configMap:
-          name: image-registry-config
+          name: registry-registry-config

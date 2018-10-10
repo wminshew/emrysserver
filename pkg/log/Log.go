@@ -35,6 +35,8 @@ func Init() {
 func Log(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		Sugar.Infof("%s %s from %s", r.Method, r.URL, r.RemoteAddr)
+		// dump, _ := httputil.DumpRequest(r, false)
+		// fmt.Printf("%s", dump)
 		h.ServeHTTP(w, r)
 	})
 }

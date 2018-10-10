@@ -21,6 +21,11 @@ func Jwt(secret string) func(http.Handler) http.Handler {
 	}
 }
 
+const (
+	challenge = "WWW-Authenticate"
+	realm     = "Bearer realm=\"emrys.io\""
+)
+
 // jwtAuth authenticates jwts, given a secret
 func jwtAuth(h http.Handler, secret string) app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
@@ -33,11 +38,12 @@ func jwtAuth(h http.Handler, secret string) app.Handler {
 				return []byte(secret), nil
 			}, request.WithClaims(claims))
 		if err != nil {
-			log.Sugar.Errorw("error parsing jwt",
+			log.Sugar.Infow("error parsing jwt",
 				"url", r.URL,
 				"err", err.Error(),
 			)
-			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing token, please login again"}
+			w.Header().Set(challenge, realm)
+			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt, please login again"}
 		}
 
 		if token.Valid {

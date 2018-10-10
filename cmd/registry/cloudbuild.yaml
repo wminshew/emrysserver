@@ -1,0 +1,7 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/registry/dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/registry:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/registry:latest', '.' ]
+images: [ 'gcr.io/$PROJECT_ID/registry:$_BUILD', 'gcr.io/$PROJECT_ID/registry:latest' ]
+tags: [ 'registry', '$_BUILD' ]

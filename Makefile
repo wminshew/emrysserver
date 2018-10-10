@@ -2,6 +2,7 @@ DATE := $(shell date +%Y-%m-%d_%H-%M-%S)
 MINERTIMEOUT := 605
 JOBTIMEOUT := 125
 IMAGETIMEOUT := 305
+REGISTRYTIMEOUT := 305
 DATATIMEOUT := 305
 # DEVPITIMEOUT := 305
 
@@ -14,6 +15,8 @@ miner: build-miner deploy-miner
 job: build-job deploy-job
 
 image: build-image deploy-image
+
+registry: build-registry deploy-registry
 
 data: build-data deploy-data
 
@@ -45,6 +48,11 @@ build-image: cmd/image/cloudbuild.yaml cmd/image/dockerfile dep-ensure
 	# container-builder-local --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
 	gcloud builds submit --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
+build-registry: cmd/registry/cloudbuild.yaml cmd/registry/dockerfile dep-ensure
+	# container-builder-local --config ./cmd/registry/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
+	# container-builder-local --config ./cmd/registry/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
+	gcloud builds submit --config ./cmd/registry/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+
 build-data: cmd/data/cloudbuild.yaml cmd/data/dockerfile dep-ensure
 	# container-builder-local --config ./cmd/data/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/data/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
@@ -58,7 +66,7 @@ build-devpi: cmd/devpi/cloudbuild.yaml cmd/devpi/dockerfile dep-ensure
 dep-ensure:
 	dep ensure -v
 
-deploy: deploy-user deploy-miner deploy-job deploy-image deploy-data deploy-sqlproxy deploy-devpi deploy-ing
+deploy: deploy-user deploy-miner deploy-job deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
 
 deploy-user: cmd/user/svc-deploy.yaml
 	kubectl apply -f cmd/user/svc-deploy.yaml
@@ -72,9 +80,14 @@ deploy-job: cmd/job/svc-sts.yaml
 	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(JOBTIMEOUT)
 
 deploy-image: cmd/image/svc-deploy.yaml
-	kubectl create configmap registry-config --dry-run -o yaml --from-file=cmd/image/registry-config.yaml | kubectl apply -f -
+	kubectl create configmap image-registry-config --dry-run -o yaml --from-file=cmd/image/registry-config.yaml | kubectl apply -f -
 	kubectl apply -f cmd/image/svc-deploy.yaml
 	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(IMAGETIMEOUT)
+
+deploy-registry: cmd/registry/svc-deploy.yaml
+	kubectl create configmap registry-registry-config --dry-run -o yaml --from-file=cmd/registry/registry-config.yaml | kubectl apply -f -
+	kubectl apply -f cmd/registry/svc-deploy.yaml
+	gcloud compute backend-services list --filter='registry' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(REGISTRYTIMEOUT)
 
 deploy-data: cmd/data/svc-sts.yaml
 	kubectl apply -f cmd/data/svc-sts.yaml
@@ -91,7 +104,7 @@ deploy-ing: emrys-ing.yaml
 	kubectl replace -f emrys-ing.yaml
 
 
-rollout: rollout-user rollout-miner rollout-job rollout-image rollout-data
+rollout: rollout-user rollout-miner rollout-job rollout-image rollout-registry rollout-data
 
 rollout-user:
 	kubectl set image deploy/user-deploy user-container=gcr.io/emrys-12/user:latest
@@ -109,6 +122,10 @@ rollout-image:
 	kubectl set image deploy/image-deploy image-container=gcr.io/emrys-12/image:latest
 	kubectl rollout status deploy/image-deploy
 
+rollout-registry:
+	kubectl set image deploy/registry-deploy image-container=gcr.io/emrys-12/registry:latest
+	kubectl rollout status deploy/registry-deploy
+
 rollout-data:
 	kubectl set image sts/data-sts data-container=gcr.io/emrys-12/data:latest
 	kubectl rollout status sts/data-sts
@@ -118,7 +135,7 @@ rollout-devpi:
 	kubectl rollout status sts/devpi-sts
 
 
-rollback: rollback-user rollback-miner rollback-job rollback-image rollback-data
+rollback: rollback-user rollback-miner rollback-job rollback-image rollback-registry rollback-data
 
 rollback-user:
 	kubectl rollout undo deploy/user-deploy
@@ -135,6 +152,10 @@ rollback-job:
 rollback-image:
 	kubectl rollout undo deploy/image-deploy
 	kubectl rollout status deploy/image-deploy
+
+rollback-registry:
+	kubectl rollout undo deploy/registry-deploy
+	kubectl rollout status deploy/registry-deploy
 
 rollback-data:
 	kubectl rollout undo deploy/data-deploy

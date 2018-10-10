@@ -27,15 +27,15 @@ storage:
 #     realm: https://registry.emrys.io/auth
 #     service: registry.emrys.io
 #     issuer: auth.service
-#     rootcertbundle:
+#     rootcertbundle: []
 # middleware:
 # reporting:
 http:
-  addr: :5000
-  host: http://localhost
+  addr: :5001
+  host: https://registry.emrys.io
   # secret: # set in env
   debug:
-    addr: localhost:5001
+    addr: localhost:5002
   relativeurls: true
   headers:
     X-Content-Type-Options: [nosniff]

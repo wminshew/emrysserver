@@ -12,7 +12,6 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"os/signal"
@@ -54,9 +53,17 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	rImageUser := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
+	rImage := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
+
+	rImageMiner := rImage.PathPrefix("/downloaded").Subrouter()
+	rImageMiner.Handle("/{jID}", imageDownloaded())
+	rImageMiner.Use(auth.Jwt(minerSecret))
+	rImageMiner.Use(auth.MinerJobMiddleware())
+	rImageMiner.Use(auth.JobActive())
+
 	projectRegexpMux := validate.ProjectRegexpMux()
-	rImageUser.Handle(fmt.Sprintf("/{uID}/{project:%s}/{jID}", projectRegexpMux), buildImage())
+	rImageUser := rImage.PathPrefix(fmt.Sprintf("/{uID}/{project:%s}", projectRegexpMux)).Subrouter()
+	rImageUser.Handle("/{jID}", buildImage())
 	rImageUser.Use(auth.Jwt(userSecret))
 	rImageUser.Use(auth.UserJobMiddleware())
 	rImageUser.Use(auth.JobActive())
@@ -74,32 +81,11 @@ func main() {
 		}
 	}()
 
-	registryURL := url.URL{
-		Scheme: "http",
-		Host:   registryHost,
-	}
-	registryRP := httputil.NewSingleHostReverseProxy(&registryURL)
-	proxyServer := http.Server{
-		Addr:              ":5000",
-		Handler:           log.Log(registryRP),
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	go func() {
-		log.Sugar.Infof("Listening on port %s...", proxyServer.Addr)
-		if err := proxyServer.ListenAndServe(); err != http.ErrServerClosed {
-			log.Sugar.Fatalf("Server error: %v", err)
-		}
-	}()
-
 	ctx := context.Background()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	<-stop
 	if err := server.Shutdown(ctx); err != nil {
 		log.Sugar.Errorf("shutting server down: %v", err)
-	}
-	if err := proxyServer.Shutdown(ctx); err != nil {
-		log.Sugar.Errorf("shutting proxyServer down: %v", err)
 	}
 }
