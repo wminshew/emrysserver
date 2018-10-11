@@ -1,5 +1,10 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/default-backend/dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/default-backend:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/default-backend:latest',
+    '.' ]
+- name: 'gcr.io/cloud-builders/docker'
   args: [ 'build', '-f', './cmd/user/dockerfile',
     '-t', 'gcr.io/$PROJECT_ID/user:$_BUILD',
     '-t', 'gcr.io/$PROJECT_ID/user:latest',
@@ -30,6 +35,7 @@ steps:
     '-t', 'gcr.io/$PROJECT_ID/data:latest',
     '.' ]
 images: [
+  'gcr.io/$PROJECT_ID/default-backend:$_BUILD', 'gcr.io/$PROJECT_ID/default-backend:latest',
   'gcr.io/$PROJECT_ID/user:$_BUILD', 'gcr.io/$PROJECT_ID/user:latest',
   'gcr.io/$PROJECT_ID/miner:$_BUILD', 'gcr.io/$PROJECT_ID/miner:latest',
   'gcr.io/$PROJECT_ID/job:$_BUILD', 'gcr.io/$PROJECT_ID/job:latest',
@@ -37,4 +43,4 @@ images: [
   'gcr.io/$PROJECT_ID/registry:$_BUILD', 'gcr.io/$PROJECT_ID/registry:latest',
   'gcr.io/$PROJECT_ID/data:$_BUILD', 'gcr.io/$PROJECT_ID/data:latest',
 ]
-tags: [ 'user', 'miner', 'job', 'image', 'registry', 'data', '$_BUILD' ]
+tags: [ 'default-backend', 'user', 'miner', 'job', 'image', 'registry', 'data', '$_BUILD' ]

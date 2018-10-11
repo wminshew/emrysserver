@@ -8,6 +8,8 @@ DATATIMEOUT := 320
 
 all: build deploy
 
+default-backend: build-default-backend deploy-default-backend
+
 user: build-user deploy-user
 
 miner: build-miner deploy-miner
@@ -29,6 +31,11 @@ build: cloudbuild.yaml dep-ensure
 	# container-builder-local --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
 	gcloud builds submit --config ./cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+
+build-default-backend: cmd/default-backend/cloudbuild.yaml cmd/default-backend/dockerfile dep-ensure
+	# container-builder-local --config ./cmd/default-backend/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
+	# container-builder-local --config ./cmd/default-backend/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
+	gcloud builds submit --config ./cmd/default-backend/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
 build-user: cmd/user/cloudbuild.yaml cmd/user/dockerfile dep-ensure
 	# container-builder-local --config ./cmd/user/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
@@ -66,7 +73,10 @@ build-devpi: cmd/devpi/cloudbuild.yaml cmd/devpi/dockerfile dep-ensure
 	gcloud builds submit --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) ./cmd/devpi/
 
 
-deploy: deploy-user deploy-miner deploy-job deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
+deploy: deploy-default-backend deploy-user deploy-miner deploy-job deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
+
+deploy-default-backend: cmd/default-backend/svc-deploy.yaml
+	kubectl apply -f cmd/default-backend/svc-deploy.yaml
 
 deploy-user: cmd/user/svc-deploy.yaml
 	kubectl apply -f cmd/user/svc-deploy.yaml
@@ -104,7 +114,11 @@ deploy-ing: emrys-ing.yaml
 	kubectl replace -f emrys-ing.yaml
 
 
-rollout: rollout-user rollout-miner rollout-job rollout-image rollout-registry rollout-data
+rollout: rollout-default-backend rollout-user rollout-miner rollout-job rollout-image rollout-registry rollout-data
+
+rollout-default-backend:
+	kubectl set image deploy/default-backend-deploy default-backend-container=gcr.io/emrys-12/default-backend:latest
+	kubectl rollout status deploy/default-backend-deploy
 
 rollout-user:
 	kubectl set image deploy/user-deploy user-container=gcr.io/emrys-12/user:latest
@@ -135,7 +149,11 @@ rollout-devpi:
 	kubectl rollout status sts/devpi-sts
 
 
-rollback: rollback-user rollback-miner rollback-job rollback-image rollback-registry rollback-data
+rollback: rollback-default-backend rollback-user rollback-miner rollback-job rollback-image rollback-registry rollback-data
+
+rollback-default-backend:
+	kubectl rollout undo deploy/default-backend-deploy
+	kubectl rollout status deploy/default-backend-deploy
 
 rollback-user:
 	kubectl rollout undo deploy/user-deploy
