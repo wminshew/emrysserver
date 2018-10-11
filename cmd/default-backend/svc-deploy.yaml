@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: default-backend-svc
+  labels:
+    app: default-backend
+spec:
+  selector:
+    app: default-backend
+  type: NodePort
+  externalTrafficPolicy: Local
+  ports:
+  - name: default-backend
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: default-backend-deploy
+  labels:
+    app: default-backend
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: default-backend
+  template:
+    metadata:
+      labels:
+        app: default-backend
+    spec:
+      terminationGracePeriodSeconds: 10
+      restartPolicy: Always
+      containers:
+      - name: default-backend-container
+        image: gcr.io/emrys-12/default-backend:latest
+        resources:
+          requests:
+            cpu: 50m
+            memory: "50Mi"
+          # limits:
+          #   cpu: 250m
+          #   memory: "500Mi"
+        ports:
+        - containerPort: 5000
+        env:
+        - name: DBNAME
+          value: "emrysserver"
+        - name: DBNETLOC
+          value: "sqlproxy-svc"
+        - name: DBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: password
+        - name: DBPORT
+          value: "5432"
+        - name: DBUSER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: username
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3

@@ -1,0 +1,7 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/default-backend/dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/default-backend:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/default-backend:latest', '.' ]
+images: [ 'gcr.io/$PROJECT_ID/default-backend:$_BUILD', 'gcr.io/$PROJECT_ID/default-backend:latest' ]
+tags: [ 'default-backend', '$_BUILD' ]

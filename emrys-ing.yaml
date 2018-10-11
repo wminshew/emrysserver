@@ -9,6 +9,9 @@ metadata:
 spec:
   tls:
   - secretName: emrys-tls-secret
+  backend:
+    serviceName: default-backend-svc
+    servicePort: 8080
   rules:
   - host: emrys.io
     http:
