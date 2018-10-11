@@ -59,7 +59,7 @@ func main() {
 	server := http.Server{
 		Addr:              ":5000",
 		Handler:           log.Log(r),
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	go func() {
