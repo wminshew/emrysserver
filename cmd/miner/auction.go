@@ -73,7 +73,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 
 	rows, err := db.GetValidBids(r, a.jobID)
 	if err != nil {
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
 	}
 	defer app.CheckErr(r, rows.Close)
 

@@ -50,7 +50,7 @@ func main() {
 
 	rUserCancelJob := rUserAuth.PathPrefix(fmt.Sprintf("/{jID:%s}", uuidRegexpMux)).Subrouter()
 	rUserCancelJob.Handle("/cancel", postCancelJob()).Methods("POST")
-	rUserCancelJob.Use(auth.UserJobMiddleware())
+	rUserCancelJob.Use(auth.UserJobMiddleware)
 	rUserCancelJob.Use(auth.JobActive())
 
 	server := http.Server{

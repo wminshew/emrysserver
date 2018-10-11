@@ -24,6 +24,28 @@ func postAuction() app.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 
+		if t, err := db.GetStatusAuctionCompleted(r, jUUID); err != nil {
+			return err // already logged
+		} else if t != time.Time{} {
+			log.Sugar.Infow("user tried to re-auction job",
+				"method", r.Method,
+				"url", r.URL,
+				"jID", jID,
+			)
+			return nil
+		}
+
+		if tDataSynced, tImageBuilt, err := db.GetStatusAuctionPrereqs(r, jUUID); err != nil {
+			return err // already logged
+		} else if  tDataSynced == time.Time{} || tImageBuilt == time.Time{} {
+			log.Sugar.Infow("user tried to auction job without completing prereqs",
+				"method", r.Method,
+				"url", r.URL,
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusBadRequest, Message: "must successfully sync data & build image before auctioning job"}
+		}
+
 		a, ok := auctions[jUUID]
 		if ok {
 			winBid := a.winBid()

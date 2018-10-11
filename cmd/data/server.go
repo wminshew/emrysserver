@@ -61,8 +61,9 @@ func main() {
 	rDataUser.Handle(syncUserPath, syncUser()).Methods("POST")
 	rDataUser.Handle(path.Join(syncUserPath, "{relPath:.*}"), uploadData()).Methods("PUT")
 	rDataUser.Use(auth.Jwt(userSecret))
-	rDataUser.Use(auth.UserJobMiddleware())
+	rDataUser.Use(auth.UserJobMiddleware)
 	rDataUser.Use(auth.JobActive())
+	rDataUser.Use(checkDataSynced)
 
 	rDataMiner := r.PathPrefix("/miner").HeadersRegexp("Authorization", "^Bearer ").Methods("GET").Subrouter()
 	rDataMiner.Handle(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux), getData())

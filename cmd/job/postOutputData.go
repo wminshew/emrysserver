@@ -32,6 +32,17 @@ func postOutputData() app.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 
+		if tDataDownloaded, tImageDownloaded, tOutputLogPosted, err := db.GetStatusOutputDataPrereqs(r, jUUID); err != nil {
+			return err // already logged
+		} else if  tDataDownloaded== time.Time{} || tImageDownloaded == time.Time{} || tOutputLogPosted == time.Time{} {
+			log.Sugar.Infow("miner tried to post output data without completing prereqs",
+				"method", r.Method,
+				"url", r.URL,
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusBadRequest, Message: "must successfully download data, image and post output log before posting output data"}
+		}
+
 		outputDir := path.Join("output", jID)
 		if err := os.MkdirAll(outputDir, 0755); err != nil {
 			log.Sugar.Errorw("error making output dir",

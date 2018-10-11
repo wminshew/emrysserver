@@ -55,6 +55,7 @@ func main() {
 	rJob := rRegistry.PathPrefix(fmt.Sprintf("/miner/{jID:%s}", uuidRegexpMux)).Subrouter()
 	rJob.Use(auth.MinerJobMiddleware())
 	rJob.Use(auth.JobActive())
+	rJob.Use(checkImageDownloaded)
 	rJob.NewRoute().Handler(registryRP)
 
 	server := http.Server{

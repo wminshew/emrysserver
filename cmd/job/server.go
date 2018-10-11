@@ -52,7 +52,7 @@ func main() {
 	rJobUser.Handle("/log/download", downloadOutputLog())
 	rJobUser.Handle("/data", getOutputData())
 	rJobUser.Use(auth.Jwt(userSecret))
-	rJobUser.Use(auth.UserJobMiddleware())
+	rJobUser.Use(auth.UserJobMiddleware)
 
 	server := http.Server{
 		Addr:              ":8080",

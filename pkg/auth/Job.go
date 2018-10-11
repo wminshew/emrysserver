@@ -54,11 +54,16 @@ func JobActive() func(http.Handler) http.Handler {
 }
 
 // UserJobMiddleware applies userJob as router middleware
-func UserJobMiddleware() func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return userJob(h)
-	}
+func UserJobMiddleware(h http.Handler) http.Handler {
+	return userJob(h)
 }
+
+// TODO: if this works, convert the rest
+// func UserJobMiddleware() func(http.Handler) http.Handler {
+// 	return func(h http.Handler) http.Handler {
+// 		return userJob(h)
+// 	}
+// }
 
 // MinerJobMiddleware applies userJob as router middleware
 func MinerJobMiddleware() func(http.Handler) http.Handler {

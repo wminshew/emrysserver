@@ -27,6 +27,17 @@ func getData() app.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 
+		if t, err := db.GetStatusDataDownloaded(r, jUUID); err != nil {
+			return err // already logged in db
+		} else if t != time.Time{} {
+			log.Sugar.Infow("miner tried to re-download data",
+				"method", r.Method,
+				"url", r.URL,
+				"jID", jID,
+			)
+			return nil
+		}
+
 		uUUID, project, err := db.GetJobOwnerAndProject(r, jUUID)
 		if err != nil {
 			log.Sugar.Errorw("error retrieving job owner and project",

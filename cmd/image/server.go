@@ -37,7 +37,11 @@ func main() {
 	db.Init()
 	defer db.Close()
 	storage.Init()
-	initDocker()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		cancel()
+	}()
+	initDocker(ctx)
 	defer func() {
 		if err := dClient.Close(); err != nil {
 			log.Sugar.Errorf("Error closing docker client: %v\n", err)
@@ -66,7 +70,7 @@ func main() {
 	projectRegexpMux := validate.ProjectRegexpMux()
 	rImageUser := rImage.PathPrefix(fmt.Sprintf("/{uID:%s}/{project:%s}", uuidRegexpMux, projectRegexpMux)).Subrouter()
 	rImageUser.Use(auth.Jwt(userSecret))
-	rImageUser.Use(auth.UserJobMiddleware())
+	rImageUser.Use(auth.UserJobMiddleware)
 	rImageUser.Use(auth.JobActive())
 	rImageUser.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), buildImage())
 
@@ -84,7 +88,6 @@ func main() {
 		}
 	}()
 
-	ctx := context.Background()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	<-stop

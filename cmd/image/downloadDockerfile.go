@@ -37,10 +37,7 @@ func downloadDockerfile(ctx context.Context) error {
 		if err := or.Close(); err != nil {
 			return err
 		}
-		if err := f.Close(); err != nil {
-			return err
-		}
-		return nil
+		return f.Close()
 	}
 	return err
 }

@@ -56,7 +56,7 @@ func main() {
 	rAuction := r.PathPrefix("/auction").Subrouter()
 	rAuction.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), postAuction()).Methods("POST")
 	rAuction.Use(auth.Jwt(userSecret))
-	rAuction.Use(auth.UserJobMiddleware())
+	rAuction.Use(auth.UserJobMiddleware)
 	rAuction.Use(auth.JobActive())
 
 	server := http.Server{

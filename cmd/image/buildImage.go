@@ -35,6 +35,16 @@ func buildImage() app.Handler {
 			)
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
+		if t, err := db.GetStatusImageBuilt(r, jUUID); err != nil {
+			return err // already logged in db
+		} else if t != time.Time{} {
+			log.Sugar.Infow("user tried to re-build image",
+				"method", r.Method,
+				"url", r.URL,
+				"jID", jID,
+			)
+			return nil
+		}
 		uID := vars["uID"]
 		uUUID, err := uuid.FromString(uID)
 		if err != nil {
@@ -187,6 +197,8 @@ func buildImage() app.Handler {
 		strRefs := []string{strRef, strRefLatest, strRefMiner}
 		log.Sugar.Infof("Caching from: %v", cacheSlice)
 		log.Sugar.Infof("Tagging as: %v", strRefs)
+		// TODO: do I have to add the other tags too?
+		imageBuildTime[strRef] = time.Now()
 		buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
 			BuildArgs: map[string]*string{
 				"DEVPI_HOST":         &devpiHost,
