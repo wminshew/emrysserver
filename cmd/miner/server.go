@@ -62,6 +62,7 @@ func main() {
 		Addr:              ":8080",
 		Handler:           log.Log(r),
 		ReadHeaderTimeout: 15 * time.Second,
+		IdleTimeout:       620 * time.Second, // per https://cloud.google.com/load-balancing/docs/https/#timeouts_and_retries
 	}
 
 	go func() {

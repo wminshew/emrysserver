@@ -20,7 +20,7 @@ func SetJobInactive(jUUID uuid.UUID) error {
 		if ok {
 			log.Sugar.Errorw(message,
 				// "method", r.Method,
-				"url", r.URL,
+				// "url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 				"pq_sev", pqErr.Severity,
@@ -30,7 +30,7 @@ func SetJobInactive(jUUID uuid.UUID) error {
 		} else {
 			log.Sugar.Errorw(message,
 				// "method", r.Method,
-				"url", r.URL,
+				// "url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 			)
