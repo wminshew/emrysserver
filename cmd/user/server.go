@@ -31,6 +31,7 @@ func main() {
 	defer db.Close()
 
 	r := mux.NewRouter()
+	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rUser := r.PathPrefix("/user").Subrouter()

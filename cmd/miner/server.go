@@ -34,6 +34,7 @@ func main() {
 	initJobsManager()
 
 	r := mux.NewRouter()
+	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rMiner := r.PathPrefix("/miner").Subrouter()

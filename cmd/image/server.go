@@ -51,6 +51,7 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rImage := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
