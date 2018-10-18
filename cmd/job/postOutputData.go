@@ -8,6 +8,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
+	"github.com/wminshew/emrysserver/pkg/payments"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"io"
@@ -116,6 +117,16 @@ func postOutputData() app.Handler {
 				time.Sleep(15 * time.Minute)
 			}()
 		}()
+
+		if err := payments.ChargeUser(r, jUUID); err != nil {
+			log.Sugar.Errorw("error charging user",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
 
 		return db.SetJobFinishedAndStatusOutputDataPosted(r, jUUID)
 	}

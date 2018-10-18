@@ -10,6 +10,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/payments"
 	"net/http"
 	"os"
 	"os/signal"
@@ -47,6 +48,7 @@ func main() {
 	rUserAuth.Handle("", postJob()).Methods("POST")
 	rUserAuth.Handle("/", postJob()).Methods("POST")
 	rUserAuth.Use(auth.Jwt(userSecret))
+	rUserAuth.User(payments.AuthorizeUser)
 
 	rUserCancelJob := rUserAuth.PathPrefix(fmt.Sprintf("/{jID:%s}", uuidRegexpMux)).Subrouter()
 	rUserCancelJob.Handle("/cancel", postCancelJob()).Methods("POST")
