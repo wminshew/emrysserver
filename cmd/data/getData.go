@@ -28,8 +28,8 @@ func getData() app.Handler {
 		}
 
 		if t, err := db.GetStatusDataDownloaded(r, jUUID); err != nil {
-			return err // already logged in db
-		} else if t != time.Time{} {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged err
+		} else if !t.IsZero() {
 			log.Sugar.Infow("miner tried to re-download data",
 				"method", r.Method,
 				"url", r.URL,

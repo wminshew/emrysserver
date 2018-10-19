@@ -62,14 +62,14 @@ func main() {
 	rDataUser.Handle(path.Join(syncUserPath, "{relPath:.*}"), uploadData()).Methods("PUT")
 	rDataUser.Use(auth.Jwt(userSecret))
 	rDataUser.Use(auth.UserJobMiddleware)
-	rDataUser.Use(auth.JobActive())
+	rDataUser.Use(auth.JobActive)
 	rDataUser.Use(checkDataSynced)
 
 	rDataMiner := r.PathPrefix("/miner").HeadersRegexp("Authorization", "^Bearer ").Methods("GET").Subrouter()
 	rDataMiner.Handle(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux), getData())
 	rDataMiner.Use(auth.Jwt(minerSecret))
-	rDataMiner.Use(auth.MinerJobMiddleware())
-	rDataMiner.Use(auth.JobActive())
+	rDataMiner.Use(auth.MinerJobMiddleware)
+	rDataMiner.Use(auth.JobActive)
 
 	server := http.Server{
 		Addr:              ":8080",

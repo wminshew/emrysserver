@@ -7,24 +7,24 @@ import (
 	"net/http"
 )
 
-// GetUserPaymentAuthorization returns whether user is authorized for payments
-func GetUserPaymentAuthorization(r *http.Request, uUUID uuid.UUID) (bool, error) {
-	var authorized bool
+// GetUserSuspended returns whether user is suspended
+func GetUserSuspended(r *http.Request, uUUID uuid.UUID) (bool, error) {
+	var suspended bool
 	// TODO: name the db column better..
 	sqlStmt := `
-	SELECT authorized_payments
+	SELECT suspended
 	FROM users
 	WHERE user_uuid = $1
 	`
-	if err := db.QueryRow(sqlStmt, uUUID).Scan(&authorized); err != nil {
-		message := "error querying for user payment authorization"
+	if err := db.QueryRow(sqlStmt, uUUID).Scan(&suspended); err != nil {
+		message := "error querying for user suspended"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"jID", jUUID,
+				"uID", uUUID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
 				"pq_detail", pqErr.Detail,
@@ -34,10 +34,10 @@ func GetUserPaymentAuthorization(r *http.Request, uUUID uuid.UUID) (bool, error)
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"jID", jUUID,
+				"uID", uUUID,
 			)
 		}
 		return false, err
 	}
-	return authorization, nil
+	return suspended, nil
 }

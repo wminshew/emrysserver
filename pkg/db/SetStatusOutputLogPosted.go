@@ -13,7 +13,8 @@ func SetStatusOutputLogPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses
 	SET output_log_posted = NOW()
-	WHERE job_uuid = $1
+	WHERE job_uuid = $1 AND
+		output_log_posted IS NULL
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
 		message := "error updating job status to output log posted"

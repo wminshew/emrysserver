@@ -1,7 +1,7 @@
 package payments
 
 import (
-	"fmt"
+	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -10,7 +10,7 @@ import (
 
 // AuthorizeUser checks the user is authorized to create new jobs
 func AuthorizeUser(h http.Handler) http.Handler {
-	return func(w http.ResponseWriter, r *http.Request) *app.Error {
+	return app.Handler(func(w http.ResponseWriter, r *http.Request) *app.Error {
 		uID := r.Header.Get("X-Jwt-Claims-Subject")
 		uUUID, err := uuid.FromString(uID)
 		if err != nil {
@@ -22,19 +22,19 @@ func AuthorizeUser(h http.Handler) http.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing user ID"}
 		}
 
-		if authorized, err := db.GetUserPaymentAuthorization(r, uUUID); err != nil {
-			return &app.Error{Code: http.StatusInternalError, Message: "internal error"} // err already logged
-		} else if authorized {
-			log.Sugar.Infof("user authorized for payments")
-			h.ServeHTTP(w, r)
-		} else {
-			log.Sugar.Infow("user unauthorized for payments",
+		if suspended, err := db.GetUserSuspended(r, uUUID); err != nil {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+		} else if suspended {
+			log.Sugar.Infow("user is suspended",
 				"method", r.Method,
 				"url", r.URL,
 				"uID", uID,
 			)
-			return &app.Error{Code: http.StatusPaymentRequired, Message: "no bids received, please try again"}
+			return &app.Error{Code: http.StatusUnauthorized, Message: "user is suspended"}
 		}
+
+		log.Sugar.Infof("user authorized for payments")
+		h.ServeHTTP(w, r)
 		return nil
-	}
+	})
 }

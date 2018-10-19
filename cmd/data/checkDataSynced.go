@@ -2,19 +2,16 @@ package main
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
-	"os"
-	"path/filepath"
 )
 
 // checkDataSynced checks if user has already synced data for this job
 func checkDataSynced(h http.Handler) http.Handler {
-	return func(w http.ResponseWriter, r *http.Request) *app.Error {
+	return app.Handler(func(w http.ResponseWriter, r *http.Request) *app.Error {
 		vars := mux.Vars(r)
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
@@ -27,8 +24,8 @@ func checkDataSynced(h http.Handler) http.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 		if t, err := db.GetStatusDataSynced(r, jUUID); err != nil {
-			return err // already logged in db
-		} else if t != time.Time{} {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+		} else if !t.IsZero() {
 			log.Sugar.Infow("user tried to re-sync data",
 				"method", r.Method,
 				"url", r.URL,
@@ -37,5 +34,6 @@ func checkDataSynced(h http.Handler) http.Handler {
 			return nil
 		}
 		h.ServeHTTP(w, r)
-	}
+		return nil
+	})
 }

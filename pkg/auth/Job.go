@@ -10,71 +10,48 @@ import (
 )
 
 // JobActive is router middleware to check if the job is active
-func JobActive() func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return func(h http.Handler) app.Handler {
-			return func(w http.ResponseWriter, r *http.Request) *app.Error {
-				vars := mux.Vars(r)
-				jID := vars["jID"]
-				jUUID, err := uuid.FromString(jID)
-				if err != nil {
-					log.Sugar.Errorw("parsing job ID",
-						"method", r.Method,
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jID,
-					)
-					return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
-				}
+func JobActive(h http.Handler) http.Handler {
+	return app.Handler(func(w http.ResponseWriter, r *http.Request) *app.Error {
+		vars := mux.Vars(r)
+		jID := vars["jID"]
+		jUUID, err := uuid.FromString(jID)
+		if err != nil {
+			log.Sugar.Errorw("parsing job ID",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
+		}
 
-				active, err := db.GetJobActive(r, jUUID)
-				if err != nil {
-					log.Sugar.Errorw("checking if job is active",
-						"method", r.Method,
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jUUID,
-					)
-					return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-				}
-				if !active {
-					log.Sugar.Infow("inactive job",
-						"method", r.Method,
-						"url", r.URL,
-						"jID", jUUID,
-					)
-					return &app.Error{Code: http.StatusBadRequest, Message: "inactive job"}
-				}
+		active, err := db.GetJobActive(r, jUUID)
+		if err != nil {
+			log.Sugar.Errorw("checking if job is active",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		if !active {
+			log.Sugar.Infow("inactive job",
+				"method", r.Method,
+				"url", r.URL,
+				"jID", jUUID,
+			)
+			return &app.Error{Code: http.StatusBadRequest, Message: "inactive job"}
+		}
 
-				h.ServeHTTP(w, r)
-				return nil
-			}
-		}(h)
-	}
+		h.ServeHTTP(w, r)
+		return nil
+	})
 }
 
-// UserJobMiddleware applies userJob as router middleware
+// UserJobMiddleware authorizes an authenticated user for the requested job
 func UserJobMiddleware(h http.Handler) http.Handler {
-	return userJob(h)
-}
-
-// TODO: if this works, convert the rest
-// func UserJobMiddleware() func(http.Handler) http.Handler {
-// 	return func(h http.Handler) http.Handler {
-// 		return userJob(h)
-// 	}
-// }
-
-// MinerJobMiddleware applies userJob as router middleware
-func MinerJobMiddleware() func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return minerJob(h)
-	}
-}
-
-// userJob authorizes an authenticated user for the requested job
-func userJob(h http.Handler) app.Handler {
-	return func(w http.ResponseWriter, r *http.Request) *app.Error {
+	return app.Handler(func(w http.ResponseWriter, r *http.Request) *app.Error {
 		vars := mux.Vars(r)
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
@@ -117,12 +94,12 @@ func userJob(h http.Handler) app.Handler {
 		log.Sugar.Infof("valid user, owns job")
 		h.ServeHTTP(w, r)
 		return nil
-	}
+	})
 }
 
-// minerJob authorizes an authenticated miner for the requested job
-func minerJob(h http.Handler) app.Handler {
-	return func(w http.ResponseWriter, r *http.Request) *app.Error {
+// MinerJobMiddleware authorizes an authenticated miner for the requested job
+func MinerJobMiddleware(h http.Handler) http.Handler {
+	return app.Handler(func(w http.ResponseWriter, r *http.Request) *app.Error {
 		vars := mux.Vars(r)
 		jID := vars["jID"]
 		jUUID, err := uuid.FromString(jID)
@@ -165,5 +142,5 @@ func minerJob(h http.Handler) app.Handler {
 		log.Sugar.Infof("valid miner, won job")
 		h.ServeHTTP(w, r)
 		return nil
-	}
+	})
 }

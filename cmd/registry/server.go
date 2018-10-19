@@ -53,8 +53,8 @@ func main() {
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 	rJob := rRegistry.PathPrefix(fmt.Sprintf("/miner/{jID:%s}", uuidRegexpMux)).Subrouter()
-	rJob.Use(auth.MinerJobMiddleware())
-	rJob.Use(auth.JobActive())
+	rJob.Use(auth.MinerJobMiddleware)
+	rJob.Use(auth.JobActive)
 	rJob.Use(checkImageDownloaded)
 	rJob.NewRoute().Handler(registryRP)
 

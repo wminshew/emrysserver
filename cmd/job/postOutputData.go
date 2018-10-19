@@ -8,8 +8,8 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
-	"github.com/wminshew/emrysserver/pkg/payments"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/payments"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"io"
 	"net/http"
@@ -34,8 +34,8 @@ func postOutputData() app.Handler {
 		}
 
 		if tDataDownloaded, tImageDownloaded, tOutputLogPosted, err := db.GetStatusOutputDataPrereqs(r, jUUID); err != nil {
-			return err // already logged
-		} else if  tDataDownloaded== time.Time{} || tImageDownloaded == time.Time{} || tOutputLogPosted == time.Time{} {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+		} else if tDataDownloaded.IsZero() || tImageDownloaded.IsZero() || tOutputLogPosted.IsZero() {
 			log.Sugar.Infow("miner tried to post output data without completing prereqs",
 				"method", r.Method,
 				"url", r.URL,

@@ -51,13 +51,13 @@ func main() {
 	uuidRegexpMux := validate.UUIDRegexpMux()
 	rMinerJob := rMinerAuth.PathPrefix(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)).Subrouter()
 	rMinerJob.Handle("/bid", postBid()).Methods("POST")
-	rMinerJob.Use(auth.JobActive())
+	rMinerJob.Use(auth.JobActive)
 
 	rAuction := r.PathPrefix("/auction").Subrouter()
 	rAuction.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), postAuction()).Methods("POST")
 	rAuction.Use(auth.Jwt(userSecret))
 	rAuction.Use(auth.UserJobMiddleware)
-	rAuction.Use(auth.JobActive())
+	rAuction.Use(auth.JobActive)
 
 	server := http.Server{
 		Addr:              ":8080",

@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 )
@@ -25,8 +26,8 @@ func postAuction() app.Handler {
 		}
 
 		if t, err := db.GetStatusAuctionCompleted(r, jUUID); err != nil {
-			return err // already logged
-		} else if t != time.Time{} {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+		} else if !t.IsZero() {
 			log.Sugar.Infow("user tried to re-auction job",
 				"method", r.Method,
 				"url", r.URL,
@@ -36,8 +37,8 @@ func postAuction() app.Handler {
 		}
 
 		if tDataSynced, tImageBuilt, err := db.GetStatusAuctionPrereqs(r, jUUID); err != nil {
-			return err // already logged
-		} else if  tDataSynced == time.Time{} || tImageBuilt == time.Time{} {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+		} else if tDataSynced.IsZero() || tImageBuilt.IsZero() {
 			log.Sugar.Infow("user tried to auction job without completing prereqs",
 				"method", r.Method,
 				"url", r.URL,

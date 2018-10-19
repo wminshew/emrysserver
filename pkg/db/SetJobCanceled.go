@@ -3,20 +3,22 @@ package db
 import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 )
 
-// SetJobPaidByUser sets user_paid for job jUUID
-func SetJobPaidByUser(r *http.Request, jUUID uuid.UUID) error {
+// SetJobCanceled sets job canceled_at and active=falsefor job jUUID
+func SetJobCanceled(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
-	UPDATE payments
-	SET user_paid = NOW()
+	UPDATE jobs
+	SET (canceled_at, active)= (NOW(), false)
 	WHERE job_uuid = $1 AND
-		user_paid IS NULL
+		canceled_at IS NULL AND
+		completed_at IS NULL
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
-		message := "error updating payments"
+		message := "error canceling job"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -36,8 +38,7 @@ func SetJobPaidByUser(r *http.Request, jUUID uuid.UUID) error {
 				"jID", jUUID,
 			)
 		}
-		return err
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
-
 	return nil
 }

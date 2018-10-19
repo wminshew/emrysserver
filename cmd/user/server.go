@@ -48,12 +48,12 @@ func main() {
 	rUserAuth.Handle("", postJob()).Methods("POST")
 	rUserAuth.Handle("/", postJob()).Methods("POST")
 	rUserAuth.Use(auth.Jwt(userSecret))
-	rUserAuth.User(payments.AuthorizeUser)
+	rUserAuth.Use(payments.AuthorizeUser)
 
 	rUserCancelJob := rUserAuth.PathPrefix(fmt.Sprintf("/{jID:%s}", uuidRegexpMux)).Subrouter()
 	rUserCancelJob.Handle("/cancel", postCancelJob()).Methods("POST")
 	rUserCancelJob.Use(auth.UserJobMiddleware)
-	rUserCancelJob.Use(auth.JobActive())
+	rUserCancelJob.Use(auth.JobActive)
 
 	server := http.Server{
 		Addr:              ":8080",

@@ -13,7 +13,8 @@ func SetStatusImageDownloaded(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE statuses
 	SET image_downloaded = NOW()
-	WHERE job_uuid = $1
+	WHERE job_uuid = $1 AND
+		image_downloaded IS NULL
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
 		message := "error updating job status to image built"

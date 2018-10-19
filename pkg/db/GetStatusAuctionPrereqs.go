@@ -3,14 +3,13 @@ package db
 import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 	"time"
 )
 
 // GetStatusAuctionPrereqs gets status auction_completed for job jUUID
-func GetStatusAuctionPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, time.Time, *app.Error) {
+func GetStatusAuctionPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, time.Time, error) {
 	tDataSynced := time.Time{}
 	tImageBuilt := time.Time{}
 	sqlStmt := `
@@ -18,7 +17,7 @@ func GetStatusAuctionPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, time.
 	FROM statuses
 	WHERE job_uuid = $1
 	`
-	if _, err := db.QueryRow(sqlStmt, jUUID).Scan(&tDataSynced, &tImageBuilt); err != nil {
+	if err := db.QueryRow(sqlStmt, jUUID).Scan(&tDataSynced, &tImageBuilt); err != nil {
 		message := "error querying data_synced and image_built"
 		pqErr, ok := err.(*pq.Error)
 		if ok {

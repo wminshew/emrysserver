@@ -36,8 +36,8 @@ func buildImage() app.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 		if t, err := db.GetStatusImageBuilt(r, jUUID); err != nil {
-			return err // already logged in db
-		} else if t != time.Time{} {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged err
+		} else if !t.IsZero() {
 			log.Sugar.Infow("user tried to re-build image",
 				"method", r.Method,
 				"url", r.URL,
@@ -163,6 +163,7 @@ func buildImage() app.Handler {
 
 		cacheSlice := []string{dockerBaseCudaRef, localBaseJobRef}
 		latestProjectBuild := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
+		imageBuildTime[latestProjectBuild] = time.Now()
 		if pullResp, err := dClient.ImagePull(ctx, latestProjectBuild, types.ImagePullOptions{}); err != nil {
 			log.Sugar.Infof("error finding %s: %v", latestProjectBuild, err)
 		} else {
@@ -195,10 +196,11 @@ func buildImage() app.Handler {
 		strRefLatest := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
 		strRefMiner := fmt.Sprintf("%s/%s/%s:%s", registryHost, "miner", jID, "latest")
 		strRefs := []string{strRef, strRefLatest, strRefMiner}
+		for _, ref := range strRefs {
+			imageBuildTime[ref] = time.Now()
+		}
 		log.Sugar.Infof("Caching from: %v", cacheSlice)
 		log.Sugar.Infof("Tagging as: %v", strRefs)
-		// TODO: do I have to add the other tags too?
-		imageBuildTime[strRef] = time.Now()
 		buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
 			BuildArgs: map[string]*string{
 				"DEVPI_HOST":         &devpiHost,

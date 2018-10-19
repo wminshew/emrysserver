@@ -62,8 +62,8 @@ func main() {
 
 	rImageMiner := rImage.PathPrefix("/downloaded").Subrouter()
 	rImageMiner.Use(auth.Jwt(minerSecret))
-	rImageMiner.Use(auth.MinerJobMiddleware())
-	rImageMiner.Use(auth.JobActive())
+	rImageMiner.Use(auth.MinerJobMiddleware)
+	rImageMiner.Use(auth.JobActive)
 	uuidRegexpMux := validate.UUIDRegexpMux()
 	rImageMiner.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), imageDownloaded())
 
@@ -71,7 +71,7 @@ func main() {
 	rImageUser := rImage.PathPrefix(fmt.Sprintf("/{uID:%s}/{project:%s}", uuidRegexpMux, projectRegexpMux)).Subrouter()
 	rImageUser.Use(auth.Jwt(userSecret))
 	rImageUser.Use(auth.UserJobMiddleware)
-	rImageUser.Use(auth.JobActive())
+	rImageUser.Use(auth.JobActive)
 	rImageUser.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), buildImage())
 
 	server := http.Server{

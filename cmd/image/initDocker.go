@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"docker.io/go-docker"
+	"docker.io/go-docker/api/types"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"time"
 )
@@ -13,7 +14,7 @@ var (
 )
 
 const (
-	prunePeriod = 3 * time.Day
+	prunePeriod = 3 * 24 * time.Hour
 )
 
 // initDocker initializes the docker client
@@ -41,23 +42,23 @@ func pruneDocker(ctx context.Context, dClient *docker.Client) {
 		select {
 		case <-ctx.Done():
 			return
-			// TODO: add manual trigger if disk gets close to capacity; evict by LRU
+			// TODO: add trigger if disk gets close to capacity, evict by LRU
 		case <-time.After(prunePeriod):
-			// possible to inspect images, look at summary or history, rather than use map?
+			// TODO: do I need to remove all 3 tags for each image? probably..
 			for imgRefStr, t := range imageBuildTime {
-				if t.Before(t.Now.Subtract(prunePeriod)) {
-					// TODO: log image remove report?
+				if time.Since(t) > prunePeriod {
 					if _, err := dClient.ImageRemove(ctx, imgRefStr, types.ImageRemoveOptions{
 						Force: true,
 					}); err != nil {
 						log.Sugar.Errorf("Docker prune: error removing job image %v: %v", imgRefStr, err)
 						continue
 					}
+					// TODO: log full image remove report?
 					log.Sugar.Infof("Removed image %v", imgRefStr)
 					delete(imageBuildTime, imgRefStr)
 				}
 			}
-			// TODO: log build cache prune report?
+			// TODO: log full build cache prune report?
 			if _, err := dClient.BuildCachePrune(ctx); err != nil {
 				log.Sugar.Errorf("Docker prune: error pruning build cache: %v", err)
 			}

@@ -35,16 +35,6 @@ func postCancelJob() app.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		if err := db.SetJobInactive(jUUID); err != nil {
-			log.Sugar.Errorw("error setting job inactive",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
-		return nil
+		return db.SetJobCanceled(r, jUUID)
 	}
 }

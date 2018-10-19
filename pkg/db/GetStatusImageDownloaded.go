@@ -3,21 +3,20 @@ package db
 import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 	"time"
 )
 
 // GetStatusImageDownloaded gets status image_downloaded for job jUUID
-func GetStatusImageDownloaded(r *http.Request, jUUID uuid.UUID) (time.Time, *app.Error) {
+func GetStatusImageDownloaded(r *http.Request, jUUID uuid.UUID) (time.Time, error) {
 	t := time.Time{}
 	sqlStmt := `
 	SELECT image_downloaded
 	FROM statuses
 	WHERE job_uuid = $1
 	`
-	if _, err := db.QueryRow(sqlStmt, jUUID).Scan(&t); err != nil {
+	if err := db.QueryRow(sqlStmt, jUUID).Scan(&t); err != nil {
 		message := "error querying image_downloaded"
 		pqErr, ok := err.(*pq.Error)
 		if ok {

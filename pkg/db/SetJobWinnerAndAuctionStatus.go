@@ -20,7 +20,9 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 		sqlStmt := `
 		UPDATE jobs
 		SET (win_bid_uuid, pay_rate) = ($1, $2)
-		WHERE job_uuid = $3
+		WHERE job_uuid = $3 AND
+			win_bid_uuid IS NULL AND
+			pay_rate IS NULL
 		`
 		if _, err := tx.Exec(sqlStmt, wbUUID, payRate, jUUID); err != nil {
 			return "error updating job winner", err
@@ -29,7 +31,8 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 		sqlStmt = `
 		UPDATE statuses
 		SET auction_completed = NOW()
-		WHERE job_uuid = $1
+		WHERE job_uuid = $1 AND
+			auction_completed IS NULL
 		`
 		if _, err := tx.Exec(sqlStmt, jUUID); err != nil {
 			return "error updating job status", err
