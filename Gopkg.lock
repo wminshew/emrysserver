@@ -431,9 +431,15 @@
   revision = "7a6a684ca69eb4cae85ad0a484f2e531598c047b"
   version = "v1.12.2"
 
+[[projects]]
+  branch = "v2"
+  name = "gopkg.in/robfig/cron.v2"
+  packages = ["."]
+  revision = "be2e0b0deed5a68ffee390b4583a13aff8321535"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aca6fb4a506cda2fb482b5b5df87a46677e0f995385d1c1f501063fb2c038c8a"
+  inputs-digest = "9e67a59885198370ac7f6b546406fcce6a45131d3326d9587d04c653a761f012"
   solver-name = "gps-cdcl"
   solver-version = 1

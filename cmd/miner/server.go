@@ -10,7 +10,9 @@ import (
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/payments"
 	"github.com/wminshew/emrysserver/pkg/storage"
+	"gopkg.in/robfig/cron.v2"
 	"net/http"
 	"os"
 	"os/signal"
@@ -72,6 +74,10 @@ func main() {
 			log.Sugar.Fatalf("Server error: %v", err)
 		}
 	}()
+
+	c := cron.New()
+	defer c.Stop()
+	c.AddFunc("@weekly", payments.PayMiners)
 
 	ctx := context.Background()
 	stop := make(chan os.Signal, 1)

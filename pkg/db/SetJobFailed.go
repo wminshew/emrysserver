@@ -3,26 +3,22 @@ package db
 import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"net/http"
 )
 
-// SetJobCanceled sets job canceled_at and active=falsefor job jUUID
-func SetJobCanceled(r *http.Request, jUUID uuid.UUID) *app.Error {
+// SetJobFailed sets job failed_at and active=falsefor job jUUID
+func SetJobFailed(jUUID uuid.UUID) error {
 	sqlStmt := `
 	UPDATE jobs
-	SET (canceled_at, active)= (NOW(), false)
+	SET (failed_at, active)= (NOW(), false)
 	WHERE job_uuid = $1 AND
-		canceled_at IS NULL
+		failed_at IS NULL
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
-		message := "error updating job canceled_at"
+		message := "error updating job failed_at"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 				"pq_sev", pqErr.Severity,
@@ -31,13 +27,11 @@ func SetJobCanceled(r *http.Request, jUUID uuid.UUID) *app.Error {
 			)
 		} else {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 			)
 		}
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		return err
 	}
 	return nil
 }

@@ -19,8 +19,8 @@ func monitorJob(jUUID uuid.UUID) {
 	for {
 		select {
 		case <-time.After(timeout):
-			if err := db.SetJobInactive(jUUID); err != nil {
-				log.Sugar.Errorw("error setting job inactive",
+			if err := db.SetJobFailed(jUUID); err != nil {
+				log.Sugar.Errorw("error setting job failed",
 					"err", err.Error(),
 					"jID", jUUID,
 				)
