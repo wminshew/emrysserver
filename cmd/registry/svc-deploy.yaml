@@ -41,7 +41,7 @@ spec:
         image: gcr.io/emrys-12/registry:latest
         resources:
           requests:
-            cpu: 100m
+            cpu: 50m
             memory: "100Mi"
           # limits:
           #   cpu: 250m
@@ -67,7 +67,7 @@ spec:
               key: username
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
-        - name: MINERSECRET
+        - name: MINER_SECRET
           valueFrom:
             secretKeyRef:
               name: miner-secret
@@ -100,8 +100,7 @@ spec:
         resources:
           requests:
             cpu: 100m
-            memory: "200Mi"
-            # memory: "1Gi" TODO
+            memory: "500Mi"
           # limits:
           #   cpu: 500m
           #   memory: "2Gi"

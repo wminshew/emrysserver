@@ -75,14 +75,14 @@ spec:
           value: "Dockerfiles/Dockerfile"
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
-        - name: MINERSECRET
+        - name: MINER_SECRET
           valueFrom:
             secretKeyRef:
               name: miner-secret
               key: secret
         - name: REGISTRY_HOST
           value: "127.0.0.1:5000"
-        - name: USERSECRET
+        - name: USER_SECRET
           valueFrom:
             secretKeyRef:
               name: user-secret
@@ -112,8 +112,7 @@ spec:
         resources:
           requests:
             cpu: 100m
-            memory: "200Mi"
-            # memory: "1Gi" TODO
+            memory: "500Mi"
           # limits:
           #   cpu: 500m
           #   memory: "2Gi"
@@ -133,8 +132,7 @@ spec:
         resources:
           requests:
             cpu: 100m
-            memory: "200Mi"
-            # memory: "1Gi" TODO
+            memory: "500Mi"
           # limits:
           #   cpu: 500m
           #   memory: "2Gi"

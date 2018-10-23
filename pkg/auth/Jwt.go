@@ -9,11 +9,6 @@ import (
 	"net/http"
 )
 
-type jwtClaims struct {
-	Email string `json:"email"`
-	jwt.StandardClaims
-}
-
 // Jwt returns middleware for authenticating jwts
 func Jwt(secret string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
@@ -29,7 +24,7 @@ const (
 // jwtAuth authenticates jwts, given a secret
 func jwtAuth(h http.Handler, secret string) app.Handler {
 	return func(w http.ResponseWriter, r *http.Request) *app.Error {
-		claims := &jwtClaims{}
+		claims := &jwt.StandardClaims{}
 		token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
 			func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

@@ -44,7 +44,6 @@ func pruneDocker(ctx context.Context, dClient *docker.Client) {
 			return
 			// TODO: add trigger if disk gets close to capacity, evict by LRU
 		case <-time.After(prunePeriod):
-			// TODO: do I need to remove all 3 tags for each image? probably..
 			for imgRefStr, t := range imageBuildTime {
 				if time.Since(t) > prunePeriod {
 					if _, err := dClient.ImageRemove(ctx, imgRefStr, types.ImageRemoveOptions{
@@ -53,12 +52,11 @@ func pruneDocker(ctx context.Context, dClient *docker.Client) {
 						log.Sugar.Errorf("Docker prune: error removing job image %v: %v", imgRefStr, err)
 						continue
 					}
-					// TODO: log full image remove report?
 					log.Sugar.Infof("Removed image %v", imgRefStr)
 					delete(imageBuildTime, imgRefStr)
 				}
 			}
-			// TODO: log full build cache prune report?
+			log.Sugar.Infof("Pruning build cache")
 			if _, err := dClient.BuildCachePrune(ctx); err != nil {
 				log.Sugar.Errorf("Docker prune: error pruning build cache: %v", err)
 			}

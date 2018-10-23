@@ -1,4 +1,4 @@
-package payments
+package auth
 
 import (
 	"github.com/satori/go.uuid"
@@ -8,8 +8,8 @@ import (
 	"net/http"
 )
 
-// AuthorizeUser checks the user is authorized to create new jobs
-func AuthorizeUser(h http.Handler) http.Handler {
+// UserActive checks if the user is not suspended
+func UserActive(h http.Handler) http.Handler {
 	return app.Handler(func(w http.ResponseWriter, r *http.Request) *app.Error {
 		uID := r.Header.Get("X-Jwt-Claims-Subject")
 		uUUID, err := uuid.FromString(uID)
@@ -33,7 +33,7 @@ func AuthorizeUser(h http.Handler) http.Handler {
 			return &app.Error{Code: http.StatusUnauthorized, Message: "user is suspended"}
 		}
 
-		log.Sugar.Infof("user authorized for payments")
+		log.Sugar.Infof("user is active")
 		h.ServeHTTP(w, r)
 		return nil
 	})

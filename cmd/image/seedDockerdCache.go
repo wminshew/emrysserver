@@ -25,7 +25,7 @@ func seedDockerdCache(ctx context.Context) {
 
 	var pullResp io.ReadCloser
 	var err error
-	// TODO: make ENV/ARGS?
+	// TODO: make ENV/ARGS
 	img := "nvidia/cuda"
 	tag := "9.0-base-ubuntu16.04"
 	digestAlgo := "sha256"

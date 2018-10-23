@@ -67,12 +67,12 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
-        - name: MINERSECRET
+        - name: MINER_SECRET
           valueFrom:
             secretKeyRef:
               name: miner-secret
               key: secret
-        - name: USERSECRET
+        - name: USER_SECRET
           valueFrom:
             secretKeyRef:
               name: user-secret

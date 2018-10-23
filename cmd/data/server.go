@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	userSecret  = os.Getenv("USERSECRET")
-	minerSecret = os.Getenv("MINERSECRET")
+	userSecret  = os.Getenv("USER_SECRET")
+	minerSecret = os.Getenv("MINER_SECRET")
 )
 
 func main() {
@@ -50,23 +50,26 @@ func main() {
 		}
 	}()
 
+	uuidRegexpMux := validate.UUIDRegexpMux()
+	projectRegexpMux := validate.ProjectRegexpMux()
+
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rDataUser := r.PathPrefix("/user").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	uuidRegexpMux := validate.UUIDRegexpMux()
-	projectRegexpMux := validate.ProjectRegexpMux()
-	syncUserPath := fmt.Sprintf("/{uID:%s}/project/{project:%s}/job/{jID}", uuidRegexpMux, projectRegexpMux)
-	rDataUser.Handle(syncUserPath, syncUser()).Methods("POST")
-	rDataUser.Handle(path.Join(syncUserPath, "{relPath:.*}"), uploadData()).Methods("PUT")
 	rDataUser.Use(auth.Jwt(userSecret))
 	rDataUser.Use(auth.UserJobMiddleware)
 	rDataUser.Use(auth.JobActive)
 	rDataUser.Use(checkDataSynced)
+	syncUserPath := fmt.Sprintf("/{uID:%s}/project/{project:%s}/job/{jID}", uuidRegexpMux, projectRegexpMux)
+	rDataUser.Handle(syncUserPath, syncUser).Methods("POST")
+	uploadDataPath := path.Join(syncUserPath, "{relPath:.*}")
+	rDataUser.Handle(uploadDataPath, uploadData).Methods("PUT")
 
 	rDataMiner := r.PathPrefix("/miner").HeadersRegexp("Authorization", "^Bearer ").Methods("GET").Subrouter()
-	rDataMiner.Handle(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux), getData())
+	getDataPath := fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)
+	rDataMiner.Handle(getDataPath, getData)
 	rDataMiner.Use(auth.Jwt(minerSecret))
 	rDataMiner.Use(auth.MinerJobMiddleware)
 	rDataMiner.Use(auth.JobActive)

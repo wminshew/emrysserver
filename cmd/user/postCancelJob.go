@@ -11,30 +11,28 @@ import (
 )
 
 // postCancelJob handles user job cancellations
-func postCancelJob() app.Handler {
-	return func(w http.ResponseWriter, r *http.Request) *app.Error {
-		vars := mux.Vars(r)
-		jID := vars["jID"]
-		jUUID, err := uuid.FromString(jID)
-		if err != nil {
-			log.Sugar.Errorw("error parsing job ID",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-			)
-			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
-		}
-
-		if err := payments.ChargeUser(r, jUUID); err != nil {
-			log.Sugar.Errorw("error charging user",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
-		return db.SetJobCanceled(r, jUUID)
+var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+	vars := mux.Vars(r)
+	jID := vars["jID"]
+	jUUID, err := uuid.FromString(jID)
+	if err != nil {
+		log.Sugar.Errorw("error parsing job ID",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
+
+	if err := payments.ChargeUser(r, jUUID); err != nil {
+		log.Sugar.Errorw("error charging user",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	return db.SetJobCanceled(r, jUUID)
 }

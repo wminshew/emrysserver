@@ -7,22 +7,23 @@ import (
 	"net/http"
 )
 
-// InsertUser inserts a new user into the db
-func InsertUser(r *http.Request, email, hashedPassword string, uUUID uuid.UUID) error {
+// GetMinerSuspended returns whether miner is suspended
+func GetMinerSuspended(r *http.Request, mUUID uuid.UUID) (bool, error) {
+	var suspended bool
 	sqlStmt := `
-	INSERT INTO users (user_email, password, user_uuid)
-	VALUES ($1, $2, $3)
+	SELECT suspended
+	FROM miners
+	WHERE miner_uuid = $1
 	`
-	if _, err := db.Exec(sqlStmt, email, hashedPassword, uUUID); err != nil {
-		message := "error inserting user"
+	if err := db.QueryRow(sqlStmt, mUUID).Scan(&suspended); err != nil {
+		message := "error querying for miner suspended"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"uID", uUUID,
-				"email", email,
+				"mID", mUUID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
 				"pq_detail", pqErr.Detail,
@@ -32,12 +33,10 @@ func InsertUser(r *http.Request, email, hashedPassword string, uUUID uuid.UUID) 
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"uID", uUUID,
-				"email", email,
+				"mID", mUUID,
 			)
 		}
-		return err
+		return false, err
 	}
-
-	return nil
+	return suspended, nil
 }

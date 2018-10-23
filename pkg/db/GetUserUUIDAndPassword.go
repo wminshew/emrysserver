@@ -16,22 +16,24 @@ var (
 )
 
 // GetUserUUIDAndPassword returns user uuid and hashed password of the email address, if they exist
-func GetUserUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, error) {
+func GetUserUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, bool, bool, error) {
 	storedC := &creds.User{}
 	uUUID := uuid.UUID{}
+	confirmed := false
+	suspended := false
 	sqlStmt := `
-	SELECT password, user_uuid
+	SELECT password, user_uuid, confirmed, suspended
 	FROM users
 	WHERE user_email=$1
 	`
-	if err := db.QueryRow(sqlStmt, email).Scan(&storedC.Password, &uUUID); err != nil {
+	if err := db.QueryRow(sqlStmt, email).Scan(&storedC.Password, &uUUID, &confirmed, &suspended); err != nil {
 		if err == sql.ErrNoRows {
 			log.Sugar.Infow("unauthorized user",
 				"method", r.Method,
 				"url", r.URL,
 				"email", email,
 			)
-			return uuid.UUID{}, "", ErrUnauthorizedUser
+			return uuid.UUID{}, "", false, false, ErrUnauthorizedUser
 		}
 		message := "error querying for user uuid and password"
 		pqErr, ok := err.(*pq.Error)
@@ -53,7 +55,7 @@ func GetUserUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, e
 				"email", email,
 			)
 		}
-		return uuid.UUID{}, "", err
+		return uuid.UUID{}, "", false, false, err
 	}
-	return uUUID, storedC.Password, nil
+	return uUUID, storedC.Password, confirmed, suspended, nil
 }

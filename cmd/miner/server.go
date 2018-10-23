@@ -20,8 +20,9 @@ import (
 	"time"
 )
 
-var minerSecret = os.Getenv("MINERSECRET")
-var userSecret = os.Getenv("USERSECRET")
+var minerSecret = os.Getenv("MINER_SECRET")
+var userSecret = os.Getenv("USER_SECRET")
+var sendgridSecret = os.Getenv("SENDGRID_SECRET")
 
 func main() {
 	log.Init()
@@ -34,32 +35,38 @@ func main() {
 	defer db.Close()
 	storage.Init()
 	initJobsManager()
+	c := cron.New()
+	defer c.Stop()
+	if _, err := c.AddFunc("@weekly", payments.PayMiners); err != nil {
+		log.Sugar.Errorf("Error starting weekly miner payment to cron: %v", err)
+		panic(err)
+	}
+
+	uuidRegexpMux := validate.UUIDRegexpMux()
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rMiner := r.PathPrefix("/miner").Subrouter()
-	rMiner.Handle("", newMiner()).Methods("POST")
-	rMiner.Handle("/", newMiner()).Methods("POST")
-	rMiner.Handle("/login", login()).Methods("POST")
-	rMiner.Handle("/version", getVersion()).Methods("GET")
+	rMiner.Handle("", newMiner).Methods("POST")
+	rMiner.Handle("/confirm", confirmMiner).Methods("GET")
+	rMiner.Handle("/login", login).Methods("POST")
+	rMiner.Handle("/version", getVersion).Methods("GET")
 
 	rMinerAuth := rMiner.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rMinerAuth.Handle("/connect", connect()).Methods("GET")
-	rMinerAuth.Handle("/device_snapshot", postDeviceSnapshot()).Methods("POST")
 	rMinerAuth.Use(auth.Jwt(minerSecret))
-
-	uuidRegexpMux := validate.UUIDRegexpMux()
-	rMinerJob := rMinerAuth.PathPrefix(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)).Subrouter()
-	rMinerJob.Handle("/bid", postBid()).Methods("POST")
-	rMinerJob.Use(auth.JobActive)
+	rMinerAuth.Handle("/connect", auth.MinerActive(connect)).Methods("GET")
+	rMinerAuth.Handle("/device_snapshot", postDeviceSnapshot).Methods("POST")
+	postBidPath := fmt.Sprintf("/job/{jID:%s}/bid", uuidRegexpMux)
+	rMinerAuth.Handle(postBidPath, auth.JobActive(postBid)).Methods("POST")
 
 	rAuction := r.PathPrefix("/auction").Subrouter()
-	rAuction.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), postAuction()).Methods("POST")
 	rAuction.Use(auth.Jwt(userSecret))
 	rAuction.Use(auth.UserJobMiddleware)
 	rAuction.Use(auth.JobActive)
+	postAuctionPath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
+	rAuction.Handle(postAuctionPath, postAuction).Methods("POST")
 
 	server := http.Server{
 		Addr:              ":8080",
@@ -74,10 +81,6 @@ func main() {
 			log.Sugar.Fatalf("Server error: %v", err)
 		}
 	}()
-
-	c := cron.New()
-	defer c.Stop()
-	c.AddFunc("@weekly", payments.PayMiners)
 
 	ctx := context.Background()
 	stop := make(chan os.Signal, 1)

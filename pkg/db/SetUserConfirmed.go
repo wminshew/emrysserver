@@ -7,17 +7,15 @@ import (
 	"net/http"
 )
 
-// GetUserSuspended returns whether user is suspended
-func GetUserSuspended(r *http.Request, uUUID uuid.UUID) (bool, error) {
-	var suspended bool
-	// TODO: name the db column better..
+// SetUserConfirmed sets user uUUID as confirmed
+func SetUserConfirmed(r *http.Request, uUUID uuid.UUID) error {
 	sqlStmt := `
-	SELECT suspended
-	FROM users
+	UPDATE users
+	SET confirmed = true
 	WHERE user_uuid = $1
 	`
-	if err := db.QueryRow(sqlStmt, uUUID).Scan(&suspended); err != nil {
-		message := "error querying for user suspended"
+	if _, err := db.Exec(sqlStmt, uUUID); err != nil {
+		message := "error updating user confirmed"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -37,7 +35,8 @@ func GetUserSuspended(r *http.Request, uUUID uuid.UUID) (bool, error) {
 				"uID", uUUID,
 			)
 		}
-		return false, err
+		return err
 	}
-	return suspended, nil
+
+	return nil
 }

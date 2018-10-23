@@ -13,60 +13,58 @@ import (
 )
 
 // downloadOutputLog downloads the miner's container execution log
-func downloadOutputLog() app.Handler {
-	return func(w http.ResponseWriter, r *http.Request) *app.Error {
-		vars := mux.Vars(r)
-		jID := vars["jID"]
-		jUUID, err := uuid.FromString(jID)
-		if err != nil {
-			log.Sugar.Errorw("error parsing job ID",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-			)
-			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
-		}
-
-		p := path.Join("output", jID, "log")
-		if _, err := os.Stat(p); os.IsNotExist(err) {
-			log.Sugar.Infow("error finding output log on disk",
-				"method", r.Method,
-				"url", r.URL,
-				"jID", jID,
-			)
-			return getOutputLogCloud(w, r, jUUID, p)
-		} else if err != nil {
-			log.Sugar.Errorw("error stating output log",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
-		f, err := os.Open(p)
-		if err != nil {
-			log.Sugar.Errorw("error opening output log",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-		if _, err = io.Copy(w, f); err != nil {
-			log.Sugar.Errorw("error copying output log to response",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
-		return nil
+var downloadOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+	vars := mux.Vars(r)
+	jID := vars["jID"]
+	jUUID, err := uuid.FromString(jID)
+	if err != nil {
+		log.Sugar.Errorw("error parsing job ID",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
+
+	p := path.Join("output", jID, "log")
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		log.Sugar.Infow("error finding output log on disk",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return getOutputLogCloud(w, r, jUUID, p)
+	} else if err != nil {
+		log.Sugar.Errorw("error stating output log",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	f, err := os.Open(p)
+	if err != nil {
+		log.Sugar.Errorw("error opening output log",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+	if _, err = io.Copy(w, f); err != nil {
+		log.Sugar.Errorw("error copying output log to response",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	return nil
 }
 
 func getOutputLogCloud(w http.ResponseWriter, r *http.Request, jUUID uuid.UUID, p string) *app.Error {

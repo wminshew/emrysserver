@@ -16,19 +16,17 @@ var latestUserVer = semver.Version{
 }
 
 // getVersion returns the latest user version released
-func getVersion() app.Handler {
-	return func(w http.ResponseWriter, r *http.Request) *app.Error {
-		resp := creds.VersionResp{
-			Version: latestUserVer.String(),
-		}
-		if err := json.NewEncoder(w).Encode(&resp); err != nil {
-			log.Sugar.Errorw("error encoding user semver",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-		return nil
+var getVersion app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+	resp := creds.VersionResp{
+		Version: latestUserVer.String(),
 	}
+	if err := json.NewEncoder(w).Encode(&resp); err != nil {
+		log.Sugar.Errorw("error encoding user semver",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+	return nil
 }

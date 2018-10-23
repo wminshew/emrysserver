@@ -41,7 +41,7 @@ spec:
         image: gcr.io/emrys-12/devpi:latest
         resources:
           requests:
-            cpu: 250m
+            cpu: 200m
             memory: "1Gi"
           # limits:
           #   cpu: 200m

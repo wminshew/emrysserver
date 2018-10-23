@@ -18,8 +18,8 @@ import (
 	"time"
 )
 
-var userSecret = os.Getenv("USERSECRET")
-var minerSecret = os.Getenv("MINERSECRET")
+var userSecret = os.Getenv("USER_SECRET")
+var minerSecret = os.Getenv("MINER_SECRET")
 
 func main() {
 	log.Init()
@@ -33,26 +33,28 @@ func main() {
 	storage.Init()
 	initJobsManager()
 
+	uuidRegexpMux := validate.UUIDRegexpMux()
+
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	uuidRegexpMux := validate.UUIDRegexpMux()
-	rJob := r.PathPrefix(fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)).Subrouter()
+	jobPathPrefix := fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)
+	rJob := r.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 
-	rJobMiner := rJob.NewRoute().Methods("POST").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rJobMiner.Handle("/log", postOutputLog())
-	rJobMiner.Handle("/data", postOutputData())
+	rJobMiner := rJob.NewRoute().Methods("POST").Subrouter()
 	rJobMiner.Use(auth.Jwt(minerSecret))
 	rJobMiner.Use(auth.MinerJobMiddleware)
 	rJobMiner.Use(auth.JobActive)
+	rJobMiner.Handle("/log", postOutputLog)
+	rJobMiner.Handle("/data", postOutputData)
 
-	rJobUser := rJob.NewRoute().Methods("GET").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rJobUser.Handle("/log", streamOutputLog())
-	rJobUser.Handle("/log/download", downloadOutputLog())
-	rJobUser.Handle("/data", getOutputData())
+	rJobUser := rJob.NewRoute().Methods("GET").Subrouter()
 	rJobUser.Use(auth.Jwt(userSecret))
 	rJobUser.Use(auth.UserJobMiddleware)
+	rJobUser.Handle("/log", streamOutputLog)
+	rJobUser.Handle("/log/download", downloadOutputLog)
+	rJobUser.Handle("/data", getOutputData)
 
 	server := http.Server{
 		Addr:              ":8080",

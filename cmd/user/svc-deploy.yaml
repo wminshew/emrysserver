@@ -38,6 +38,13 @@ spec:
       containers:
       - name: user-container
         image: gcr.io/emrys-12/user
+        resources:
+          requests:
+            cpu: 50m
+            memory: "100Mi"
+          # limits:
+          #   cpu: 250m
+          #   memory: "500Mi"
         ports:
         - containerPort: 8080
         env:
@@ -59,12 +66,17 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
-        - name: MINERSECRET
+        - name: MINER_SECRET
           valueFrom:
             secretKeyRef:
               name: miner-secret
               key: secret
-        - name: USERSECRET
+        - name: SENDGRID_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: sendgrid-secret
+              key: secret
+        - name: USER_SECRET
           valueFrom:
             secretKeyRef:
               name: user-secret

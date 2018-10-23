@@ -10,7 +10,6 @@ import (
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"github.com/wminshew/emrysserver/pkg/payments"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,8 +17,8 @@ import (
 	"time"
 )
 
-var userSecret = os.Getenv("USERSECRET")
-var minerSecret = os.Getenv("MINERSECRET")
+var userSecret = os.Getenv("USER_SECRET")
+var minerSecret = os.Getenv("MINER_SECRET")
 
 func main() {
 	log.Init()
@@ -31,29 +30,26 @@ func main() {
 	db.Init()
 	defer db.Close()
 
+	uuidRegexpMux := validate.UUIDRegexpMux()
+	projectRegexpMux := validate.ProjectRegexpMux()
+
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rUser := r.PathPrefix("/user").Subrouter()
-	rUser.Handle("", newUser()).Methods("POST")
-	rUser.Handle("/", newUser()).Methods("POST")
-	rUser.Handle("/login", login()).Methods("POST")
-	rUser.Handle("/version", getVersion()).Methods("GET")
+	rUser.Handle("", newUser).Methods("POST")
+	rUser.Handle("/confirm", confirmUser).Methods("GET")
+	rUser.Handle("/login", login).Methods("POST")
+	rUser.Handle("/version", getVersion).Methods("GET")
 
-	uuidRegexpMux := validate.UUIDRegexpMux()
-	projectRegexpMux := validate.ProjectRegexpMux()
-	rUserAuth := rUser.PathPrefix(fmt.Sprintf("/{uID:%s}/project/{project:%s}/job", uuidRegexpMux, projectRegexpMux)).
-		HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rUserAuth.Handle("", postJob()).Methods("POST")
-	rUserAuth.Handle("/", postJob()).Methods("POST")
+	jobPathPrefix := fmt.Sprintf("/{uID:%s}/project/{project:%s}/job", uuidRegexpMux, projectRegexpMux)
+	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rUserAuth.Use(auth.Jwt(userSecret))
-	rUserAuth.Use(payments.AuthorizeUser)
-
-	rUserCancelJob := rUserAuth.PathPrefix(fmt.Sprintf("/{jID:%s}", uuidRegexpMux)).Subrouter()
-	rUserCancelJob.Handle("/cancel", postCancelJob()).Methods("POST")
-	rUserCancelJob.Use(auth.UserJobMiddleware)
-	rUserCancelJob.Use(auth.JobActive)
+	rUserAuth.Handle("", auth.UserActive(postJob)).Methods("POST")
+	postCancelPath := fmt.Sprintf("/{jID:%s}/cancel", uuidRegexpMux)
+	rUserAuth.Handle(postCancelPath,
+		auth.JobActive(auth.UserJobMiddleware(postCancelJob))).Methods("POST")
 
 	server := http.Server{
 		Addr:              ":8080",

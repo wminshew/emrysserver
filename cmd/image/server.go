@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	userSecret       = os.Getenv("USERSECRET")
-	minerSecret      = os.Getenv("MINERSECRET")
+	userSecret       = os.Getenv("USER_SECRET")
+	minerSecret      = os.Getenv("MINER_SECRET")
 	registryHost     = os.Getenv("REGISTRY_HOST")
 	devpiHost        = os.Getenv("DEVPI_HOST")
 	devpiTrustedHost string
@@ -54,6 +54,9 @@ func main() {
 		devpiTrustedHost = u.Hostname()
 	}
 
+	uuidRegexpMux := validate.UUIDRegexpMux()
+	projectRegexpMux := validate.ProjectRegexpMux()
+
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
@@ -64,15 +67,16 @@ func main() {
 	rImageMiner.Use(auth.Jwt(minerSecret))
 	rImageMiner.Use(auth.MinerJobMiddleware)
 	rImageMiner.Use(auth.JobActive)
-	uuidRegexpMux := validate.UUIDRegexpMux()
-	rImageMiner.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), imageDownloaded())
+	postImageDownloadedPath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
+	rImageMiner.Handle(postImageDownloadedPath, imageDownloaded)
 
-	projectRegexpMux := validate.ProjectRegexpMux()
-	rImageUser := rImage.PathPrefix(fmt.Sprintf("/{uID:%s}/{project:%s}", uuidRegexpMux, projectRegexpMux)).Subrouter()
+	buildImagePathPrefix := fmt.Sprintf("/{uID:%s}/{project:%s}", uuidRegexpMux, projectRegexpMux)
+	rImageUser := rImage.PathPrefix(buildImagePathPrefix).Subrouter()
 	rImageUser.Use(auth.Jwt(userSecret))
 	rImageUser.Use(auth.UserJobMiddleware)
 	rImageUser.Use(auth.JobActive)
-	rImageUser.Handle(fmt.Sprintf("/{jID:%s}", uuidRegexpMux), buildImage())
+	postBuildImagePath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
+	rImageUser.Handle(postBuildImagePath, buildImage)
 
 	server := http.Server{
 		Addr:              ":8080",

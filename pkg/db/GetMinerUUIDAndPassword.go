@@ -16,22 +16,23 @@ var (
 )
 
 // GetMinerUUIDAndPassword returns miner uuid and hashed password of the email address, if they exist
-func GetMinerUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, error) {
+func GetMinerUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, bool, error) {
 	storedC := &creds.Miner{}
 	mUUID := uuid.UUID{}
+	confirmed := false
 	sqlStmt := `
-	SELECT password, miner_uuid
+	SELECT password, miner_uuid, confirmed
 	FROM miners
 	WHERE miner_email=$1
 	`
-	if err := db.QueryRow(sqlStmt, email).Scan(&storedC.Password, &mUUID); err != nil {
+	if err := db.QueryRow(sqlStmt, email).Scan(&storedC.Password, &mUUID, &confirmed); err != nil {
 		if err == sql.ErrNoRows {
 			log.Sugar.Infow("unauthorized miner",
 				"method", r.Method,
 				"url", r.URL,
 				"email", email,
 			)
-			return uuid.UUID{}, "", ErrUnauthorizedMiner
+			return uuid.UUID{}, "", false, ErrUnauthorizedMiner
 		}
 		message := "error querying for miner uuid and password"
 		pqErr, ok := err.(*pq.Error)
@@ -53,7 +54,7 @@ func GetMinerUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, 
 				"email", email,
 			)
 		}
-		return uuid.UUID{}, "", err
+		return uuid.UUID{}, "", false, err
 	}
-	return mUUID, storedC.Password, nil
+	return mUUID, storedC.Password, confirmed, nil
 }

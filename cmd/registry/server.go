@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	minerSecret  = os.Getenv("MINERSECRET")
+	minerSecret  = os.Getenv("MINER_SECRET")
 	registryHost = os.Getenv("REGISTRY_HOST")
 )
 
@@ -33,6 +33,8 @@ func main() {
 	}()
 	db.Init()
 	defer db.Close()
+
+	uuidRegexpMux := validate.UUIDRegexpMux()
 
 	registryURL := url.URL{
 		Scheme: "http",
@@ -51,8 +53,8 @@ func main() {
 	rBase := rRegistry.PathPrefix("/emrys/base").Subrouter()
 	rBase.NewRoute().Handler(registryRP)
 
-	uuidRegexpMux := validate.UUIDRegexpMux()
-	rJob := rRegistry.PathPrefix(fmt.Sprintf("/miner/{jID:%s}", uuidRegexpMux)).Subrouter()
+	minerJobPrefix := fmt.Sprintf("/miner/{jID:%s}", uuidRegexpMux)
+	rJob := rRegistry.PathPrefix(minerJobPrefix).Subrouter()
 	rJob.Use(auth.MinerJobMiddleware)
 	rJob.Use(auth.JobActive)
 	rJob.Use(checkImageDownloaded)

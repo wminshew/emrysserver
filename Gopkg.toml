@@ -84,3 +84,7 @@
 [[constraint]]
   branch = "v2"
   name = "gopkg.in/robfig/cron.v2"
+
+[[constraint]]
+  name = "github.com/sendgrid/sendgrid-go"
+  branch = "master"

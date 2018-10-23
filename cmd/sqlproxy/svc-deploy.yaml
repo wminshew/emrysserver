@@ -36,6 +36,13 @@ spec:
       containers:
       - name: sqlproxy-container
         image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        resources:
+          requests:
+            cpu: 100m
+            memory: "100Mi"
+          # limits:
+          #   cpu: 250m
+          #   memory: "500Mi"
         command: ["/cloud_sql_proxy",
           "-instances=emrys-12:us-central1:emrysserver-psql=tcp:0.0.0.0:5432",
           "-credential_file=/secrets/cloudsql/credentials.json"]

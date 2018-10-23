@@ -18,81 +18,76 @@ const (
 )
 
 // login takes miner credentials from the request and, if valid, returns a token
-func login() app.Handler {
-	return func(w http.ResponseWriter, r *http.Request) *app.Error {
-		c := &creds.Miner{}
-		if err := json.NewDecoder(r.Body).Decode(c); err != nil {
-			log.Sugar.Errorw("error decoding json request body",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-			)
-			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
-		}
-
-		mUUID, hashedPassword, err := db.GetMinerUUIDAndPassword(r, c.Email)
-		if err != nil {
-			if err == db.ErrUnauthorizedMiner {
-				return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized miner"}
-			}
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
-		if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(c.Password)); err != nil {
-			log.Sugar.Infow("unauthorized miner",
-				"method", r.Method,
-				"url", r.URL,
-				"mID", mUUID,
-				"email", c.Email,
-			)
-			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized miner"}
-		}
-
-		days := stdDuration
-		if d, err := strconv.Atoi(c.Duration); err == nil {
-			days = d
-		}
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"aud":   "emrys.io",
-			"exp":   time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(),
-			"iss":   "emrys.io",
-			"iat":   time.Now().Unix(),
-			"email": c.Email,
-			"sub":   mUUID,
-		})
-
-		tokenString, err := token.SignedString([]byte(minerSecret))
-		if err != nil {
-			log.Sugar.Errorw("error signing token",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"mID", mUUID,
-				"email", c.Email,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
-		resp := creds.LoginResp{
-			Token: tokenString,
-		}
-		if err = json.NewEncoder(w).Encode(resp); err != nil {
-			log.Sugar.Errorw("error encoding json response",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"mID", mUUID,
-				"email", c.Email,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
-		log.Sugar.Infow("miner login",
+var login app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+	c := &creds.Miner{}
+	if err := json.NewDecoder(r.Body).Decode(c); err != nil {
+		log.Sugar.Errorw("error decoding json request body",
 			"method", r.Method,
 			"url", r.URL,
-			"sub", mUUID,
-			"email", c.Email,
+			"err", err.Error(),
 		)
-		return nil
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
 	}
+
+	mUUID, hashedPassword, confirmed, err := db.GetMinerUUIDAndPassword(r, c.Email)
+	if err != nil {
+		if err == db.ErrUnauthorizedMiner {
+			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized miner"}
+		}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	} else if !confirmed {
+		return &app.Error{Code: http.StatusUnauthorized, Message: "you must confirm your email address before your account is active"}
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(c.Password)); err != nil {
+		log.Sugar.Infow("unauthorized miner",
+			"method", r.Method,
+			"url", r.URL,
+			"mID", mUUID,
+		)
+		return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized miner"}
+	}
+
+	days := stdDuration
+	if d, err := strconv.Atoi(c.Duration); err == nil {
+		days = d
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"aud": "emrys.io",
+		"exp": time.Now().Add(time.Hour * 24 * time.Duration(days)).Unix(),
+		"iss": "emrys.io",
+		"iat": time.Now().Unix(),
+		"sub": mUUID,
+	})
+
+	tokenString, err := token.SignedString([]byte(minerSecret))
+	if err != nil {
+		log.Sugar.Errorw("error signing token",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"mID", mUUID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	resp := creds.LoginResp{
+		Token: tokenString,
+	}
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
+		log.Sugar.Errorw("error encoding json response",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"mID", mUUID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	log.Sugar.Infow("miner login",
+		"method", r.Method,
+		"url", r.URL,
+		"sub", mUUID,
+	)
+	return nil
 }
