@@ -66,6 +66,7 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+	defer app.CheckErr(r, func() error { return os.RemoveAll(inputDir) })
 
 	log.Sugar.Infof("Storing input files on disk...")
 	if err := archiver.TarGz.Read(r.Body, inputDir); err != nil {
@@ -113,7 +114,6 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	}
 
 	defer func() {
-		defer app.CheckErr(r, func() error { return os.RemoveAll(inputDir) })
 		ctx := context.Background()
 		operation := func() error {
 			pr, pw := io.Pipe()

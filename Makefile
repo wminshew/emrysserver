@@ -1,9 +1,10 @@
 DATE := $(shell date +%Y-%m-%d_%H-%M-%S)
-MINERTIMEOUT := 620
-JOBTIMEOUT := 140
-IMAGETIMEOUT := 320
-REGISTRYTIMEOUT := 320
-DATATIMEOUT := 320
+MINER_TIMEOUT := 620
+JOB_TIMEOUT := 140
+IMAGE_TIMEOUT := 320
+REGISTRY_TIMEOUT := 320
+DATA_TIMEOUT := 320
+MAX_RPS_PER_INSTANCE := 100
 # DEVPITIMEOUT := 320
 
 all: build deploy
@@ -80,35 +81,43 @@ deploy-default-backend: cmd/default-backend/svc-deploy.yaml
 
 deploy-user: cmd/user/svc-deploy.yaml
 	kubectl apply -f cmd/user/svc-deploy.yaml
+	gcloud compute backend-services list --filter='user' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --max-rate-per-instance $(MAX_RATE_PER_INSTANCE)
 
 deploy-miner: cmd/miner/svc-deploy.yaml
 	kubectl apply -f cmd/miner/svc-deploy.yaml
-	gcloud compute backend-services list --filter='miner' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(MINERTIMEOUT)
+	gcloud compute backend-services list --filter='miner' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(MINER_TIMEOUT)
+	gcloud compute backend-services list --filter='miner' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --max-rate-per-instance $(MAX_RATE_PER_INSTANCE)
 
 deploy-job: cmd/job/svc-sts.yaml
 	kubectl apply -f cmd/job/svc-sts.yaml
-	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(JOBTIMEOUT)
+	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(JOB_TIMEOUT)
+	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --max-rate-per-instance $(MAX_RATE_PER_INSTANCE)
 
 deploy-image: cmd/image/svc-deploy.yaml
 	kubectl create configmap image-registry-config --dry-run -o yaml --from-file=cmd/image/registry-config.yaml | kubectl apply -f -
 	kubectl apply -f cmd/image/svc-deploy.yaml
-	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(IMAGETIMEOUT)
+	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(IMAGE_TIMEOUT)
+	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --max-rate-per-instance $(MAX_RATE_PER_INSTANCE)
 
 deploy-registry: cmd/registry/svc-deploy.yaml
 	kubectl create configmap registry-registry-config --dry-run -o yaml --from-file=cmd/registry/registry-config.yaml | kubectl apply -f -
 	kubectl apply -f cmd/registry/svc-deploy.yaml
-	gcloud compute backend-services list --filter='registry' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(REGISTRYTIMEOUT)
+	gcloud compute backend-services list --filter='registry' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(REGISTRY_TIMEOUT)
+	gcloud compute backend-services list --filter='registry' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --max-rate-per-instance $(MAX_RATE_PER_INSTANCE)
 
 deploy-data: cmd/data/svc-sts.yaml
 	kubectl apply -f cmd/data/svc-sts.yaml
-	gcloud compute backend-services list --filter='data' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(DATATIMEOUT)
+	gcloud compute backend-services list --filter='data' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(DATA_TIMEOUT)
+	gcloud compute backend-services list --filter='data' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --max-rate-per-instance $(MAX_RATE_PER_INSTANCE)
 
 deploy-sqlproxy: cmd/sqlproxy/svc-deploy.yaml
 	kubectl apply -f cmd/sqlproxy/svc-deploy.yaml
+	gcloud compute backend-services list --filter='sqlproxy' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --max-rate-per-instance $(MAX_RATE_PER_INSTANCE)
 
 deploy-devpi: cmd/devpi/svc-sts.yaml
 	kubectl apply -f cmd/devpi/svc-sts.yaml
 	# gcloud compute backend-services list --filter='devpi' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(DEVPITIMEOUT)
+	# gcloud compute backend-services list --filter='devpi' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --max-rate-per-instance $(MAX_RATE_PER_INSTANCE)
 
 deploy-ing: emrys-ing.yaml
 	kubectl replace -f emrys-ing.yaml

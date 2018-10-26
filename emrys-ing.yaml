@@ -13,7 +13,7 @@ spec:
     serviceName: default-backend-svc
     servicePort: 8080
   rules:
-  - host: emrys.io
+  - host: api.emrys.io
     http:
       paths:
       - path: /user
