@@ -72,8 +72,8 @@ spec:
               key: username
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
-        - name: DEBUG_CORS
-          value: "false"
+        # - name: DEBUG_CORS
+        #   value: "false"
         - name: REGISTRY_HOST
           value: "127.0.0.1:5001"
         volumeMounts:

@@ -45,7 +45,7 @@ var postOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 	outputLog := path.Join(outputDir, "log")
 	f, err := os.OpenFile(outputLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Sugar.Errorw("error creating or open append only file",
+		log.Sugar.Errorw("error creating or opening append only file",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
@@ -67,6 +67,18 @@ var postOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		}
 
 		go func() {
+			f, err := os.OpenFile(outputLog, os.O_RDONLY, 0644)
+			if err != nil {
+				log.Sugar.Errorw("error opening read only file",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return
+			}
+			defer app.CheckErr(r, f.Close)
+
 			operation := func() error {
 				ctx := context.Background()
 				uploadLog := path.Join("output", jID, "log")

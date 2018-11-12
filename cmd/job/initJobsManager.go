@@ -3,11 +3,13 @@ package main
 import (
 	"github.com/jcuga/golongpoll"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"os"
 )
 
 var (
-	jobsManager *golongpoll.LongpollManager
-	maxTimeout  = 60 * 2
+	jobsManager   *golongpoll.LongpollManager
+	maxTimeout    = 60 * 2
+	debugLongpoll = (os.Getenv("DEBUG_LONGPOLL") == "true")
 )
 
 // initJobsManager initializes the longpoll manager that handles user and miner
@@ -17,7 +19,7 @@ func initJobsManager() {
 
 	var err error
 	if jobsManager, err = golongpoll.StartLongpoll(golongpoll.Options{
-		LoggingEnabled:                 true,
+		LoggingEnabled:                 debugLongpoll,
 		MaxLongpollTimeoutSeconds:      maxTimeout,
 		MaxEventBufferSize:             100,
 		EventTimeToLiveSeconds:         60 * 2,

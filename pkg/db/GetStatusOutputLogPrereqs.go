@@ -10,8 +10,8 @@ import (
 
 // GetStatusOutputLogPrereqs gets status auction_completed for job jUUID
 func GetStatusOutputLogPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, time.Time, error) {
-	tDataDownloaded := time.Time{}
-	tImageDownloaded := time.Time{}
+	tDataDownloaded := pq.NullTime{}
+	tImageDownloaded := pq.NullTime{}
 	sqlStmt := `
 	SELECT (data_downloaded, image_downloaded)
 	FROM statuses
@@ -41,5 +41,13 @@ func GetStatusOutputLogPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, tim
 		return time.Time{}, time.Time{}, err
 	}
 
-	return tDataDownloaded, tImageDownloaded, nil
+	tDataReturn := time.Time{}
+	if tDataDownloaded.Valid {
+		tDataReturn = tDataDownloaded.Time
+	}
+	tImageReturn := time.Time{}
+	if tImageDownloaded.Valid {
+		tImageReturn = tImageDownloaded.Time
+	}
+	return tDataReturn, tImageReturn, nil
 }

@@ -10,16 +10,16 @@ import (
 
 // GetStatusOutputDataPrereqs gets status auction_completed for job jUUID
 func GetStatusOutputDataPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, time.Time, time.Time, error) {
-	tDataDownloaded := time.Time{}
-	tImageDownloaded := time.Time{}
-	tOutputLogPosted := time.Time{}
+	tDataDownloaded := pq.NullTime{}
+	tImageDownloaded := pq.NullTime{}
+	tOutputLogPosted := pq.NullTime{}
 	sqlStmt := `
-	SELECT (data_downloaded, image_downloaded, output_log_posted)
+	SELECT data_downloaded, image_downloaded, output_log_posted
 	FROM statuses
 	WHERE job_uuid = $1
 	`
 	if err := db.QueryRow(sqlStmt, jUUID).Scan(&tDataDownloaded, &tImageDownloaded, &tOutputLogPosted); err != nil {
-		message := "error querying data_downloaded, image_downloaded, and output_log_posted"
+		message := "error querying output data prereqs"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -42,5 +42,17 @@ func GetStatusOutputDataPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, ti
 		return time.Time{}, time.Time{}, time.Time{}, err
 	}
 
-	return tDataDownloaded, tImageDownloaded, tOutputLogPosted, nil
+	tDataReturn := time.Time{}
+	if tDataDownloaded.Valid {
+		tDataReturn = tDataDownloaded.Time
+	}
+	tImageReturn := time.Time{}
+	if tImageDownloaded.Valid {
+		tImageReturn = tImageDownloaded.Time
+	}
+	tOutputReturn := time.Time{}
+	if tOutputLogPosted.Valid {
+		tOutputReturn = tOutputLogPosted.Time
+	}
+	return tDataReturn, tImageReturn, tOutputReturn, nil
 }

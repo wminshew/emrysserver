@@ -10,7 +10,7 @@ import (
 
 // GetStatusAuctionCompleted gets status auction_completed for job jUUID
 func GetStatusAuctionCompleted(r *http.Request, jUUID uuid.UUID) (time.Time, error) {
-	t := time.Time{}
+	t := pq.NullTime{}
 	sqlStmt := `
 	SELECT auction_completed
 	FROM statuses
@@ -40,5 +40,8 @@ func GetStatusAuctionCompleted(r *http.Request, jUUID uuid.UUID) (time.Time, err
 		return time.Time{}, err
 	}
 
-	return t, nil
+	if t.Valid {
+		return t.Time, nil
+	}
+	return time.Time{}, nil
 }

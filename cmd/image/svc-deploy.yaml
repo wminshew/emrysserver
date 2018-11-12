@@ -70,8 +70,8 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
-        - name: DEBUG_CORS
-          value: "false"
+        # - name: DEBUG_CORS
+        #   value: "false"
         - name: DEVPI_HOST
           value: "http://devpi-svc:3141"
         - name: DOCKER_API_VERSION

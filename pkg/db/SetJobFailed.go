@@ -6,6 +6,8 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 )
 
+const errCheckViolation = "23514"
+
 // SetJobFailed sets job failed_at and active=falsefor job jUUID
 func SetJobFailed(jUUID uuid.UUID) error {
 	sqlStmt := `
@@ -18,6 +20,12 @@ func SetJobFailed(jUUID uuid.UUID) error {
 		message := "error updating job failed_at"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
+			if pqErr.Code == errCheckViolation {
+				log.Sugar.Infow("Job already ended, not updating failed_at",
+					"jID", jUUID,
+				)
+				return nil
+			}
 			log.Sugar.Errorw(message,
 				"err", err.Error(),
 				"jID", jUUID,

@@ -5,12 +5,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
+	// "github.com/rs/cors"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -23,7 +24,7 @@ import (
 var (
 	authSecret   = os.Getenv("AUTH_SECRET")
 	registryHost = os.Getenv("REGISTRY_HOST")
-	debugCors    = (os.Getenv("DEBUG_CORS") == "true")
+	// debugCors    = (os.Getenv("DEBUG_CORS") == "true")
 )
 
 func main() {
@@ -43,6 +44,18 @@ func main() {
 		Host:   registryHost,
 	}
 	registryRP := httputil.NewSingleHostReverseProxy(&registryURL)
+	registryRP.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   60 * time.Second,
+			KeepAlive: 640 * time.Second, // server to load balancer timeout + buffer
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
@@ -62,21 +75,22 @@ func main() {
 	rJob.Use(checkImageDownloaded)
 	rJob.NewRoute().Handler(registryRP)
 
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"https://www.emrys.io",
-			"http://localhost:8080",
-		},
-		AllowedHeaders: []string{
-			"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
-		},
-		Debug: debugCors,
-	})
-	h := c.Handler(r)
+	// c := cors.New(cors.Options{
+	// 	AllowedOrigins: []string{
+	// 		"https://www.emrys.io",
+	// 		"http://localhost:8080",
+	// 	},
+	// 	AllowedHeaders: []string{
+	// 		"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
+	// 	},
+	// 	Debug: debugCors,
+	// })
+	// h := c.Handler(r)
 
 	server := http.Server{
-		Addr:              ":5000",
-		Handler:           log.Log(h),
+		Addr:    ":5000",
+		Handler: log.Log(r),
+		// Handler:           log.Log(h),
 		ReadHeaderTimeout: 15 * time.Second,
 		IdleTimeout:       620 * time.Second, // per https://cloud.google.com/load-balancing/docs/https/#timeouts_and_retries
 	}

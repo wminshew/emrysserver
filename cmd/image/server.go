@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
+	// "github.com/rs/cors"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -21,9 +21,9 @@ import (
 )
 
 var (
-	authSecret       = os.Getenv("AUTH_SECRET")
-	registryHost     = os.Getenv("REGISTRY_HOST")
-	debugCors        = (os.Getenv("DEBUG_CORS") == "true")
+	authSecret   = os.Getenv("AUTH_SECRET")
+	registryHost = os.Getenv("REGISTRY_HOST")
+	// debugCors        = (os.Getenv("DEBUG_CORS") == "true")
 	devpiHost        = os.Getenv("DEVPI_HOST")
 	devpiTrustedHost string
 )
@@ -79,21 +79,22 @@ func main() {
 	postBuildImagePath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
 	rImageUser.Handle(postBuildImagePath, buildImage)
 
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"https://www.emrys.io",
-			"http://localhost:8080",
-		},
-		AllowedHeaders: []string{
-			"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
-		},
-		Debug: debugCors,
-	})
-	h := c.Handler(r)
-
+	// c := cors.New(cors.Options{
+	// 	AllowedOrigins: []string{
+	// 		"https://www.emrys.io",
+	// 		"http://localhost:8080",
+	// 	},
+	// 	AllowedHeaders: []string{
+	// 		"*",
+	// 	},
+	// 	Debug: debugCors,
+	// })
+	// h := c.Handler(r)
+	//
 	server := http.Server{
-		Addr:              ":8080",
-		Handler:           log.Log(h),
+		Addr: ":8080",
+		// Handler:           log.Log(h),
+		Handler:           log.Log(r),
 		ReadHeaderTimeout: 15 * time.Second,
 		IdleTimeout:       620 * time.Second, // per https://cloud.google.com/load-balancing/docs/https/#timeouts_and_retries
 	}

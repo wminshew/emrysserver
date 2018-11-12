@@ -8,14 +8,17 @@ RUN apk --update upgrade && \
   ca-certificates \
   gcc \
   python-dev \
+  py-cffi \
+  py-cryptography \
+  py-pip \
   py-setuptools \
   libffi-dev \
   musl-dev \
   openssl-dev \
-  py-pip \
   && \
   update-ca-certificates && \
   rm -rf /var/cache/apk/*
-RUN pip install gsutil
+RUN pip install --upgrade pip && \
+  pip install gsutil
 COPY --from=builder /go/bin/data /go-data
 CMD ["/go-data"]

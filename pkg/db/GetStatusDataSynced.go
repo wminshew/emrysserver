@@ -10,7 +10,7 @@ import (
 
 // GetStatusDataSynced gets status data_synced for job jUUID
 func GetStatusDataSynced(r *http.Request, jUUID uuid.UUID) (time.Time, error) {
-	t := time.Time{}
+	t := pq.NullTime{}
 	sqlStmt := `
 	SELECT data_synced
 	FROM statuses
@@ -40,5 +40,8 @@ func GetStatusDataSynced(r *http.Request, jUUID uuid.UUID) (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	return t, nil
+	if t.Valid {
+		return t.Time, nil
+	}
+	return time.Time{}, nil
 }

@@ -74,6 +74,8 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: DEBUG_LONGPOLL
+          value: "false"
         volumeMounts:
           - name: job-creds
             mountPath: /secrets/google_application_credentials

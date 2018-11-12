@@ -10,7 +10,7 @@ import (
 
 // GetStatusDataDownloaded gets status data_downloaded for job jUUID
 func GetStatusDataDownloaded(r *http.Request, jUUID uuid.UUID) (time.Time, error) {
-	t := time.Time{}
+	t := pq.NullTime{}
 	sqlStmt := `
 	SELECT data_downloaded
 	FROM statuses
@@ -40,5 +40,8 @@ func GetStatusDataDownloaded(r *http.Request, jUUID uuid.UUID) (time.Time, error
 		return time.Time{}, err
 	}
 
-	return t, nil
+	if t.Valid {
+		return t.Time, nil
+	}
+	return time.Time{}, nil
 }

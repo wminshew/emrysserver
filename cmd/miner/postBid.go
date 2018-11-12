@@ -54,6 +54,7 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 	} else {
 		b.Late = a.lateBid()
 	}
+	log.Sugar.Infof("%+v", b)
 
 	if err := db.InsertBid(r, b); err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}

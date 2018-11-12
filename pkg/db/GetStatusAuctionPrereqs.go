@@ -10,10 +10,10 @@ import (
 
 // GetStatusAuctionPrereqs gets status auction_completed for job jUUID
 func GetStatusAuctionPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, time.Time, error) {
-	tDataSynced := time.Time{}
-	tImageBuilt := time.Time{}
+	tDataSynced := pq.NullTime{}
+	tImageBuilt := pq.NullTime{}
 	sqlStmt := `
-	SELECT (data_synced, image_built)
+	SELECT data_synced, image_built
 	FROM statuses
 	WHERE job_uuid = $1
 	`
@@ -41,5 +41,13 @@ func GetStatusAuctionPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, time.
 		return time.Time{}, time.Time{}, err
 	}
 
-	return tDataSynced, tImageBuilt, nil
+	tDataReturn := time.Time{}
+	if tDataSynced.Valid {
+		tDataReturn = tDataSynced.Time
+	}
+	tImageReturn := time.Time{}
+	if tImageBuilt.Valid {
+		tImageReturn = tImageBuilt.Time
+	}
+	return tDataReturn, tImageReturn, nil
 }

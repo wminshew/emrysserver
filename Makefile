@@ -124,7 +124,7 @@ deploy-data: cmd/data/svc-sts.yaml
 
 deploy-sqlproxy: cmd/sqlproxy/svc-deploy.yaml
 	kubectl apply -f cmd/sqlproxy/svc-deploy.yaml
-	gcloud compute backend-services list --filter='sqlproxy' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	# gcloud compute backend-services list --filter='sqlproxy' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-devpi: cmd/devpi/svc-sts.yaml
 	kubectl apply -f cmd/devpi/svc-sts.yaml
