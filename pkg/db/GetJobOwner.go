@@ -13,8 +13,8 @@ func GetJobOwner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
 	sqlStmt := `
 	SELECT p.user_uuid
 	FROM projects p
-	INNER JOIN jobs j ON (j.project_uuid = p.project_uuid)
-	WHERE j.job_uuid = $1
+	INNER JOIN jobs j ON (j.project_uuid = p.uuid)
+	WHERE j.uuid = $1
 	`
 	if err := db.QueryRow(sqlStmt, jUUID).Scan(&uUUID); err != nil {
 		message := "error querying for job owner"

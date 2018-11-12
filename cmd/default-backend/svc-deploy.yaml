@@ -65,6 +65,8 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
+        - name: DEBUG_CORS
+          value: "false"
         readinessProbe:
           httpGet:
             path: /healthz

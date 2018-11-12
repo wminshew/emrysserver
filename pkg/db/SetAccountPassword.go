@@ -7,22 +7,22 @@ import (
 	"net/http"
 )
 
-// InsertMiner inserts a new miner into the db
-func InsertMiner(r *http.Request, email, hashedPassword string, mUUID uuid.UUID) error {
+// SetAccountPassword sets account aUUID's password
+func SetAccountPassword(r *http.Request, aUUID uuid.UUID, hashedPassword string) error {
 	sqlStmt := `
-	INSERT INTO miners (miner_email, password, miner_uuid)
-	VALUES ($1, $2, $3)
+	UPDATE accounts
+	SET password = $1
+	WHERE uuid = $2
 	`
-	if _, err := db.Exec(sqlStmt, email, hashedPassword, mUUID); err != nil {
-		message := "error inserting miner"
+	if _, err := db.Exec(sqlStmt, hashedPassword, aUUID); err != nil {
+		message := "error updating account password"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"mID", mUUID,
-				"email", email,
+				"aID", aUUID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
 				"pq_detail", pqErr.Detail,
@@ -32,8 +32,7 @@ func InsertMiner(r *http.Request, email, hashedPassword string, mUUID uuid.UUID)
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"mID", mUUID,
-				"email", email,
+				"aID", aUUID,
 			)
 		}
 		return err

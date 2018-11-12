@@ -15,19 +15,19 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
 		if txerr != nil {
-			return "error beginning tx", txerr
+			return errBeginTx, txerr
 		}
 		pUUID := uuid.UUID{}
 		sqlStmt := `
-	SELECT project_uuid
+	SELECT uuid
 	FROM projects
-	WHERE (project_name, user_uuid) = ($1, $2)
+	WHERE (name, user_uuid) = ($1, $2)
 	`
 		if err := tx.QueryRow(sqlStmt, project, uUUID).Scan(&pUUID); err != nil {
 			if err == sql.ErrNoRows {
 				pUUID = uuid.NewV4()
 				sqlStmt = `
-	INSERT INTO projects (project_uuid, project_name, user_uuid)
+	INSERT INTO projects (uuid, name, user_uuid)
 	VALUES ($1, $2, $3)
 	`
 				if _, err := tx.Exec(sqlStmt, pUUID, project, uUUID); err != nil {
@@ -40,7 +40,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 		}
 
 		sqlStmt = `
-	INSERT INTO jobs (job_uuid, project_uuid, active)
+	INSERT INTO jobs (uuid, project_uuid, active)
 	VALUES ($1, $2, true)
 	`
 		if _, err := tx.Exec(sqlStmt, jUUID, pUUID); err != nil {
@@ -63,7 +63,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 		}
 
 		if err := tx.Commit(); err != nil {
-			return "error committing tx", err
+			return errCommitTx, err
 		}
 
 		return "", nil

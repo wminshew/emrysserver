@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: data-svc
+  name: auth-svc
   labels:
-    app: data
+    app: auth
 spec:
   selector:
-    app: data
+    app: auth
   type: NodePort
   externalTrafficPolicy: Local
   ports:
@@ -16,36 +16,35 @@ spec:
     protocol: TCP
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  name: data-sts
+  name: auth-deploy
   labels:
-    app: data
+    app: auth
 spec:
   replicas: 1
-  serviceName: "data-svc"
-  updateStrategy:
+  strategy:
     type: RollingUpdate
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: data
+      app: auth
   template:
     metadata:
       labels:
-        app: data
+        app: auth
     spec:
-      terminationGracePeriodSeconds: 10
       restartPolicy: Always
       containers:
-      - name: data-container
-        image: gcr.io/emrys-12/data:latest
+      - name: auth-container
+        image: gcr.io/emrys-12/auth
         resources:
           requests:
-            cpu: 200m
-            memory: "1Gi"
+            cpu: 50m
+            memory: "50Mi"
           # limits:
-          #   cpu: 200m
-          #   memory: "200Mi"
+          #   cpu: 250m
+          #   memory: "500Mi"
         ports:
         - containerPort: 8080
         env:
@@ -54,8 +53,8 @@ spec:
             secretKeyRef:
               name: auth-secret
               key: secret
-        - name: BOTO_CONFIG
-          value: "/etc/gsutil/gsutil.boto"
+        # - name: GOOGLE_APPLICATION_CREDENTIALS
+        #   value: "/secrets/google_application_credentials/credentials.json"
         - name: DBNAME
           value: "emrysserver"
         - name: DBNETLOC
@@ -74,24 +73,15 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: "/secrets/google_application_credentials/credentials.json"
-        - name: PVC_CAP_GB
-          value: "100"
-        - name: PVC_MAX_PROJECT_GB
-          value: "10"
-        - name: PVC_PERIOD_SEC
-          value: "300"
-        - name: PVC_THRESHOLD
-          value: "0.8"
-        volumeMounts:
-          - name: data-creds
-            mountPath: /secrets/google_application_credentials
-            readOnly: true
-          - name: data-pvc
-            mountPath: /data
-          - name: gsutil-config
-            mountPath: /etc/gsutil
+        - name: SENDGRID_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: sendgrid-secret
+              key: secret
+        # volumeMounts:
+        #   - name: auth-creds
+        #     mountPath: /secrets/google_application_credentials
+        #     readOnly: true
         readinessProbe:
           httpGet:
             path: /healthz
@@ -108,18 +98,7 @@ spec:
           timeoutSeconds: 1
           successThreshold: 1
           failureThreshold: 3
-      volumes:
-      - name: data-creds
-        secret:
-          secretName: data-creds
-      - name: gsutil-config
-        configMap:
-          name: gsutil-config
-  volumeClaimTemplates:
-  - metadata:
-      name: data-pvc
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 100Gi
+      # volumes:
+      # - name: auth-creds
+      #   secret:
+      #     secretName: auth-creds

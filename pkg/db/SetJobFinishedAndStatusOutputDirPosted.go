@@ -14,13 +14,13 @@ func SetJobFinishedAndStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
 		if txerr != nil {
-			return "error beginning tx", txerr
+			return errBeginTx, txerr
 		}
 
 		sqlStmt := `
 	UPDATE jobs
 	SET (completed_at, active) = (NOW(), false)
-	WHERE job_uuid = $1 AND
+	WHERE uuid = $1 AND
 		completed_at IS NULL
 	`
 		if _, err := tx.Exec(sqlStmt, jUUID); err != nil {
@@ -38,7 +38,7 @@ func SetJobFinishedAndStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *
 		}
 
 		if err := tx.Commit(); err != nil {
-			return "error committing tx", err
+			return errCommitTx, err
 		}
 
 		return "", nil

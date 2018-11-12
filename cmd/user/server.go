@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -17,8 +18,10 @@ import (
 	"time"
 )
 
-var userSecret = os.Getenv("USER_SECRET")
-var minerSecret = os.Getenv("MINER_SECRET")
+var (
+	authSecret = os.Getenv("AUTH_SECRET")
+	debugCors  = (os.Getenv("DEBUG_CORS") == "true")
+)
 
 func main() {
 	log.Init()
@@ -38,22 +41,31 @@ func main() {
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rUser := r.PathPrefix("/user").Subrouter()
-	rUser.Handle("", newUser).Methods("POST")
-	rUser.Handle("/confirm", confirmUser).Methods("GET")
-	rUser.Handle("/login", login).Methods("POST")
 	rUser.Handle("/version", getVersion).Methods("GET")
 
 	jobPathPrefix := fmt.Sprintf("/{uID:%s}/project/{project:%s}/job", uuidRegexpMux, projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rUserAuth.Use(auth.Jwt(userSecret))
+	rUserAuth.Use(auth.Jwt(authSecret, []string{"user"}))
 	rUserAuth.Handle("", auth.UserActive(postJob)).Methods("POST")
 	postCancelPath := fmt.Sprintf("/{jID:%s}/cancel", uuidRegexpMux)
 	rUserAuth.Handle(postCancelPath,
 		auth.JobActive(auth.UserJobMiddleware(postCancelJob))).Methods("POST")
 
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"https://www.emrys.io",
+			"http://localhost:8080",
+		},
+		AllowedHeaders: []string{
+			"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
+		},
+		Debug: debugCors,
+	})
+	h := c.Handler(r)
+
 	server := http.Server{
 		Addr:              ":8080",
-		Handler:           log.Log(r),
+		Handler:           log.Log(h),
 		ReadHeaderTimeout: 15 * time.Second,
 		IdleTimeout:       620 * time.Second, // per https://cloud.google.com/load-balancing/docs/https/#timeouts_and_retries
 	}

@@ -48,6 +48,11 @@ spec:
         ports:
         - containerPort: 8080
         env:
+        - name: AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: auth-secret
+              key: secret
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
         - name: DBNAME
@@ -66,20 +71,12 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
-        - name: MINER_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: miner-secret
-              key: secret
+        - name: DEBUG_CORS
+          value: "false"
         - name: SENDGRID_SECRET
           valueFrom:
             secretKeyRef:
               name: sendgrid-secret
-              key: secret
-        - name: USER_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: user-secret
               key: secret
         volumeMounts:
           - name: miner-creds

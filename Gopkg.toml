@@ -88,3 +88,7 @@
 [[constraint]]
   name = "github.com/sendgrid/sendgrid-go"
   branch = "master"
+
+[[constraint]]
+  name = "github.com/rs/cors"
+  version = "1.6.0"

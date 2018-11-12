@@ -1,19 +1,14 @@
-// package main begins an registry server
+// package main begins an auth server
 package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
-	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
-	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,9 +16,8 @@ import (
 )
 
 var (
-	authSecret   = os.Getenv("AUTH_SECRET")
-	registryHost = os.Getenv("REGISTRY_HOST")
-	debugCors    = (os.Getenv("DEBUG_CORS") == "true")
+	authSecret = os.Getenv("AUTH_SECRET")
+	debugCors  = (os.Getenv("DEBUG_CORS") == "true")
 )
 
 func main() {
@@ -36,31 +30,17 @@ func main() {
 	db.Init()
 	defer db.Close()
 
-	uuidRegexpMux := validate.UUIDRegexpMux()
-
-	registryURL := url.URL{
-		Scheme: "http",
-		Host:   registryHost,
-	}
-	registryRP := httputil.NewSingleHostReverseProxy(&registryURL)
-
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	rRegistry := r.PathPrefix("/v2").Methods("GET", "HEAD").Subrouter()
-	rRegistry.Use(auth.Jwt(authSecret, []string{"miner"}))
-	rRegistry.Handle("/", registryRP)
-
-	rBase := rRegistry.PathPrefix("/emrys/base").Subrouter()
-	rBase.NewRoute().Handler(registryRP)
-
-	minerJobPrefix := fmt.Sprintf("/miner/{jID:%s}", uuidRegexpMux)
-	rJob := rRegistry.PathPrefix(minerJobPrefix).Subrouter()
-	rJob.Use(auth.MinerJobMiddleware)
-	rJob.Use(auth.JobActive)
-	rJob.Use(checkImageDownloaded)
-	rJob.NewRoute().Handler(registryRP)
+	rAuth := r.PathPrefix("/auth").Subrouter()
+	rAuth.Handle("/account", newAccount).Methods("POST")
+	rAuth.Handle("/confirm-email", confirmEmail).Methods("POST")
+	rAuth.Handle("/reset-password", resetPassword).Methods("POST")
+	rAuth.Handle("/confirm-reset-password", confirmResetPassword).Methods("POST")
+	rAuth.Handle("/token", refreshToken).Methods("POST").Queries("grant_type", "token")
+	rAuth.Handle("/token", login).Methods("POST")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
@@ -75,9 +55,9 @@ func main() {
 	h := c.Handler(r)
 
 	server := http.Server{
-		Addr:              ":5000",
+		Addr:              ":8080",
 		Handler:           log.Log(h),
-		ReadHeaderTimeout: 15 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       620 * time.Second, // per https://cloud.google.com/load-balancing/docs/https/#timeouts_and_retries
 	}
 

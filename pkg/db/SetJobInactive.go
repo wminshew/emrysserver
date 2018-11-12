@@ -12,7 +12,7 @@ func SetJobInactive(jUUID uuid.UUID) error {
 	sqlStmt := `
 	UPDATE jobs
 	SET active = false
-	WHERE job_uuid = $1
+	WHERE uuid = $1
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {
 		message := "error updating job"

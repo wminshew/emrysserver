@@ -11,7 +11,7 @@ func SetJobFailed(jUUID uuid.UUID) error {
 	sqlStmt := `
 	UPDATE jobs
 	SET (failed_at, active)= (NOW(), false)
-	WHERE job_uuid = $1 AND
+	WHERE uuid = $1 AND
 		failed_at IS NULL
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {

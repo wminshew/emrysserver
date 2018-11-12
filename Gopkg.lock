@@ -219,6 +219,12 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/rs/cors"
+  packages = ["."]
+  revision = "9a47f48565a795472d43519dd49aac781f3034fb"
+  version = "v1.6.0"
+
+[[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
@@ -259,7 +265,7 @@
     "pkg/jsonmessage",
     "pkg/validate"
   ]
-  revision = "9d53b15c451d92e2e6633b250032a19050ee0b84"
+  revision = "7e08b271d8a6ff8ca9eb90b888b4b9ad7587a145"
 
 [[projects]]
   name = "go.opencensus.io"
@@ -455,6 +461,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9cb807fa6f911be479ceb42c922a7640f2f98cb67d5cece8a5c958c678bcb26b"
+  inputs-digest = "80223b9fd1a57b3fe1e89945a4ec8e115870d63a5ec4431254cba1533eda12ef"
   solver-name = "gps-cdcl"
   solver-version = 1

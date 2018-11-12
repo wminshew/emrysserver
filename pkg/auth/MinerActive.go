@@ -22,7 +22,7 @@ func MinerActive(h http.Handler) http.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing miner ID"}
 		}
 
-		if suspended, err := db.GetMinerSuspended(r, mUUID); err != nil {
+		if suspended, err := db.GetAccountSuspended(r, mUUID); err != nil {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
 		} else if suspended {
 			log.Sugar.Infow("miner is suspended",

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -20,9 +21,9 @@ import (
 )
 
 var (
-	userSecret       = os.Getenv("USER_SECRET")
-	minerSecret      = os.Getenv("MINER_SECRET")
+	authSecret       = os.Getenv("AUTH_SECRET")
 	registryHost     = os.Getenv("REGISTRY_HOST")
+	debugCors        = (os.Getenv("DEBUG_CORS") == "true")
 	devpiHost        = os.Getenv("DEVPI_HOST")
 	devpiTrustedHost string
 )
@@ -64,7 +65,7 @@ func main() {
 	rImage := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
 
 	rImageMiner := rImage.PathPrefix("/downloaded").Subrouter()
-	rImageMiner.Use(auth.Jwt(minerSecret))
+	rImageMiner.Use(auth.Jwt(authSecret, []string{"miner"}))
 	rImageMiner.Use(auth.MinerJobMiddleware)
 	rImageMiner.Use(auth.JobActive)
 	postImageDownloadedPath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
@@ -72,15 +73,27 @@ func main() {
 
 	buildImagePathPrefix := fmt.Sprintf("/{uID:%s}/{project:%s}", uuidRegexpMux, projectRegexpMux)
 	rImageUser := rImage.PathPrefix(buildImagePathPrefix).Subrouter()
-	rImageUser.Use(auth.Jwt(userSecret))
+	rImageUser.Use(auth.Jwt(authSecret, []string{"user"}))
 	rImageUser.Use(auth.UserJobMiddleware)
 	rImageUser.Use(auth.JobActive)
 	postBuildImagePath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
 	rImageUser.Handle(postBuildImagePath, buildImage)
 
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"https://www.emrys.io",
+			"http://localhost:8080",
+		},
+		AllowedHeaders: []string{
+			"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
+		},
+		Debug: debugCors,
+	})
+	h := c.Handler(r)
+
 	server := http.Server{
 		Addr:              ":8080",
-		Handler:           log.Log(r),
+		Handler:           log.Log(h),
 		ReadHeaderTimeout: 15 * time.Second,
 		IdleTimeout:       620 * time.Second, // per https://cloud.google.com/load-balancing/docs/https/#timeouts_and_retries
 	}

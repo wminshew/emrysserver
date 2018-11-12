@@ -10,8 +10,8 @@ import (
 func SetMinerPaid(mUUID uuid.UUID) error {
 	sqlStmt := `
 	UPDATE payments p
-	INNER JOIN jobs j ON (p.job_uuid = j.job_uuid)
-	INNER JOIN bids b ON (j.win_bid_uuid = b.bid_uuid)
+	INNER JOIN jobs j ON (p.job_uuid = j.uuid)
+	INNER JOIN bids b ON (j.win_bid_uuid = b.uuid)
 	SET p.miner_paid = NOW()
 	WHERE b.miner_uuid = $1 AND
 		p.miner_paid IS NULL AND

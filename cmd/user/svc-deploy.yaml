@@ -41,13 +41,18 @@ spec:
         resources:
           requests:
             cpu: 50m
-            memory: "100Mi"
+            memory: "50Mi"
           # limits:
           #   cpu: 250m
           #   memory: "500Mi"
         ports:
         - containerPort: 8080
         env:
+        - name: AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: auth-secret
+              key: secret
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
         - name: DBNAME
@@ -66,21 +71,8 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
-        - name: MINER_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: miner-secret
-              key: secret
-        - name: SENDGRID_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: sendgrid-secret
-              key: secret
-        - name: USER_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: user-secret
-              key: secret
+        - name: DEBUG_CORS
+          value: "false"
         volumeMounts:
           - name: user-creds
             mountPath: /secrets/google_application_credentials

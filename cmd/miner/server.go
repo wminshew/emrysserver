@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -20,9 +21,11 @@ import (
 	"time"
 )
 
-var minerSecret = os.Getenv("MINER_SECRET")
-var userSecret = os.Getenv("USER_SECRET")
-var sendgridSecret = os.Getenv("SENDGRID_SECRET")
+var (
+	authSecret     = os.Getenv("AUTH_SECRET")
+	sendgridSecret = os.Getenv("SENDGRID_SECRET")
+	debugCors      = (os.Getenv("DEBUG_CORS") == "true")
+)
 
 func main() {
 	log.Init()
@@ -49,28 +52,37 @@ func main() {
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	rMiner := r.PathPrefix("/miner").Subrouter()
-	rMiner.Handle("", newMiner).Methods("POST")
-	rMiner.Handle("/confirm", confirmMiner).Methods("GET")
-	rMiner.Handle("/login", login).Methods("POST")
 	rMiner.Handle("/version", getVersion).Methods("GET")
 
 	rMinerAuth := rMiner.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
-	rMinerAuth.Use(auth.Jwt(minerSecret))
+	rMinerAuth.Use(auth.Jwt(authSecret, []string{"miner"}))
 	rMinerAuth.Handle("/connect", auth.MinerActive(connect)).Methods("GET")
 	rMinerAuth.Handle("/device_snapshot", postDeviceSnapshot).Methods("POST")
 	postBidPath := fmt.Sprintf("/job/{jID:%s}/bid", uuidRegexpMux)
 	rMinerAuth.Handle(postBidPath, auth.JobActive(postBid)).Methods("POST")
 
 	rAuction := r.PathPrefix("/auction").Subrouter()
-	rAuction.Use(auth.Jwt(userSecret))
+	rAuction.Use(auth.Jwt(authSecret, []string{"user"}))
 	rAuction.Use(auth.UserJobMiddleware)
 	rAuction.Use(auth.JobActive)
 	postAuctionPath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
 	rAuction.Handle(postAuctionPath, postAuction).Methods("POST")
 
+	corsR := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"https://www.emrys.io",
+			"http://localhost:8080",
+		},
+		AllowedHeaders: []string{
+			"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
+		},
+		Debug: debugCors,
+	})
+	h := corsR.Handler(r)
+
 	server := http.Server{
 		Addr:              ":8080",
-		Handler:           log.Log(r),
+		Handler:           log.Log(h),
 		ReadHeaderTimeout: 15 * time.Second,
 		IdleTimeout:       620 * time.Second, // per https://cloud.google.com/load-balancing/docs/https/#timeouts_and_retries
 	}

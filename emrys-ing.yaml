@@ -16,9 +16,9 @@ spec:
   - host: api.emrys.io
     http:
       paths:
-      - path: /user
+      - path: /auth/*
         backend:
-          serviceName: user-svc
+          serviceName: auth-svc
           servicePort: 8080
       - path: /user/*
         backend:

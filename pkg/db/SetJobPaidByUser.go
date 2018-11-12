@@ -12,7 +12,7 @@ func SetJobPaidByUser(r *http.Request, jUUID uuid.UUID) error {
 	sqlStmt := `
 	UPDATE payments
 	SET user_paid = NOW()
-	WHERE job_uuid = $1 AND
+	WHERE uuid = $1 AND
 		user_paid IS NULL
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {

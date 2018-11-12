@@ -7,22 +7,22 @@ import (
 	"net/http"
 )
 
-// InsertUser inserts a new user into the db
-func InsertUser(r *http.Request, email, hashedPassword string, uUUID uuid.UUID) error {
+// SetAccountConfirmed sets user aUUID as confirmed
+func SetAccountConfirmed(r *http.Request, aUUID uuid.UUID) error {
 	sqlStmt := `
-	INSERT INTO users (user_email, password, user_uuid)
-	VALUES ($1, $2, $3)
+	UPDATE accounts
+	SET confirmed = true
+	WHERE uuid = $1
 	`
-	if _, err := db.Exec(sqlStmt, email, hashedPassword, uUUID); err != nil {
-		message := "error inserting user"
+	if _, err := db.Exec(sqlStmt, aUUID); err != nil {
+		message := "error updating user confirmed"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"uID", uUUID,
-				"email", email,
+				"aID", aUUID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
 				"pq_detail", pqErr.Detail,
@@ -32,8 +32,7 @@ func InsertUser(r *http.Request, email, hashedPassword string, uUUID uuid.UUID) 
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"uID", uUUID,
-				"email", email,
+				"aID", aUUID,
 			)
 		}
 		return err

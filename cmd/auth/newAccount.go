@@ -16,9 +16,9 @@ import (
 
 const cost = 14
 
-// newMiner creates a new miners entry in database if successful
-var newMiner app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
-	c := &creds.Miner{}
+// newAccount creates a new accounts entry in database if successful
+var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+	c := &creds.Account{}
 	if err := json.NewDecoder(r.Body).Decode(c); err != nil {
 		log.Sugar.Errorw("error decoding json request body",
 			"method", r.Method,
@@ -39,37 +39,43 @@ var newMiner app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	mUUID := uuid.NewV4()
-	if err := db.InsertMiner(r, c.Email, string(hashedPassword), mUUID); err != nil {
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
+	aUUID := uuid.NewV4()
+	isUser := r.URL.Query().Get("user") != ""
+	isMiner := r.URL.Query().Get("miner") != ""
+
+	if err := db.InsertAccount(r, c.Email, string(hashedPassword), aUUID, isUser, isMiner); err != nil {
+		// error already logged
+		if err == db.ErrEmailExists {
+			return &app.Error{Code: http.StatusBadRequest, Message: err.Error()}
+		}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
-	log.Sugar.Infof("Miner %s (%s) successfully added!", c.Email, mUUID.String())
+	log.Sugar.Infof("Account %s (%s) successfully added!", c.Email, aUUID.String())
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"aud": "emrys.io",
-		"exp": time.Now().Add(time.Hour * 72).Unix(), // TODO: make shorter
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
 		"iss": "emrys.io",
 		"iat": time.Now().Unix(),
-		"sub": mUUID,
+		"sub": aUUID,
 	})
-	tokenString, err := token.SignedString([]byte(minerSecret))
+	tokenString, err := token.SignedString([]byte(authSecret))
 	if err != nil {
 		log.Sugar.Errorw("error signing token",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
-			"mID", mUUID,
+			"aID", aUUID,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	client := "miner"
-	if err := email.SendEmailConfirmation(client, c.Email, tokenString); err != nil {
-		log.Sugar.Errorw("error sending user confirmation email",
+	if err := email.SendEmailConfirmation(c.Email, tokenString); err != nil {
+		log.Sugar.Errorw("error sending account confirmation email",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
-			"mID", mUUID,
+			"aID", aUUID,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}

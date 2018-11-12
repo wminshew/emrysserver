@@ -11,12 +11,12 @@ import (
 func GetJobActive(r *http.Request, jUUID uuid.UUID) (bool, error) {
 	var active bool
 	sqlStmt := `
-	SELECT j.active
-	FROM jobs j
-	WHERE j.job_uuid = $1
+	SELECT active
+	FROM jobs
+	WHERE uuid = $1
 	`
 	if err := db.QueryRow(sqlStmt, jUUID).Scan(&active); err != nil {
-		message := "error querying for job owner"
+		message := "error querying for jobs.active"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,

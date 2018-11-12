@@ -1,9 +1,11 @@
 package log
 
 import (
+	// "fmt"
 	"github.com/blendle/zapdriver"
 	"go.uber.org/zap"
 	"net/http"
+	// "net/http/httputil"
 	"os"
 )
 
@@ -35,7 +37,10 @@ func Init() {
 func Log(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		Sugar.Infof("%s %s from %s", r.Method, r.URL, r.RemoteAddr)
-		// dump, _ := httputil.DumpRequest(r, false)
+		// dump, err := httputil.DumpRequest(r, false)
+		// if err != nil {
+		// 	Sugar.Errorf("Dump request error: %v", err)
+		// }
 		// fmt.Printf("%s", dump)
 		h.ServeHTTP(w, r)
 	})

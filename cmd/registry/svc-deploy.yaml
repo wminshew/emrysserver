@@ -49,6 +49,11 @@ spec:
         ports:
         - containerPort: 5000
         env:
+        - name: AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: auth-secret
+              key: secret
         - name: DBNAME
           value: "emrysserver"
         - name: DBNETLOC
@@ -67,11 +72,8 @@ spec:
               key: username
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
-        - name: MINER_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: miner-secret
-              key: secret
+        - name: DEBUG_CORS
+          value: "false"
         - name: REGISTRY_HOST
           value: "127.0.0.1:5001"
         volumeMounts:

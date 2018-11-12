@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
@@ -11,6 +12,10 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+)
+
+var (
+	debugCors = (os.Getenv("DEBUG_CORS") == "true")
 )
 
 func main() {
@@ -25,9 +30,21 @@ func main() {
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"https://www.emrys.io",
+			"http://localhost:8080",
+		},
+		AllowedHeaders: []string{
+			"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
+		},
+		Debug: debugCors,
+	})
+	h := c.Handler(r)
+
 	server := http.Server{
 		Addr:              ":8080",
-		Handler:           log.Log(r),
+		Handler:           log.Log(h),
 		ReadHeaderTimeout: 15 * time.Second,
 		IdleTimeout:       620 * time.Second, // per https://cloud.google.com/load-balancing/docs/https/#timeouts_and_retries
 	}

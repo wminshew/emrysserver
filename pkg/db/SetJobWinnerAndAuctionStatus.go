@@ -14,15 +14,15 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
 		if txerr != nil {
-			return "error beginning tx", txerr
+			return errBeginTx, txerr
 		}
 
 		sqlStmt := `
 		UPDATE jobs
-		SET (win_bid_uuid, pay_rate) = ($1, $2)
-		WHERE job_uuid = $3 AND
+		SET (win_bid_uuid, rate) = ($1, $2)
+		WHERE uuid = $3 AND
 			win_bid_uuid IS NULL AND
-			pay_rate IS NULL
+			rate IS NULL
 		`
 		if _, err := tx.Exec(sqlStmt, wbUUID, payRate, jUUID); err != nil {
 			return "error updating job winner", err
@@ -39,7 +39,7 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 		}
 
 		if err := tx.Commit(); err != nil {
-			return "error committing tx", err
+			return errCommitTx, err
 		}
 
 		return "", nil

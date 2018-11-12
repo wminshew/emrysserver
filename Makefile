@@ -11,6 +11,8 @@ all: build deploy
 
 default-backend: build-default-backend deploy-default-backend
 
+auth: build-auth deploy-auth
+
 user: build-user deploy-user
 
 miner: build-miner deploy-miner
@@ -37,6 +39,11 @@ build-default-backend: cmd/default-backend/cloudbuild.yaml cmd/default-backend/d
 	# container-builder-local --config ./cmd/default-backend/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/default-backend/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
 	gcloud builds submit --config ./cmd/default-backend/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+
+build-auth: cmd/auth/cloudbuild.yaml cmd/auth/dockerfile dep-ensure
+	# container-builder-local --config ./cmd/auth/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
+	# container-builder-local --config ./cmd/auth/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
+	gcloud builds submit --config ./cmd/auth/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
 build-user: cmd/user/cloudbuild.yaml cmd/user/dockerfile dep-ensure
 	# container-builder-local --config ./cmd/user/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
@@ -74,61 +81,69 @@ build-devpi: cmd/devpi/cloudbuild.yaml cmd/devpi/dockerfile dep-ensure
 	gcloud builds submit --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) ./cmd/devpi/
 
 
-deploy: deploy-default-backend deploy-user deploy-miner deploy-job deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
+deploy: deploy-default-backend deploy-auth deploy-user deploy-miner deploy-job deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
 
 deploy-default-backend: cmd/default-backend/svc-deploy.yaml
 	kubectl apply -f cmd/default-backend/svc-deploy.yaml
 
+deploy-auth: cmd/auth/svc-deploy.yaml
+	kubectl apply -f cmd/auth/svc-deploy.yaml
+	gcloud compute backend-services list --filter='auth' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+
 deploy-user: cmd/user/svc-deploy.yaml
 	kubectl apply -f cmd/user/svc-deploy.yaml
-	gcloud compute backend-services list --filter='user' --format='value(name)' | xargs -n 1 gcloud compute backend-services update {} --max-rate-per-instance $(MAX_RATE_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	gcloud compute backend-services list --filter='user' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-miner: cmd/miner/svc-deploy.yaml
 	kubectl apply -f cmd/miner/svc-deploy.yaml
 	gcloud compute backend-services list --filter='miner' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(MINER_TIMEOUT)
-	gcloud compute backend-services list --filter='miner' --format='value(name)' | xargs -n 1 gcloud compute backend-services update {} --max-rate-per-instance $(MAX_RATE_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	gcloud compute backend-services list --filter='miner' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 
 deploy-job: cmd/job/svc-sts.yaml
 	kubectl apply -f cmd/job/svc-sts.yaml
 	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(JOB_TIMEOUT)
-	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update {} --max-rate-per-instance $(MAX_RATE_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-image: cmd/image/svc-deploy.yaml
 	kubectl create configmap image-registry-config --dry-run -o yaml --from-file=cmd/image/registry-config.yaml | kubectl apply -f -
 	kubectl apply -f cmd/image/svc-deploy.yaml
 	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(IMAGE_TIMEOUT)
-	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update {} --max-rate-per-instance $(MAX_RATE_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-registry: cmd/registry/svc-deploy.yaml
 	kubectl create configmap registry-registry-config --dry-run -o yaml --from-file=cmd/registry/registry-config.yaml | kubectl apply -f -
 	kubectl apply -f cmd/registry/svc-deploy.yaml
 	gcloud compute backend-services list --filter='registry' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(REGISTRY_TIMEOUT)
-	gcloud compute backend-services list --filter='registry' --format='value(name)' | xargs -n 1 gcloud compute backend-services update {} --max-rate-per-instance $(MAX_RATE_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	gcloud compute backend-services list --filter='registry' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-data: cmd/data/svc-sts.yaml
 	kubectl apply -f cmd/data/svc-sts.yaml
 	gcloud compute backend-services list --filter='data' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(DATA_TIMEOUT)
-	gcloud compute backend-services list --filter='data' --format='value(name)' | xargs -n 1 gcloud compute backend-services update {} --max-rate-per-instance $(MAX_RATE_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	gcloud compute backend-services list --filter='data' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-sqlproxy: cmd/sqlproxy/svc-deploy.yaml
 	kubectl apply -f cmd/sqlproxy/svc-deploy.yaml
-	gcloud compute backend-services list --filter='sqlproxy' --format='value(name)' | xargs -n 1 gcloud compute backend-services update {} --max-rate-per-instance $(MAX_RATE_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	gcloud compute backend-services list --filter='sqlproxy' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-devpi: cmd/devpi/svc-sts.yaml
 	kubectl apply -f cmd/devpi/svc-sts.yaml
 	# gcloud compute backend-services list --filter='devpi' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(DEVPITIMEOUT)
-	# gcloud compute backend-services list --filter='devpi' --format='value(name)' | xargs -n 1 gcloud compute backend-services update {} --max-rate-per-instance $(MAX_RATE_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+	# gcloud compute backend-services list --filter='devpi' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-ing: emrys-ing.yaml
 	kubectl replace -f emrys-ing.yaml
 
 
-rollout: rollout-default-backend rollout-user rollout-miner rollout-job rollout-image rollout-registry rollout-data
+rollout: rollout-default-backend rollout-auth rollout-user rollout-miner rollout-job rollout-image rollout-registry rollout-data
 
 rollout-default-backend:
 	kubectl set image deploy/default-backend-deploy default-backend-container=gcr.io/emrys-12/default-backend:latest
 	kubectl rollout status deploy/default-backend-deploy
+
+rollout-auth:
+	kubectl set image deploy/auth-deploy auth-container=gcr.io/emrys-12/auth:latest
+	kubectl rollout status deploy/auth-deploy
 
 rollout-user:
 	kubectl set image deploy/user-deploy user-container=gcr.io/emrys-12/user:latest
@@ -159,11 +174,15 @@ rollout-devpi:
 	kubectl rollout status sts/devpi-sts
 
 
-rollback: rollback-default-backend rollback-user rollback-miner rollback-job rollback-image rollback-registry rollback-data
+rollback: rollback-default-backend rollback-auth rollback-user rollback-miner rollback-job rollback-image rollback-registry rollback-data
 
 rollback-default-backend:
 	kubectl rollout undo deploy/default-backend-deploy
 	kubectl rollout status deploy/default-backend-deploy
+
+rollback-auth:
+	kubectl rollout undo deploy/auth-deploy
+	kubectl rollout status deploy/auth-deploy
 
 rollback-user:
 	kubectl rollout undo deploy/user-deploy

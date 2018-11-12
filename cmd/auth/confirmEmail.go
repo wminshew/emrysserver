@@ -10,8 +10,8 @@ import (
 	"net/http"
 )
 
-// confirmMiner confirms a new user
-var confirmMiner app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+// confirmEmail confirms a new account
+var confirmEmail app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	tokenStr := r.URL.Query().Get("token")
 
 	claims := &jwt.StandardClaims{}
@@ -20,7 +20,7 @@ var confirmMiner app.Handler = func(w http.ResponseWriter, r *http.Request) *app
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte(minerSecret), nil
+			return []byte(authSecret), nil
 		})
 	if err != nil {
 		log.Sugar.Infow("error parsing jwt",
@@ -28,7 +28,7 @@ var confirmMiner app.Handler = func(w http.ResponseWriter, r *http.Request) *app
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt, please contact support"}
+		return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt"}
 	}
 
 	if token.Valid {
@@ -43,26 +43,34 @@ var confirmMiner app.Handler = func(w http.ResponseWriter, r *http.Request) *app
 			"url", r.URL,
 			"sub", claims.Subject,
 		)
-		// TODO: handle expired tokens specially
-		return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt, please contact support"}
+		// TODO: handle expired tokens specially?
+		return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt"}
 	}
 
-	mUUID, err := uuid.FromString(claims.Subject)
+	aUUID, err := uuid.FromString(claims.Subject)
 	if err != nil {
-		log.Sugar.Errorw("error parsing user claims.Subject",
+		log.Sugar.Errorw("error parsing claims.Subject",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing token, please contact support"}
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing token"}
 	}
 
-	if err := db.SetMinerConfirmed(r, mUUID); err != nil {
+	if err := db.SetAccountConfirmed(r, aUUID); err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
 	}
-	log.Sugar.Infof("Miner %s successfully confirmed!", mUUID.String())
+	log.Sugar.Infof("Account %s successfully confirmed!", aUUID.String())
 
-	_, _ = w.Write([]byte("email confirmed"))
+	if _, err := w.Write([]byte("Email confirmed!")); err != nil {
+		log.Sugar.Errorw("error writing response",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"aID", aUUID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
 
 	return nil
 }

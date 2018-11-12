@@ -13,7 +13,7 @@ func SetJobCanceled(r *http.Request, jUUID uuid.UUID) *app.Error {
 	sqlStmt := `
 	UPDATE jobs
 	SET (canceled_at, active)= (NOW(), false)
-	WHERE job_uuid = $1 AND
+	WHERE uuid = $1 AND
 		canceled_at IS NULL
 	`
 	if _, err := db.Exec(sqlStmt, jUUID); err != nil {

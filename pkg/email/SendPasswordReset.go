@@ -7,17 +7,17 @@ import (
 )
 
 const (
-	registrationTemplateID = "d-5bfe76c1b2a94855980f74f8cc6bc205"
+	resetPasswordTemplateID = "d-9f09c620fc724ea4ba20f248b48f6d37"
 )
 
-// SendEmailConfirmation sends an email to the user's address to confirm ownership
-func SendEmailConfirmation(email, token string) error {
+// SendResetPasswordsends an email to the user's address to reset their password
+func SendResetPassword(email, token string) error {
 	m := mail.NewV3Mail()
 
 	e := mail.NewEmail(fromName, fromAddress)
 	m.SetFrom(e)
 
-	m.SetTemplateID(registrationTemplateID)
+	m.SetTemplateID(resetPasswordTemplateID)
 
 	p := mail.NewPersonalization()
 	tos := []*mail.Email{
@@ -39,7 +39,7 @@ func SendEmailConfirmation(email, token string) error {
 	}
 
 	// TODO: remove? handle non 2xx status codes?
-	log.Sugar.Infow("user registration email confirmation sent",
+	log.Sugar.Infow("reset password email sent",
 		"StatusCode", response.StatusCode,
 		"Body", response.Body,
 		"Headers", response.Headers,

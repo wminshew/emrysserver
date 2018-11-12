@@ -9,11 +9,11 @@ import (
 // GetOutstandingMinerPayments returns the jobs for which miners haven't been paid
 func GetOutstandingMinerPayments() (*sql.Rows, error) {
 	sqlStmt := `
-	SELECT p.job_uuid, b.miner_uuid, j.pay_rate, s.auction_completed, j.completed_at, j.canceled_at, j.failed_at
+	SELECT p.job_uuid, b.miner_uuid, j.rate, s.auction_completed, j.completed_at, j.canceled_at, j.failed_at
 	FROM payments p
-	INNER JOIN jobs j ON (p.job_uuid = j.job_uuid)
+	INNER JOIN jobs j ON (p.job_uuid = j.uuid)
 	INNER JOIN statuses s ON (p.job_uuid = s.job_uuid)
-	INNER JOIN bids b ON (j.win_bid_uuid = b.bid_uuid)
+	INNER JOIN bids b ON (j.win_bid_uuid = b.uuid)
 	WHERE p.miner_paid IS NULL
 		AND j.active = false
 	`
