@@ -265,7 +265,7 @@
     "pkg/jsonmessage",
     "pkg/validate"
   ]
-  revision = "7e08b271d8a6ff8ca9eb90b888b4b9ad7587a145"
+  revision = "9fc6e8eb8e4d41d3369a5c065943ba92d128db27"
 
 [[projects]]
   name = "go.opencensus.io"

@@ -7,10 +7,8 @@ import (
 	"time"
 )
 
-var activeWorker = make(map[uuid.UUID]chan struct{})
-
-const (
-	timeout = 30 * time.Second
+var (
+	activeWorker = make(map[uuid.UUID]chan struct{})
 )
 
 func monitorJob(jUUID uuid.UUID) {
@@ -18,16 +16,17 @@ func monitorJob(jUUID uuid.UUID) {
 	defer delete(activeWorker, jUUID)
 	for {
 		select {
-		case <-time.After(timeout):
+		case <-time.After(time.Second * time.Duration(minerTimeout)):
+			log.Sugar.Infow("miner failed job",
+				"jID", jUUID,
+			)
 			if err := db.SetJobFailed(jUUID); err != nil {
 				log.Sugar.Errorw("error setting job failed",
 					"err", err.Error(),
 					"jID", jUUID,
 				)
 				return
-				// return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
-
 			return
 		case <-activeWorker[jUUID]:
 		}

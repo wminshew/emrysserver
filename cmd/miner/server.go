@@ -17,14 +17,17 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
 
 var (
-	authSecret     = os.Getenv("AUTH_SECRET")
-	sendgridSecret = os.Getenv("SENDGRID_SECRET")
-	debugCors      = (os.Getenv("DEBUG_CORS") == "true")
+	authSecret      = os.Getenv("AUTH_SECRET")
+	sendgridSecret  = os.Getenv("SENDGRID_SECRET")
+	debugCors       = (os.Getenv("DEBUG_CORS") == "true")
+	minerTimeoutStr = os.Getenv("MINER_TIMEOUT")
+	minerTimeout    int
 )
 
 func main() {
@@ -37,10 +40,14 @@ func main() {
 	db.Init()
 	defer db.Close()
 	storage.Init()
+	var err error
+	if minerTimeout, err = strconv.Atoi(minerTimeoutStr); err != nil {
+		panic(err)
+	}
 	initJobsManager()
 	c := cron.New()
 	defer c.Stop()
-	if _, err := c.AddFunc("@weekly", payments.PayMiners); err != nil {
+	if _, err = c.AddFunc("@weekly", payments.PayMiners); err != nil {
 		log.Sugar.Errorf("Error starting weekly miner payment to cron: %v", err)
 		panic(err)
 	}

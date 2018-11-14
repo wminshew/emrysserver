@@ -37,13 +37,14 @@ var postDeviceSnapshot app.Handler = func(w http.ResponseWriter, r *http.Request
 	}
 
 	// TODO: store snapshots in files or DB instead of logger?
+	jID := r.URL.Query().Get("jID")
 	log.Sugar.Infow("device snapshot",
 		"mID", mID,
 		"dID", d.ID,
+		"jID", jID,
 		"snapshot", d,
 	)
 
-	jID := r.URL.Query().Get("jID")
 	if jID == "" {
 		return nil
 	}
