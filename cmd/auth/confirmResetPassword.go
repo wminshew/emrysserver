@@ -6,6 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
+	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -69,7 +70,13 @@ var confirmResetPassword app.Handler = func(w http.ResponseWriter, r *http.Reque
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
 	}
 
-	// TODO: validate new password
+	if !validate.PasswordRegexp().MatchString(c.Password) {
+		log.Sugar.Errorw("error validating password",
+			"method", r.Method,
+			"url", r.URL,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
+	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), cost)
 	if err != nil {

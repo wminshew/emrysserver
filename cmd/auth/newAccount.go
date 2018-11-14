@@ -5,6 +5,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
+	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/email"
@@ -26,6 +27,23 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 			"err", err.Error(),
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
+	}
+
+	if !validate.EmailRegexp().MatchString(c.Email) {
+		log.Sugar.Infow("invalid email",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "email invalid"}
+	}
+	if !validate.PasswordRegexp().MatchString(c.Password) {
+		log.Sugar.Infow("invalid password",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), cost)
