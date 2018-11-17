@@ -49,11 +49,11 @@ spec:
         ports:
         - containerPort: 3141
         env:
-        # - name: DEVPI_MAX_RETRIES
+        # - name: DEVPISERVER_MAX_RETRIES
         #   value: "3"
-        - name: DEVPI_SERVERDIR
+        - name: DEVPISERVER_SERVERDIR
           value: "/devpi/server"
-        - name: DEVPI_DEBUG
+        - name: DEVPISERVER_DEBUG
           value: ""
         volumeMounts:
           - name: devpi-pvc
