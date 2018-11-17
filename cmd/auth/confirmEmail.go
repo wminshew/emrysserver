@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrys/pkg/creds"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
+	"github.com/wminshew/emrysserver/pkg/email"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 )
@@ -14,7 +16,7 @@ import (
 var confirmEmail app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	tokenStr := r.URL.Query().Get("token")
 
-	claims := &jwt.StandardClaims{}
+	claims := &creds.JwtClaims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims,
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -64,6 +66,21 @@ var confirmEmail app.Handler = func(w http.ResponseWriter, r *http.Request) *app
 
 	if _, err := w.Write([]byte("Email confirmed!")); err != nil {
 		log.Sugar.Errorw("error writing response",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"aID", aUUID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	userEmail, err := db.GetAccountEmail(r, aUUID)
+	if err != nil {
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
+	}
+
+	if err := email.SendWelcome(userEmail); err != nil {
+		log.Sugar.Errorw("error sending account welcome email",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),

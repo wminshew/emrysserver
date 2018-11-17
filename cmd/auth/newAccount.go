@@ -29,6 +29,27 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
 	}
 
+	agreedToTOSAndPrivacy := r.URL.Query().Get("terms") != ""
+	if !agreedToTOSAndPrivacy {
+		log.Sugar.Infow("must agree to the Terms of Service and Privacy Policy",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must agree to the Terms of Service and Privacy Policy"}
+	}
+
+	isUser := r.URL.Query().Get("user") != ""
+	isMiner := r.URL.Query().Get("miner") != ""
+	if !isUser && !isMiner {
+		log.Sugar.Infow("must sign up as a user or miner",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must sign up as a user or miner"}
+	}
+
 	if !validate.EmailRegexp().MatchString(c.Email) {
 		log.Sugar.Infow("invalid email",
 			"method", r.Method,
@@ -58,8 +79,6 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	}
 
 	aUUID := uuid.NewV4()
-	isUser := r.URL.Query().Get("user") != ""
-	isMiner := r.URL.Query().Get("miner") != ""
 
 	if err := db.InsertAccount(r, c.Email, string(hashedPassword), aUUID, isUser, isMiner); err != nil {
 		// error already logged
