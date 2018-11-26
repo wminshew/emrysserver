@@ -29,7 +29,7 @@ var login app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error 
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
 	}
 
-	aUUID, hashedPassword, isUser, isMiner, confirmed, suspended, err := db.GetAccountUUIDAndPassword(r, c.Email)
+	aUUID, hashedPassword, isUser, isMiner, confirmed, suspended, beta, err := db.GetAccountUUIDAndPassword(r, c.Email)
 	if err != nil {
 		if err == db.ErrUnauthorizedAccount {
 			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized account"}
@@ -37,6 +37,8 @@ var login app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error 
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	} else if !confirmed {
 		return &app.Error{Code: http.StatusUnauthorized, Message: "you must confirm your email address before your account is active"}
+	} else if !beta {
+		return &app.Error{Code: http.StatusUnauthorized, Message: "you haven't been granted beta access yet"}
 	} else if suspended {
 		return &app.Error{Code: http.StatusUnauthorized, Message: "your account is currently suspended"}
 	}

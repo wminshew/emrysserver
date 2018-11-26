@@ -24,7 +24,7 @@ var resetPassword app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
 	}
 
-	aUUID, _, _, _, confirmed, _, err := db.GetAccountUUIDAndPassword(r, c.Email)
+	aUUID, _, _, _, confirmed, _, _, err := db.GetAccountUUIDAndPassword(r, c.Email)
 	if err != nil {
 		// already logged
 		if err == db.ErrUnauthorizedAccount {

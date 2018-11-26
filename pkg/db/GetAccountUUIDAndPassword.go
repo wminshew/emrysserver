@@ -16,28 +16,29 @@ var (
 )
 
 // GetAccountUUIDAndPassword returns account uuid and hashed password of the email address, if they exist
-func GetAccountUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, bool, bool, bool, bool, error) {
+func GetAccountUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, bool, bool, bool, bool, bool, error) {
 	aUUID := uuid.UUID{}
 	storedC := &creds.Account{}
 	uUUID := uuid.UUID{}
 	mUUID := uuid.UUID{}
 	confirmed := false
 	suspended := false
+	beta := false
 	sqlStmt := `
-	SELECT a.uuid, password, u.uuid, m.uuid, a.confirmed, a.suspended
+	SELECT a.uuid, password, u.uuid, m.uuid, a.confirmed, a.suspended, a.beta
 	FROM accounts a
 	LEFT OUTER JOIN users u ON (a.uuid = u.uuid)
 	LEFT OUTER JOIN miners m ON (a.uuid = m.uuid)
 	WHERE a.email=$1
 	`
-	if err := db.QueryRow(sqlStmt, email).Scan(&aUUID, &storedC.Password, &uUUID, &mUUID, &confirmed, &suspended); err != nil {
+	if err := db.QueryRow(sqlStmt, email).Scan(&aUUID, &storedC.Password, &uUUID, &mUUID, &confirmed, &suspended, &beta); err != nil {
 		if err == sql.ErrNoRows {
 			log.Sugar.Infow("unauthorized account",
 				"method", r.Method,
 				"url", r.URL,
 				"email", email,
 			)
-			return uuid.UUID{}, "", false, false, false, false, ErrUnauthorizedAccount
+			return uuid.UUID{}, "", false, false, false, false, false, ErrUnauthorizedAccount
 		}
 		message := "error querying for account by email"
 		pqErr, ok := err.(*pq.Error)
@@ -59,9 +60,9 @@ func GetAccountUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string
 				"email", email,
 			)
 		}
-		return uuid.UUID{}, "", false, false, false, false, err
+		return uuid.UUID{}, "", false, false, false, false, false, err
 	}
 	isUser := (uUUID != uuid.UUID{})
 	isMiner := (mUUID != uuid.UUID{})
-	return aUUID, storedC.Password, isUser, isMiner, confirmed, suspended, nil
+	return aUUID, storedC.Password, isUser, isMiner, confirmed, suspended, beta, nil
 }
