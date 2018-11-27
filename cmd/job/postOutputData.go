@@ -9,7 +9,6 @@ import (
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"github.com/wminshew/emrysserver/pkg/payments"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"io"
 	"net/http"
@@ -115,15 +114,5 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 		}()
 	}()
 
-	if err := payments.ChargeUser(r, jUUID); err != nil {
-		log.Sugar.Errorw("error charging user",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-	}
-
-	return db.SetJobFinishedAndStatusOutputDataPosted(r, jUUID)
+	return db.SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r, jUUID)
 }

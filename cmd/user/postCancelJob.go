@@ -6,7 +6,6 @@ import (
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"github.com/wminshew/emrysserver/pkg/payments"
 	"net/http"
 )
 
@@ -24,15 +23,5 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	if err := payments.ChargeUser(r, jUUID); err != nil {
-		log.Sugar.Errorw("error charging user",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-	}
-
-	return db.SetJobCanceled(r, jUUID)
+	return db.SetJobCanceledAndDebitUser(r, jUUID)
 }

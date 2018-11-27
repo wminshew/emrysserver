@@ -65,7 +65,7 @@ func SetJobWinnerAndAuctionStatus(r *http.Request, jUUID, wbUUID uuid.UUID, payR
 		}
 		if txerr == nil {
 			if err := tx.Rollback(); err != nil {
-				log.Sugar.Errorf("Error rolling tx back job %v: %v\n", jUUID, err)
+				log.Sugar.Errorf("Error rolling tx back: %v", err)
 			}
 		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}

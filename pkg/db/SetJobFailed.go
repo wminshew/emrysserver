@@ -8,8 +8,9 @@ import (
 
 const errCheckViolation = "23514"
 
-// SetJobFailed sets job failed_at and active=falsefor job jUUID
+// SetJobFailed sets job failed_at and active=false for job jUUID
 func SetJobFailed(jUUID uuid.UUID) error {
+	// TODO: add miner balance debit penalty
 	sqlStmt := `
 	UPDATE jobs
 	SET (failed_at, active)= (NOW(), false)

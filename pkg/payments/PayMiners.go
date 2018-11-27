@@ -14,6 +14,9 @@ const (
 
 // PayMiners pays all miners their outstanding balances
 func PayMiners() {
+	log.Sugar.Infof("Paying miners")
+
+	// TODO: make atomic?
 	// TODO: add retry logic?
 	minerCredit := make(map[uuid.UUID]float64)
 
@@ -59,6 +62,7 @@ func PayMiners() {
 
 	for mUUID, credit := range minerCredit {
 		if credit > 0 {
+			// TODO: make atomic?
 			// TODO: add retry logic
 			// TODO: stripe or btcpay
 
@@ -76,4 +80,5 @@ func PayMiners() {
 		}
 	}
 
+	log.Sugar.Infof("Miners paid")
 }

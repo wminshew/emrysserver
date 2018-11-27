@@ -89,7 +89,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 		}
 		if txerr == nil {
 			if err := tx.Rollback(); err != nil {
-				log.Sugar.Errorf("Error rolling tx back job %v: %v\n", jUUID, err)
+				log.Sugar.Errorf("Error rolling tx back: %v", jUUID, err)
 			}
 		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
