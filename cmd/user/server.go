@@ -11,6 +11,8 @@ import (
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/payments"
+	cronPkg "gopkg.in/robfig/cron.v2"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,6 +34,12 @@ func main() {
 	}()
 	db.Init()
 	defer db.Close()
+	cron := cronPkg.New()
+	defer cron.Stop()
+	if _, err := cron.AddFunc("@weekly", payments.AccountsPayout); err != nil {
+		log.Sugar.Errorf("Error adding weekly payments to cron: %v", err)
+		panic(err)
+	}
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 	projectRegexpMux := validate.ProjectRegexpMux()

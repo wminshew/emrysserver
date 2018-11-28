@@ -19,36 +19,73 @@ func SetJobCanceledAndDebitUser(r *http.Request, jUUID uuid.UUID) *app.Error {
 		if txerr != nil {
 			return errBeginTx, txerr
 		}
-		var uUUID uuid.UUID
-		var createdAt, canceledAt time.Time
+		uUUID := uuid.UUID{}
+		mUUID := uuid.UUID{}
+		createdAt := time.Time{}
+		canceledAt := pq.NullTime{}
 		rate := sql.NullFloat64{}
 		sqlStmt := `
 		UPDATE jobs j
 		SET canceled_at = NOW(),
 		active = false
-		FROM accounts a, projects proj
+		FROM users u, projects proj, miners m, bids b
 		WHERE j.uuid = $1 AND
 			j.canceled_at IS NULL AND
 			proj.uuid = j.project_uuid AND
-			a.uuid = proj.user_uuid
-		RETURNING a.uuid, j.created_at, j.canceled_at, j.rate
+			u.uuid = proj.user_uuid AND
+			b.uuid = j.win_bid_uuid AND
+			m.uuid = b.miner_uuid
+		RETURNING u.uuid, m.uuid, j.created_at, j.canceled_at, j.rate
 		`
-		if err := db.QueryRow(sqlStmt, jUUID).Scan(&uUUID, &createdAt, &canceledAt, &rate); err != nil {
-			return "error updating job canceled_at, active", err
+		if err := db.QueryRow(sqlStmt, jUUID).Scan(&uUUID, &mUUID, &createdAt, &canceledAt, &rate); err != nil {
+			return "error updating jobs canceled_at, active", err
 		}
 
-		if rate.Valid {
-			amt := rate.Float64 * canceledAt.Sub(createdAt).Hours()
-			sqlStmt = `
-			UPDATE accounts a
-			SET balance = balance - $2
-			WHERE a.uuid = $1
-			`
-			if _, err := db.Exec(sqlStmt, uUUID, amt); err != nil {
-				return "error updating accounts balance", err
-			}
+		if canceledAt.Valid {
+			if rate.Valid {
+				amt := rate.Float64 * canceledAt.Time.Sub(createdAt).Hours()
+				sqlStmt = `
+				UPDATE accounts a
+				SET balance = balance - $2
+				WHERE a.uuid = $1
+				`
+				if _, err := db.Exec(sqlStmt, uUUID, amt); err != nil {
+					return "error updating user accounts balance", err
+				}
 
-			// TODO: add miner credit
+				sqlStmt = `
+				UPDATE accounts a
+				SET balance = balance + $2
+				WHERE a.uuid = $1
+				`
+				if _, err := db.Exec(sqlStmt, mUUID, amt); err != nil {
+					return "error updating miner accounts balance", err
+				}
+
+				sqlStmt = `
+				UPDATE payments p
+				SET processed = $2,
+				amount = $3
+				WHERE p.job_uuid = $1 AND
+					p.processed IS NULL
+				`
+				if _, err := db.Exec(sqlStmt, jUUID, canceledAt.Time, amt); err != nil {
+					return "error updating payments processed", err
+				}
+			} else {
+				sqlStmt = `
+				UPDATE payments p
+				SET processed = $2
+				WHERE p.job_uuid = $1 AND
+					p.processed IS NULL
+				`
+				if _, err := db.Exec(sqlStmt, jUUID, canceledAt.Time); err != nil {
+					return "error updating payments processed", err
+				}
+			}
+		} else {
+			// shouldn't happen
+			log.Sugar.Errorf("null canceledAt")
 		}
 
 		if err := tx.Commit(); err != nil {

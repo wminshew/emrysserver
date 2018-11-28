@@ -11,6 +11,10 @@ var (
 	activeWorker = make(map[uuid.UUID]chan struct{})
 )
 
+const (
+	baseMinerPenalty = 0.5
+)
+
 func monitorJob(jUUID uuid.UUID) {
 	activeWorker[jUUID] = make(chan struct{})
 	defer delete(activeWorker, jUUID)
@@ -20,7 +24,7 @@ func monitorJob(jUUID uuid.UUID) {
 			log.Sugar.Infow("miner failed job",
 				"jID", jUUID,
 			)
-			if err := db.SetJobFailed(jUUID); err != nil {
+			if err := db.SetJobFailed(jUUID, baseMinerPenalty); err != nil {
 				log.Sugar.Errorw("error setting job failed",
 					"err", err.Error(),
 					"jID", jUUID,

@@ -11,9 +11,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"github.com/wminshew/emrysserver/pkg/payments"
 	"github.com/wminshew/emrysserver/pkg/storage"
-	"gopkg.in/robfig/cron.v2"
 	"net/http"
 	"os"
 	"os/signal"
@@ -45,12 +43,6 @@ func main() {
 		panic(err)
 	}
 	initJobsManager()
-	c := cron.New()
-	defer c.Stop()
-	if _, err = c.AddFunc("@weekly", payments.PayMiners); err != nil {
-		log.Sugar.Errorf("Error starting weekly miner payment to cron: %v", err)
-		panic(err)
-	}
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 

@@ -22,22 +22,24 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 		}
 
 		uUUID := uuid.UUID{}
+		mUUID := uuid.UUID{}
 		createdAt := time.Time{}
 		completedAt := pq.NullTime{}
 		rate := sql.NullFloat64{}
-
 		sqlStmt := `
 		UPDATE jobs j
 		SET completed_at = NOW(),
 		active = false
-		FROM accounts a, projects proj
+		FROM users u, projects proj, miners m, bids b
 		WHERE j.uuid = $1 AND
 			j.completed_at IS NULL AND
 			proj.uuid = j.project_uuid AND
-			a.uuid = proj.user_uuid
-		RETURNING a.uuid, j.created_at, j.completed_at, j.rate
+			u.uuid = proj.user_uuid AND
+			b.uuid = j.win_bid_uuid AND
+			m.uuid = b.miner_uuid
+		RETURNING u.uuid, m.uuid, j.created_at, j.completed_at, j.rate
 		`
-		if err := tx.QueryRow(sqlStmt, jUUID).Scan(&uUUID, &createdAt, &completedAt, &rate); err != nil {
+		if err := tx.QueryRow(sqlStmt, jUUID).Scan(&uUUID, &mUUID, &createdAt, &completedAt, &rate); err != nil {
 			return "error updating jobs completed_at, active", err
 		}
 
@@ -52,16 +54,6 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 				return "error updating statuses output_data_posted", err
 			}
 
-			sqlStmt = `
-			UPDATE payments p
-			SET user_paid = $2
-			WHERE p.job_uuid = $1 AND
-				p.user_paid IS NULL
-			`
-			if _, err := db.Exec(sqlStmt, jUUID, completedAt.Time); err != nil {
-				return "error updating payments user_paid", err
-			}
-
 			if rate.Valid {
 				amt := rate.Float64 * completedAt.Time.Sub(createdAt).Hours()
 				sqlStmt = `
@@ -70,11 +62,35 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 				WHERE a.uuid = $1
 				`
 				if _, err := db.Exec(sqlStmt, uUUID, amt); err != nil {
-					return "error updating accounts balance", err
+					return "error updating user accounts balance", err
 				}
 
-				// TODO: add miner credit
+				sqlStmt = `
+				UPDATE accounts a
+				SET balance = balance + $2
+				WHERE a.uuid = $1
+				`
+				if _, err := db.Exec(sqlStmt, mUUID, amt); err != nil {
+					return "error updating miner accounts balance", err
+				}
+
+				sqlStmt = `
+				UPDATE payments p
+				SET processed = $2,
+				amount = $3
+				WHERE p.job_uuid = $1 AND
+					p.processed IS NULL
+				`
+				if _, err := db.Exec(sqlStmt, jUUID, completedAt.Time); err != nil {
+					return "error updating payments user_paid", err
+				}
+			} else {
+				// shouldn't happen
+				log.Sugar.Errorf("null rate")
 			}
+		} else {
+			// shouldn't happen
+			log.Sugar.Errorf("null createdAt")
 		}
 
 		if err := tx.Commit(); err != nil {
