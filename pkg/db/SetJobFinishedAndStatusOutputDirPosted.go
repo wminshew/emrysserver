@@ -28,8 +28,8 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 
 		sqlStmt := `
 		UPDATE jobs j
-		SET j.completed_at = NOW(),
-		j.active = false
+		SET completed_at = NOW(),
+		active = false
 		FROM accounts a, projects proj
 		WHERE j.uuid = $1 AND
 			j.completed_at IS NULL AND
@@ -41,11 +41,10 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 			return "error updating jobs completed_at, active", err
 		}
 
-		log.Sugar.Infof("Completed at: %v\n", completedAt.Time) // TODO: rm
 		if completedAt.Valid {
 			sqlStmt = `
 			UPDATE statuses s
-			SET s.output_data_posted = $2
+			SET output_data_posted = $2
 			WHERE s.job_uuid = $1 AND
 				s.output_data_posted IS NULL
 			`
@@ -55,7 +54,7 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 
 			sqlStmt = `
 			UPDATE payments p
-			SET p.user_paid = $2
+			SET user_paid = $2
 			WHERE p.job_uuid = $1 AND
 				p.user_paid IS NULL
 			`
@@ -63,12 +62,11 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 				return "error updating payments user_paid", err
 			}
 
-			log.Sugar.Infof("Rate: %v\n", rate) //TODO: rm
 			if rate.Valid {
 				amt := rate.Float64 * completedAt.Time.Sub(createdAt).Hours()
 				sqlStmt = `
 				UPDATE accounts a
-				SET a.balance = balance - $2
+				SET balance = balance - $2
 				WHERE a.uuid = $1
 				`
 				if _, err := db.Exec(sqlStmt, uUUID, amt); err != nil {

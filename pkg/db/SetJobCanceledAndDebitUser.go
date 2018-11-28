@@ -24,8 +24,8 @@ func SetJobCanceledAndDebitUser(r *http.Request, jUUID uuid.UUID) *app.Error {
 		rate := sql.NullFloat64{}
 		sqlStmt := `
 		UPDATE jobs j
-		SET j.canceled_at = NOW(),
-		j.active = false
+		SET canceled_at = NOW(),
+		active = false
 		FROM accounts a, projects proj
 		WHERE j.uuid = $1 AND
 			j.canceled_at IS NULL AND
@@ -37,12 +37,11 @@ func SetJobCanceledAndDebitUser(r *http.Request, jUUID uuid.UUID) *app.Error {
 			return "error updating job canceled_at, active", err
 		}
 
-		log.Sugar.Infof("Rate: %v\n", rate)
 		if rate.Valid {
 			amt := rate.Float64 * canceledAt.Sub(createdAt).Hours()
 			sqlStmt = `
 			UPDATE accounts a
-			SET a.balance = balance - $2
+			SET balance = balance - $2
 			WHERE a.uuid = $1
 			`
 			if _, err := db.Exec(sqlStmt, uUUID, amt); err != nil {
