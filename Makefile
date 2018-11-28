@@ -211,3 +211,33 @@ rollback-data:
 rollback-devpi:
 	kubectl rollout undo sts/devpi-sts
 	kubectl rollout status sts/devpi-sts
+
+
+delete: delete-default-backend delete-auth delete-user delete-miner delete-job delete-image delete-registry delete-data
+
+delete-default-backend:
+	kubectl delete pod -lapp=default-backend
+
+delete-auth:
+	kubectl delete pod -lapp=auth
+
+delete-user:
+	kubectl delete pod -lapp=user
+
+delete-miner:
+	kubectl delete pod -lapp=miner
+
+delete-job:
+	kubectl delete pod -lapp=job
+
+delete-image:
+	kubectl delete pod -lapp=image
+
+delete-registry:
+	kubectl delete pod -lapp=registry
+
+delete-data:
+	kubectl delete pod -lapp=data
+
+delete-devpi:
+	kubectl delete pod -lapp=devpi
