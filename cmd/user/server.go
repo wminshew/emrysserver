@@ -50,6 +50,10 @@ func main() {
 
 	rUser := r.PathPrefix("/user").Subrouter()
 	rUser.Handle("/version", getVersion).Methods("GET")
+	rUser.Handle("/job-history", auth.Jwt(authSecret, []string{})(getJobHistory)).
+		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/balance", auth.Jwt(authSecret, []string{})(getAccountBalance)).
+		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 
 	jobPathPrefix := fmt.Sprintf("/{uID:%s}/project/{project:%s}/job", uuidRegexpMux, projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
