@@ -32,9 +32,11 @@ func SetJobCanceledAndDebitUser(r *http.Request, jUUID uuid.UUID) *app.Error {
 		WHERE j.uuid = $1 AND
 			j.canceled_at IS NULL AND
 			proj.uuid = j.project_uuid AND
-			u.uuid = proj.user_uuid AND
+			u.uuid = proj.user_uuid AND (
+			j.win_bid_uuid IS NULL OR (
 			b.uuid = j.win_bid_uuid AND
 			m.uuid = b.miner_uuid
+			))
 		RETURNING u.uuid, m.uuid, j.created_at, j.canceled_at, j.rate
 		`
 		if err := db.QueryRow(sqlStmt, jUUID).Scan(&uUUID, &mUUID, &createdAt, &canceledAt, &rate); err != nil {
