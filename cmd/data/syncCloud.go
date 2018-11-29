@@ -20,7 +20,7 @@ func downloadProject(projectDir string) error {
 	args := []string{"-q", "stat", src}
 	cmd := exec.Command(cmdStr, args...)
 	if err := cmd.Run(); err != nil {
-		return nil
+		return err
 	}
 
 	// gsutil -m cp -r gs://emrys-dev/data/{uID}/{project} /data/{uID}
