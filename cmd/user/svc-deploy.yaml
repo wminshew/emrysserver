@@ -73,6 +73,8 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: USER_SEMVER
+          value: "0.1.0"
         volumeMounts:
           - name: user-creds
             mountPath: /secrets/google_application_credentials

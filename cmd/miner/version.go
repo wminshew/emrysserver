@@ -7,13 +7,10 @@ import (
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
+	"os"
 )
 
-var latestMinerVer = semver.Version{
-	Major: 0,
-	Minor: 1,
-	Patch: 0,
-}
+var latestMinerVer = semver.MustParse(os.Getenv("MINER_SEMVER"))
 
 // getVersion returns the latest miner version released
 var getVersion app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {

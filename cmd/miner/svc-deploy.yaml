@@ -73,6 +73,8 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: MINER_SEMVER
+          value: "0.1.0"
         - name: MINER_TIMEOUT
           value: "60"
         - name: SENDGRID_SECRET
