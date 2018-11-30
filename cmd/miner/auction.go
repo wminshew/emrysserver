@@ -45,7 +45,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 		Message: "New job posted!",
 		Job:     j,
 	}
-	if err := jobsManager.Publish("jobs", jMsg); err != nil {
+	if err := minerManager.Publish("jobs", jMsg); err != nil {
 		log.Sugar.Errorw("error publishing job",
 			"method", r.Method,
 			"url", r.URL,

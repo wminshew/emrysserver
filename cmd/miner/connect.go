@@ -17,6 +17,6 @@ var connect app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 	q.Set("category", "jobs")
 	q.Set("timeout", fmt.Sprintf("%d", maxTimeout))
 	r.URL.RawQuery = q.Encode()
-	jobsManager.SubscriptionHandler(w, r)
+	minerManager.SubscriptionHandler(w, r)
 	return nil
 }

@@ -42,7 +42,7 @@ func main() {
 	if minerTimeout, err = strconv.Atoi(minerTimeoutStr); err != nil {
 		panic(err)
 	}
-	initJobsManager()
+	initMinerManager()
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 

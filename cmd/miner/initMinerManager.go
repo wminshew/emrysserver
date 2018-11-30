@@ -7,18 +7,18 @@ import (
 )
 
 var (
-	jobsManager   *golongpoll.LongpollManager
+	minerManager   *golongpoll.LongpollManager
 	maxTimeout    = 60 * 10
 	debugLongpoll = (os.Getenv("DEBUG_LONGPOLL") == "true")
 )
 
-// initJobsManager initializes the longpoll manager that handles miner
+// initMinerManager initializes the longpoll manager that handles miner
 // connections while waiting for job auctions
-func initJobsManager() {
+func initMinerManager() {
 	log.Sugar.Infof("Initializing longpoll manager...")
 
 	var err error
-	if jobsManager, err = golongpoll.StartLongpoll(golongpoll.Options{
+	if minerManager, err = golongpoll.StartLongpoll(golongpoll.Options{
 		LoggingEnabled:            debugLongpoll,
 		MaxLongpollTimeoutSeconds: maxTimeout,
 		MaxEventBufferSize:        100,
