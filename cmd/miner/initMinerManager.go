@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	minerManager   *golongpoll.LongpollManager
+	minerManager  *golongpoll.LongpollManager
 	maxTimeout    = 60 * 10
 	debugLongpoll = (os.Getenv("DEBUG_LONGPOLL") == "true")
 )
