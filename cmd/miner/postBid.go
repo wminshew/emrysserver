@@ -50,7 +50,7 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 
 	a, ok := auctions[b.JobID]
 	if !ok {
-		b.Late = false
+		b.Late = true
 	} else {
 		b.Late = a.lateBid()
 	}
