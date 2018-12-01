@@ -11,13 +11,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
 
 var (
-	authSecret = os.Getenv("AUTH_SECRET")
-	debugCors  = (os.Getenv("DEBUG_CORS") == "true")
+	authSecret    = os.Getenv("AUTH_SECRET")
+	debugCors     = (os.Getenv("DEBUG_CORS") == "true")
+	newUserCredit int
 )
 
 func main() {
@@ -29,6 +31,11 @@ func main() {
 	}()
 	db.Init()
 	defer db.Close()
+	var err error
+	if newUserCredit, err = strconv.Atoi(os.Getenv("NEW_USER_CREDIT")); err != nil {
+		log.Sugar.Errorf("Error converting string to int: %v", err)
+		return
+	}
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)

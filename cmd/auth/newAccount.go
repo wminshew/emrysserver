@@ -80,7 +80,11 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 
 	aUUID := uuid.NewV4()
 
-	if err := db.InsertAccount(r, c.Email, string(hashedPassword), aUUID, isUser, isMiner); err != nil {
+	credit := newUserCredit
+	if !isUser {
+		credit = 0
+	}
+	if err := db.InsertAccount(r, c.Email, string(hashedPassword), aUUID, isUser, isMiner, credit); err != nil {
 		// error already logged
 		if err == db.ErrEmailExists {
 			return &app.Error{Code: http.StatusBadRequest, Message: err.Error()}
