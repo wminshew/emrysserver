@@ -18,6 +18,7 @@ type auction struct {
 	jobID uuid.UUID
 	winner
 	late
+	requirements *job.Specs
 }
 
 type late struct {
@@ -28,6 +29,15 @@ type late struct {
 type winner struct {
 	bid uuid.UUID
 	sync.Mutex
+}
+
+// TODO: move to emrys/pkg; share w/ client
+type jobReq struct {
+	Rate float64 `json:"rate,omitempty"`
+	GPU  string  `json:"gpu,omitempty"`
+	RAM  string  `json:"ram,omitempty"`
+	Disk string  `json:"disk,omitempty"`
+	Pcie string  `json:"pcie,omitempty"`
 }
 
 const (

@@ -13,9 +13,10 @@ func GetValidBids(r *http.Request, jUUID uuid.UUID) (*sql.Rows, error) {
 	sqlStmt := `
 	SELECT b1.uuid, b1.rate
 	FROM bids b1
-	WHERE b1.job_uuid = $1
-		AND b1.late = false
-		AND NOT EXISTS(SELECT 1
+	WHERE b1.job_uuid = $1 AND
+		b1.meets_requirements = true AND
+		b1.late = false AND
+		NOT EXISTS(SELECT 1
 			FROM bids b2
 			INNER JOIN jobs j ON (b2.uuid = j.win_bid_uuid)
 			WHERE j.active = true 

@@ -45,21 +45,63 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 			"err", err.Error(),
 			"jID", b.JobID,
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing miner ID. Please login again"}
+		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing miner ID"}
 	}
 
 	a, ok := auctions[b.JobID]
 	if !ok {
 		b.Late = true
-	} else {
-		b.Late = a.lateBid()
+		log.Sugar.Infof("Late bid: %+v", b)
+		return &app.Error{Code: http.StatusBadRequest, Message: "your bid was late"}
 	}
-	log.Sugar.Infof("%+v", b)
+	b.Late = a.lateBid()
 
-	if err := db.InsertBid(r, b); err != nil {
+	if b.Specs.Rate <= 0 {
+		log.Sugar.Errorw("non-postitive bid rate",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must submit positive bid rate"}
+	}
+	// TODO: validate gpu
+	if b.Specs.RAM == 0 {
+		log.Sugar.Errorw("no ram spec in bid",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must submit ram allocation with bid"}
+	}
+	if b.Specs.Disk == 0 {
+		log.Sugar.Errorw("no disk spec in bid",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must submit disk allocation with bid"}
+	}
+	if b.Specs.Pcie != 16 && b.Specs.Pcie != 8 && b.Specs.Pcie != 4 && b.Specs.Pcie != 2 && b.Specs.Pcie != 1 {
+		log.Sugar.Errorw("invalid pcie in bid",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "invalid pcie"}
+	}
+
+	meetsReqs := b.Specs.Rate <= a.requirements.Rate &&
+		// b.GPU >= a.requirements.GPU &&
+		b.Specs.RAM >= a.requirements.RAM &&
+		b.Specs.Disk >= a.requirements.Disk &&
+		b.Specs.Pcie >= a.requirements.Pcie
+
+	log.Sugar.Infof("%+v meets reqs: %v", b, meetsReqs) // TODO: remove
+
+	if err := db.InsertBid(r, b, meetsReqs); err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
-	log.Sugar.Infof("Bid %s (rate: %.2f, late: %s) for job %s received!", b.ID.String(), b.Rate, b.Late, b.JobID.String())
+	log.Sugar.Infof("Bid %s (rate: %.2f, late: %s, meets reqs: %s) for job %s received!", b.ID.String(), b.Specs.Rate, b.Late, meetsReqs, b.JobID.String())
 
 	if b.Late {
 		return &app.Error{Code: http.StatusBadRequest, Message: "your bid was late"}

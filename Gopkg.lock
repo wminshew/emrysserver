@@ -110,6 +110,12 @@
   revision = "cc9eb1d7ad760af14e8f918698f745e80377af4f"
 
 [[projects]]
+  name = "github.com/dustin/go-humanize"
+  packages = ["."]
+  revision = "9f541cc9db5d55bce703bd99987c9d5cb8eea45e"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/gogo/protobuf"
   packages = ["proto"]
   revision = "100ba4e885062801d56799d78530b73b178a78f3"
@@ -265,7 +271,7 @@
     "pkg/jsonmessage",
     "pkg/validate"
   ]
-  revision = "9fc6e8eb8e4d41d3369a5c065943ba92d128db27"
+  revision = "80663cd852246fa6809f4ff9208210d916db77a8"
 
 [[projects]]
   name = "go.opencensus.io"
@@ -461,6 +467,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "80223b9fd1a57b3fe1e89945a4ec8e115870d63a5ec4431254cba1533eda12ef"
+  inputs-digest = "14bd05479cc9de3c92597491173b63d1536d96922c46632b63cfccadbfbd1f43"
   solver-name = "gps-cdcl"
   solver-version = 1

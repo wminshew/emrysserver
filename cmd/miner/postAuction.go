@@ -1,12 +1,21 @@
 package main
 
 import (
+	"encoding/json"
+	"github.com/dustin/go-humanize"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
+)
+
+const (
+	defaultRAM  = 8
+	defaultDisk = 25
+	defaultPcie = 8
 )
 
 // postAuction creates and runs an auction for job jID
@@ -55,10 +64,46 @@ var postAuction app.Handler = func(w http.ResponseWriter, r *http.Request) *app.
 		return nil
 	}
 
+	reqs := &job.Specs{}
+	if err := json.NewDecoder(r.Body).Decode(reqs); err != nil {
+		return &app.Error{Code: http.StatusBadRequest, Message: "error decoding request body"}
+	}
+
+	if reqs.Rate < 0 {
+		log.Sugar.Errorw("negative job rate",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "negative job rate"}
+	}
+	// TODO: validate gpu
+	if reqs.RAM == 0 {
+		reqs.RAM = defaultRAM * humanize.GByte
+	}
+	if reqs.Disk == 0 {
+		reqs.Disk = defaultDisk * humanize.GByte
+	}
+	if reqs.Pcie == 0 {
+		reqs.Pcie = defaultPcie
+	} else if reqs.Pcie != 16 && reqs.Pcie != 8 && reqs.Pcie != 4 && reqs.Pcie != 2 && reqs.Pcie != 1 {
+		log.Sugar.Errorw("invalid pcie",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "invalid pcie"}
+	}
+
+	if err := db.InsertJobSpecs(r, jUUID, reqs); err != nil {
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+	}
+
 	a = &auction{
-		jobID:  jUUID,
-		late:   late{bool: false},
-		winner: winner{},
+		jobID:        jUUID,
+		late:         late{bool: false},
+		winner:       winner{},
+		requirements: reqs,
 	}
 	return a.run(r)
 }
