@@ -36,7 +36,7 @@ var postDeviceSnapshot app.Handler = func(w http.ResponseWriter, r *http.Request
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json gpu snapshot request body"}
 	}
 
-	// TODO: store snapshots in files or DB instead of logger?
+	// TODO: store snapshots in files or DB instead of logger? kafka -> db?
 	jID := r.URL.Query().Get("jID")
 	log.Sugar.Infow("device snapshot",
 		"mID", mID,
@@ -60,8 +60,11 @@ var postDeviceSnapshot app.Handler = func(w http.ResponseWriter, r *http.Request
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
+	// TODO: replace with kafka
 	if ch, ok := activeWorker[jUUID]; ok {
 		ch <- struct{}{}
+	} else {
+		go monitorJob(jUUID)
 	}
 
 	return nil
