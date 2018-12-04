@@ -81,7 +81,7 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 				WHERE p.job_uuid = $1 AND
 					p.processed IS NULL
 				`
-				if _, err := db.Exec(sqlStmt, jUUID, completedAt.Time); err != nil {
+				if _, err := db.Exec(sqlStmt, jUUID, completedAt.Time, amt); err != nil {
 					return "error updating payments processed, amount", err
 				}
 			} else {
