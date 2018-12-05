@@ -4,11 +4,10 @@ import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"net/http"
 )
 
 // GetJobWinner returns the winning miner uuid for job jUUID
-func GetJobWinner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
+func GetJobWinner(jUUID uuid.UUID) (uuid.UUID, error) {
 	mUUID := uuid.UUID{}
 	sqlStmt := `
 	SELECT b.miner_uuid
@@ -21,8 +20,6 @@ func GetJobWinner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 				"pq_sev", pqErr.Severity,
@@ -31,8 +28,6 @@ func GetJobWinner(r *http.Request, jUUID uuid.UUID) (uuid.UUID, error) {
 			)
 		} else {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 			)

@@ -77,7 +77,14 @@ var postAuction app.Handler = func(w http.ResponseWriter, r *http.Request) *app.
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "negative job rate"}
 	}
-	// TODO: validate gpu
+	if reqs.GPU, ok = job.ValidateGPU(reqs.GPU); !ok {
+		log.Sugar.Errorw("invalid gpu",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "invalid gpu"}
+	}
 	if reqs.RAM == 0 {
 		reqs.RAM = defaultRAM * humanize.GByte
 	}

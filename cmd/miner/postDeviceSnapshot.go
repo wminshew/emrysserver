@@ -64,6 +64,7 @@ var postDeviceSnapshot app.Handler = func(w http.ResponseWriter, r *http.Request
 	if ch, ok := activeWorker[jUUID]; ok {
 		ch <- struct{}{}
 	} else {
+		// should only happen if the pod is restarted while a job is running
 		go monitorJob(jUUID)
 	}
 

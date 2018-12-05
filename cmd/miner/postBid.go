@@ -64,7 +64,14 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "must submit positive bid rate"}
 	}
-	// TODO: validate gpu
+	if b.Specs.GPU, ok = job.ValidateGPU(b.Specs.GPU); !ok {
+		log.Sugar.Errorw("invalid gpu",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "invalid gpu"}
+	}
 	if b.Specs.RAM == 0 {
 		log.Sugar.Errorw("no ram spec in bid",
 			"method", r.Method,
@@ -90,8 +97,18 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		return &app.Error{Code: http.StatusBadRequest, Message: "invalid pcie"}
 	}
 
+	meetsGPUReq, err := job.CompareGPU(b.Specs.GPU, a.requirements.GPU)
+	if err != nil {
+		log.Sugar.Errorw("error comparing gpus",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
 	meetsReqs := b.Specs.Rate <= a.requirements.Rate &&
-		// b.GPU >= a.requirements.GPU &&
+		meetsGPUReq &&
 		b.Specs.RAM >= a.requirements.RAM &&
 		b.Specs.Disk >= a.requirements.Disk &&
 		b.Specs.Pcie >= a.requirements.Pcie

@@ -124,9 +124,9 @@ func MinerJobMiddleware(h http.Handler) http.Handler {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
-		dbmUUID, err := db.GetJobWinner(r, jUUID)
+		dbmUUID, err := db.GetJobWinner(jUUID)
 		if err != nil {
-			log.Sugar.Errorw("retrieving job winner",
+			log.Sugar.Errorw("error getting job winner",
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
