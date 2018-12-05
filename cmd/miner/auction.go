@@ -31,15 +31,6 @@ type winner struct {
 	sync.Mutex
 }
 
-// TODO: move to emrys/pkg; share w/ client
-type jobReq struct {
-	Rate float64 `json:"rate,omitempty"`
-	GPU  string  `json:"gpu,omitempty"`
-	RAM  string  `json:"ram,omitempty"`
-	Disk string  `json:"disk,omitempty"`
-	Pcie string  `json:"pcie,omitempty"`
-}
-
 const (
 	buffer      = 500 * time.Millisecond
 	duration    = 3 * time.Second
@@ -54,6 +45,9 @@ func (a *auction) run(r *http.Request) *app.Error {
 	jMsg := job.Message{
 		Message: "New job posted!",
 		Job:     j,
+	}
+	if a.requirements.Rate == 0 {
+		a.requirements.Rate = math.Inf(0)
 	}
 	if err := minerManager.Publish("jobs", jMsg); err != nil {
 		log.Sugar.Errorw("error publishing job",
