@@ -266,6 +266,7 @@
   branch = "master"
   name = "github.com/wminshew/emrys"
   packages = [
+    "pkg/check",
     "pkg/creds",
     "pkg/job",
     "pkg/jsonmessage",
@@ -467,6 +468,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "14bd05479cc9de3c92597491173b63d1536d96922c46632b63cfccadbfbd1f43"
+  inputs-digest = "efd8a586daa7186166ef8e78210865f7e0ea351a2e3c2b4f7201291d473af0d3"
   solver-name = "gps-cdcl"
   solver-version = 1

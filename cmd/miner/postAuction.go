@@ -9,6 +9,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"math"
 	"net/http"
 )
 
@@ -69,7 +70,9 @@ var postAuction app.Handler = func(w http.ResponseWriter, r *http.Request) *app.
 		return &app.Error{Code: http.StatusBadRequest, Message: "error decoding request body"}
 	}
 
-	if reqs.Rate < 0 {
+	if reqs.Rate == 0 {
+		reqs.Rate = math.Inf(0)
+	} else if reqs.Rate < 0 {
 		log.Sugar.Errorw("negative job rate",
 			"method", r.Method,
 			"url", r.URL,
