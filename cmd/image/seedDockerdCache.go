@@ -20,7 +20,8 @@ var (
 
 // seedDockerdCache downloads and possibly builds early-stage docker images
 func seedDockerdCache(ctx context.Context) {
-	time.Sleep(5 * time.Second) // wait for dockerd to boot
+	// TODO: make wait period ENV
+	time.Sleep(10 * time.Second) // wait for dockerd to boot
 	log.Sugar.Infof("Seeding dockerd cache...")
 
 	var pullResp io.ReadCloser
