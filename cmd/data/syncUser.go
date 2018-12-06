@@ -29,7 +29,7 @@ var syncUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	uID := vars["uID"]
+	uID := r.Header.Get("X-Jwt-Claims-Subject")
 	_, err = uuid.FromString(uID)
 	if err != nil {
 		log.Sugar.Errorw("error parsing user ID",
@@ -45,7 +45,7 @@ var syncUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 	projectDir := filepath.Join("data", uID, project)
 	if _, err = os.Stat(projectDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(projectDir, 0755); err != nil {
-			log.Sugar.Errorw("error retrieving server project metadata",
+			log.Sugar.Errorw("error making directory",
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
@@ -53,21 +53,23 @@ var syncUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		if err := downloadProject(projectDir); err != nil {
-			log.Sugar.Errorw("error downloading project from gcs",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-		go func() {
-			if err := checkAndEvictProjects(); err != nil {
-				log.Sugar.Errorf("Error managing disk utilization: %v\n", err)
-				return
+		if projectExists(projectDir) {
+			if err := downloadProject(projectDir); err != nil {
+				log.Sugar.Errorw("error downloading project from gcs",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			}
-		}()
+			go func() {
+				if err := checkAndEvictProjects(); err != nil {
+					log.Sugar.Errorf("Error managing disk utilization: %v\n", err)
+					return
+				}
+			}()
+		}
 	} else if err != nil {
 		log.Sugar.Errorw("error retrieving project directory",
 			"method", r.Method,

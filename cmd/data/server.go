@@ -63,7 +63,7 @@ func main() {
 	rDataUser.Use(auth.UserJobMiddleware)
 	rDataUser.Use(auth.JobActive)
 	rDataUser.Use(checkDataSynced)
-	syncUserPath := fmt.Sprintf("/{uID:%s}/project/{project:%s}/job/{jID}", uuidRegexpMux, projectRegexpMux)
+	syncUserPath := fmt.Sprintf("/project/{project:%s}/job/{jID}", projectRegexpMux)
 	rDataUser.Handle(syncUserPath, syncUser).Methods("POST")
 	uploadDataPath := path.Join(syncUserPath, "{relPath:.*}")
 	rDataUser.Handle(uploadDataPath, uploadData).Methods("PUT")

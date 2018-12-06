@@ -32,7 +32,7 @@ var uploadData app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	uID := vars["uID"]
+	uID := r.Header.Get("X-Jwt-Claims-Subject")
 	_, err = uuid.FromString(uID)
 	if err != nil {
 		log.Sugar.Errorw("error parsing user ID",

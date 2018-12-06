@@ -11,7 +11,7 @@ import (
 
 const bkt = "gs://emrys-dev"
 
-func downloadProject(projectDir string) error {
+func projectExists(projectDir string) bool {
 	// projectDir = /data/{uID}/{project}
 	// gsutil -q stat gs://emrys-dev/data/{uID}/{project} to make sure project folder exists first
 	// https://cloud.google.com/storage/docs/gsutil/commands/stat
@@ -19,15 +19,19 @@ func downloadProject(projectDir string) error {
 	src := fmt.Sprintf("%s/%s", bkt, projectDir)
 	args := []string{"-q", "stat", src}
 	cmd := exec.Command(cmdStr, args...)
-	if err := cmd.Run(); err != nil {
-		return err
-	}
+	err := cmd.Run()
+	return (err == nil)
+}
 
+func downloadProject(projectDir string) error {
+	// projectDir = /data/{uID}/{project}
 	// gsutil -m cp -r gs://emrys-dev/data/{uID}/{project} /data/{uID}
 	// https://cloud.google.com/storage/docs/gsutil/commands/cp
+	cmdStr := "gsutil"
+	src := fmt.Sprintf("%s/%s", bkt, projectDir)
 	dst := filepath.Dir(projectDir)
-	args = []string{"-m", "cp", "-r", src, dst}
-	cmd = exec.Command(cmdStr, args...)
+	args := []string{"-m", "cp", "-r", src, dst}
+	cmd := exec.Command(cmdStr, args...)
 
 	var out, stderr bytes.Buffer
 	cmd.Stdout = &out
