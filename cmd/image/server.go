@@ -71,7 +71,7 @@ func main() {
 	postImageDownloadedPath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
 	rImageMiner.Handle(postImageDownloadedPath, imageDownloaded)
 
-	buildImagePathPrefix := fmt.Sprintf("/{uID:%s}/{project:%s}", uuidRegexpMux, projectRegexpMux)
+	buildImagePathPrefix := fmt.Sprintf("/{project:%s}", projectRegexpMux)
 	rImageUser := rImage.PathPrefix(buildImagePathPrefix).Subrouter()
 	rImageUser.Use(auth.Jwt(authSecret, []string{"user"}))
 	rImageUser.Use(auth.UserJobMiddleware)

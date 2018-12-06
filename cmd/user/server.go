@@ -55,7 +55,7 @@ func main() {
 	rUser.Handle("/balance", auth.Jwt(authSecret, []string{})(getAccountBalance)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 
-	jobPathPrefix := fmt.Sprintf("/{uID:%s}/project/{project:%s}/job", uuidRegexpMux, projectRegexpMux)
+	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	rUserAuth.Use(auth.Jwt(authSecret, []string{"user"}))
 	rUserAuth.Handle("", auth.UserActive(postJob)).Methods("POST")

@@ -13,7 +13,7 @@ import (
 var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
 	project := vars["project"]
-	uID := vars["uID"]
+	uID := r.Header.Get("X-Jwt-Claims-Subject")
 	uUUID, err := uuid.FromString(uID)
 	if err != nil {
 		log.Sugar.Errorw("error parsing user ID",

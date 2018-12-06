@@ -44,7 +44,7 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		)
 		return nil
 	}
-	uID := vars["uID"]
+	uID := r.Header.Get("X-Jwt-Claims-Subject")
 	uUUID, err := uuid.FromString(uID)
 	if err != nil {
 		log.Sugar.Errorw("error parsing job ID",
