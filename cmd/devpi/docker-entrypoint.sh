@@ -13,7 +13,7 @@ if [ "$1" = 'devpi' ]; then
     /usr/bin/devpi-server --init
   fi
 
-  exec /usr/bin/devpi-server --replica-max-retries=${DEVPISERVER_MAX_RETRIES-3} --host 0.0.0.0 --port 3141 ${DEVPISERVER_DEBUG-"--debug"} 2>&1
+  exec /usr/bin/devpi-server --replica-max-retries=${DEVPISERVER_MAX_RETRIES-3} --host 0.0.0.0 --port 3141 ${DEVPISERVER_DEBUG:+"--debug"} 2>&1
 fi
 
 exec "$@"
