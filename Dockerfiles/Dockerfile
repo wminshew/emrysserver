@@ -29,9 +29,10 @@ FROM base
 ARG DEVPI_HOST="http://devpi-svc:3141"
 ARG DEVPI_TRUSTED_HOST="devpi-svc"
 ARG PIP_TIMEOUT=30
+ARG PIP_RETRIES=10
 ARG REQS
 COPY $REQS $REQS
-RUN ./venv/bin/pip --no-cache-dir --timeout=$PIP_TIMEOUT install -i $DEVPI_HOST/root/pypi/+simple/ --trusted-host $DEVPI_TRUSTED_HOST -r $REQS
+RUN ./venv/bin/pip --no-cache-dir --timeout=$PIP_TIMEOUT --retries=$PIP_RETRIES install -i $DEVPI_HOST/root/pypi/+simple/ --trusted-host $DEVPI_TRUSTED_HOST -r $REQS
 USER user
 
 ARG MAIN
