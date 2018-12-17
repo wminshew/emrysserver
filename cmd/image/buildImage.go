@@ -20,6 +20,8 @@ import (
 	"time"
 )
 
+const maxRetries = 10
+
 // buildImage handles building images for jobs posted by users
 var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
@@ -141,7 +143,7 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 			return nil
 		}
 		if err := backoff.RetryNotify(operation,
-			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10), ctx),
+			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 			func(err error, t time.Duration) {
 				log.Sugar.Errorw("error uploading input dockerContext.tar.gz to gcs--retrying",
 					"method", r.Method,
@@ -176,56 +178,62 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		}
 	}
 
-	log.Sugar.Infof("Sending ctxFiles to docker daemon...")
-	pr, pw := io.Pipe()
-	go func() {
-		defer app.CheckErr(r, pw.Close)
-		if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
-			log.Sugar.Errorw("error tar-gzipping docker context",
+	strRef := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, jID)
+	strRefLatest := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
+	strRefMiner := fmt.Sprintf("%s/%s/%s:%s", registryHost, "miner", jID, "latest")
+	strRefs := []string{strRef, strRefLatest, strRefMiner}
+	operation := func() error {
+		log.Sugar.Infof("Sending ctxFiles to docker daemon...")
+		pr, pw := io.Pipe()
+		go func() {
+			defer app.CheckErr(r, pw.Close)
+			if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
+				log.Sugar.Errorw("error tar-gzipping docker context",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+				)
+				return
+			}
+		}()
+
+		for _, ref := range strRefs {
+			imageBuildTime[ref] = time.Now()
+		}
+		log.Sugar.Infof("Caching from: %v", cacheSlice)
+		log.Sugar.Infof("Tagging as: %v", strRefs)
+		buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
+			BuildArgs: map[string]*string{
+				"DEVPI_HOST":         &devpiHost,
+				"DEVPI_TRUSTED_HOST": &devpiTrustedHost,
+				"MAIN":               &main,
+				"REQS":               &reqs,
+			},
+			CacheFrom:      cacheSlice,
+			ForceRemove:    true,
+			SuppressOutput: true,
+			Tags:           strRefs,
+		})
+		if err != nil {
+			return err
+		}
+		defer app.CheckErr(r, buildResp.Body.Close)
+
+		log.Sugar.Infof("Logging image build response...")
+		return jsonmessage.DisplayJSONMessagesStream(buildResp.Body, os.Stdout, os.Stdout.Fd(), nil)
+	}
+	if err := backoff.RetryNotify(operation,
+		backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+		func(err error, t time.Duration) {
+			log.Sugar.Errorw("error building image--retrying",
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 				"jID", jID,
 			)
-			return
-		}
-	}()
-
-	strRef := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, jID)
-	strRefLatest := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
-	strRefMiner := fmt.Sprintf("%s/%s/%s:%s", registryHost, "miner", jID, "latest")
-	strRefs := []string{strRef, strRefLatest, strRefMiner}
-	for _, ref := range strRefs {
-		imageBuildTime[ref] = time.Now()
-	}
-	log.Sugar.Infof("Caching from: %v", cacheSlice)
-	log.Sugar.Infof("Tagging as: %v", strRefs)
-	buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
-		BuildArgs: map[string]*string{
-			"DEVPI_HOST":         &devpiHost,
-			"DEVPI_TRUSTED_HOST": &devpiTrustedHost,
-			"MAIN":               &main,
-			"REQS":               &reqs,
-		},
-		CacheFrom:      cacheSlice,
-		ForceRemove:    true,
-		SuppressOutput: true,
-		Tags:           strRefs,
-	})
-	if err != nil {
-		log.Sugar.Errorw("error building image",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-	}
-	defer app.CheckErr(r, buildResp.Body.Close)
-
-	log.Sugar.Infof("Logging image build response...")
-	if err := jsonmessage.DisplayJSONMessagesStream(buildResp.Body, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-		log.Sugar.Errorw("error building image",
+		}); err != nil {
+		log.Sugar.Errorw("error building image--abort",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
