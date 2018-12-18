@@ -25,6 +25,16 @@ steps:
     '-t', 'gcr.io/$PROJECT_ID/job:latest',
     '.' ]
 - name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/notebook/dockerfile',
+    '-t', 'gcr.io/$PROJECT_ID/notebook:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/notebook:latest',
+    '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/notebook/dockerfile-sshd',
+    '-t', 'gcr.io/$PROJECT_ID/notebook-sshd:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/notebook-sshd:latest',
+    '.' ]
+- name: 'gcr.io/cloud-builders/docker'
   args: [ 'build', '-f', './cmd/image/dockerfile',
     '-t', 'gcr.io/$PROJECT_ID/image:$_BUILD',
     '-t', 'gcr.io/$PROJECT_ID/image:latest',
@@ -45,8 +55,10 @@ images: [
   'gcr.io/$PROJECT_ID/user:$_BUILD', 'gcr.io/$PROJECT_ID/user:latest',
   'gcr.io/$PROJECT_ID/miner:$_BUILD', 'gcr.io/$PROJECT_ID/miner:latest',
   'gcr.io/$PROJECT_ID/job:$_BUILD', 'gcr.io/$PROJECT_ID/job:latest',
+  'gcr.io/$PROJECT_ID/notebook:$_BUILD', 'gcr.io/$PROJECT_ID/notebook:latest',
+  'gcr.io/$PROJECT_ID/notebook-sshd:$_BUILD', 'gcr.io/$PROJECT_ID/notebook-sshd:latest',
   'gcr.io/$PROJECT_ID/image:$_BUILD', 'gcr.io/$PROJECT_ID/image:latest',
   'gcr.io/$PROJECT_ID/registry:$_BUILD', 'gcr.io/$PROJECT_ID/registry:latest',
   'gcr.io/$PROJECT_ID/data:$_BUILD', 'gcr.io/$PROJECT_ID/data:latest',
 ]
-tags: [ 'default-backend', 'auth', 'user', 'miner', 'job', 'image', 'registry', 'data', '$_BUILD' ]
+tags: [ 'default-backend', 'auth', 'user', 'miner', 'job', 'notebook', 'notebook-sshd', 'image', 'registry', 'data', '$_BUILD' ]

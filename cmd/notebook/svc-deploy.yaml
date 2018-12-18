@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: notebook-svc
+  labels:
+    app: notebook
+spec:
+  selector:
+    app: notebook
+  type: LoadBalancer
+  loadBalancerIP: "35.202.18.216"
+  externalTrafficPolicy: Local
+  ports:
+  - name: ssh
+    port: 2222
+    targetPort: 2222
+    protocol: TCP
+  # - name: http
+  #   port: 8080
+  #   targetPort: 8080
+  #   protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notebook-deploy
+  labels:
+    app: notebook
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: notebook
+  template:
+    metadata:
+      labels:
+        app: notebook
+    spec:
+      terminationGracePeriodSeconds: 10
+      restartPolicy: Always
+      containers:
+      # - name: notebook-container
+      #   image: gcr.io/emrys-12/notebook
+      #   resources:
+      #     requests:
+      #       cpu: 50m
+      #       memory: "50Mi"
+      #   ports:
+      #   - containerPort: 8080
+        # env:
+        # - name: AUTH_SECRET
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: auth-secret
+        #       key: secret
+        # - name: GOOGLE_APPLICATION_CREDENTIALS
+        #   value: "/secrets/google_application_credentials/credentials.json"
+        # - name: DBNAME
+        #   value: "emrysserver"
+        # - name: DBNETLOC
+        #   value: "sqlproxy-svc"
+        # - name: DBPASSWORD
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: cloudsql-db-credentials
+        #       key: password
+        # - name: DBPORT
+        #   value: "5432"
+        # - name: DBUSER
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: cloudsql-db-credentials
+        #       key: username
+        # - name: DEBUG_CORS
+        #   value: "false"
+        # volumeMounts:
+        #   - name: notebook-creds
+        #     mountPath: /secrets/google_application_credentials
+        #     readOnly: true
+        #   - name: notebook-pvc
+        #     mountPath: /output
+        # readinessProbe:
+        #   httpGet:
+        #     path: /healthz
+        #     port: 8080
+        #   initialDelaySeconds: 10
+        #   periodSeconds: 10
+        #   timeoutSeconds: 1
+        # livenessProbe:
+        #   httpGet:
+        #     path: /healthz
+        #     port: 8080
+        #   initialDelaySeconds: 20
+        #   periodSeconds: 20
+        #   timeoutSeconds: 1
+        #   successThreshold: 1
+        #   failureThreshold: 3
+      - name: notebook-sshd-container
+        image: gcr.io/emrys-12/notebook-sshd
+        resources:
+          requests:
+            cpu: 50m
+            memory: "50Mi"
+        ports:
+        - containerPort: 2222
+        env:
+        - name: PUBLIC_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ssh-secret
+              key: secret
+        readinessProbe:
+          tcpSocket:
+            port: 2222
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+        livenessProbe:
+          tcpSocket:
+            port: 2222
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+      #   volumeMounts: 
+      #     - name: ssh-config-dir
+      #       mountPath: /.ssh
+      # volumes:
+      # - name: ssh-dir
+      #   emptyDir: {}
+  #     - name: notebook-creds
+  #       secret:
+  #         secretName: notebook-creds

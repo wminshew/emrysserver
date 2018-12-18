@@ -1,0 +1,14 @@
+steps:
+# - name: 'gcr.io/cloud-builders/docker'
+#   args: [ 'build', '-f', './cmd/notebook/dockerfile',
+#     '-t', 'gcr.io/$PROJECT_ID/notebook:$_BUILD',
+#     '-t', 'gcr.io/$PROJECT_ID/notebook:latest', '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-f', './cmd/notebook/dockerfile-sshd',
+    '-t', 'gcr.io/$PROJECT_ID/notebook-sshd:$_BUILD',
+    '-t', 'gcr.io/$PROJECT_ID/notebook-sshd:latest', '.' ]
+# images: [ 'gcr.io/$PROJECT_ID/notebook:$_BUILD', 'gcr.io/$PROJECT_ID/notebook:latest',
+#         'gcr.io/$PROJECT_ID/notebook-sshd:$_BUILD', 'gcr.io/$PROJECT_ID/notebook-sshd:latest' ]
+images: [ 'gcr.io/$PROJECT_ID/notebook-sshd:$_BUILD', 'gcr.io/$PROJECT_ID/notebook-sshd:latest' ]
+tags: [ 'notebook-sshd', '$_BUILD' ]
+# tags: [ 'notebook', 'notebook-sshd', '$_BUILD' ]

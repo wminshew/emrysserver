@@ -11,6 +11,8 @@ all: build deploy
 
 default-backend: build-default-backend deploy-default-backend
 
+ing: deploy-ing
+
 auth: build-auth deploy-auth
 
 user: build-user deploy-user
@@ -18,6 +20,8 @@ user: build-user deploy-user
 miner: build-miner deploy-miner
 
 job: build-job deploy-job
+
+notebook: build-notebook deploy-notebook
 
 image: build-image deploy-image
 
@@ -60,6 +64,11 @@ build-job: cmd/job/cloudbuild.yaml cmd/job/dockerfile dep-ensure
 	# container-builder-local --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
 	gcloud builds submit --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
+build-notebook: cmd/notebook/cloudbuild.yaml cmd/notebook/dockerfile cmd/notebook/dockerfile-sshd cmd/notebook/entrypoint-sshd.sh dep-ensure
+	# container-builder-local --config ./cmd/notebook/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
+	# container-builder-local --config ./cmd/notebook/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
+	gcloud builds submit --config ./cmd/notebook/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
+
 build-image: cmd/image/cloudbuild.yaml cmd/image/dockerfile dep-ensure
 	# container-builder-local --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/image/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
@@ -81,7 +90,7 @@ build-devpi: cmd/devpi/cloudbuild.yaml cmd/devpi/dockerfile dep-ensure
 	gcloud builds submit --config ./cmd/devpi/cloudbuild.yaml --substitutions=_BUILD=$(DATE) ./cmd/devpi/
 
 
-deploy: deploy-default-backend deploy-auth deploy-user deploy-miner deploy-job deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
+deploy: deploy-default-backend deploy-auth deploy-user deploy-miner deploy-job deploy-notebook deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
 
 deploy-default-backend: cmd/default-backend/svc-deploy.yaml
 	kubectl apply -f cmd/default-backend/svc-deploy.yaml
@@ -104,6 +113,10 @@ deploy-job: cmd/job/svc-sts.yaml
 	kubectl apply -f cmd/job/svc-sts.yaml
 	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(JOB_TIMEOUT)
 	gcloud compute backend-services list --filter='job' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
+
+deploy-notebook: cmd/notebook/svc-deploy.yaml
+	kubectl apply -f cmd/notebook/svc-deploy.yaml
+	# gcloud compute backend-services list --filter='notebook' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-image: cmd/image/svc-deploy.yaml
 	kubectl create configmap image-registry-config --dry-run -o yaml --from-file=cmd/image/registry-config.yaml | kubectl apply -f -
@@ -157,6 +170,11 @@ rollout-job:
 	kubectl set image sts/job-sts job-container=gcr.io/emrys-12/job:latest
 	kubectl rollout status sts/job-sts
 
+rollout-notebook:
+	# kubectl set image deploy/notebook-deploy notebook-container=gcr.io/emrys-12/notebook:latest
+	kubectl set image deploy/notebook-deploy notebook-sshd-container=gcr.io/emrys-12/notebook-sshd:latest
+	kubectl rollout status deploy/notebook-deploy
+
 rollout-image:
 	kubectl set image deploy/image-deploy image-container=gcr.io/emrys-12/image:latest
 	kubectl rollout status deploy/image-deploy
@@ -174,7 +192,7 @@ rollout-devpi:
 	kubectl rollout status sts/devpi-sts
 
 
-rollback: rollback-default-backend rollback-auth rollback-user rollback-miner rollback-job rollback-image rollback-registry rollback-data
+rollback: rollback-default-backend rollback-auth rollback-user rollback-miner rollback-job rollback-notebook rollback-image rollback-registry rollback-data
 
 rollback-default-backend:
 	kubectl rollout undo deploy/default-backend-deploy
@@ -196,6 +214,10 @@ rollback-job:
 	kubectl rollout undo sts/job-sts
 	kubectl rollout status sts/job-sts
 
+rollback-notebook:
+	kubectl rollout undo deploy/notebook-deploy
+	kubectl rollout status deploy/notebook-deploy
+
 rollback-image:
 	kubectl rollout undo deploy/image-deploy
 	kubectl rollout status deploy/image-deploy
@@ -213,7 +235,7 @@ rollback-devpi:
 	kubectl rollout status sts/devpi-sts
 
 
-delete: delete-default-backend delete-auth delete-user delete-miner delete-job delete-image delete-registry delete-data
+delete: delete-default-backend delete-auth delete-user delete-miner delete-job delete-notebook delete-image delete-registry delete-data
 
 delete-default-backend:
 	kubectl delete pod -lapp=default-backend
@@ -229,6 +251,9 @@ delete-miner:
 
 delete-job:
 	kubectl delete pod -lapp=job
+
+delete-notebook:
+	kubectl delete pod -lapp=notebook
 
 delete-image:
 	kubectl delete pod -lapp=image
