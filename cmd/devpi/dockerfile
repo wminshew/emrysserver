@@ -16,7 +16,7 @@ RUN apk add --no-cache --virtual .build-deps gcc python3-dev libffi-dev musl-dev
     && rm -r /root/.cache
 
 EXPOSE 3141
-COPY docker-entrypoint.sh .
+COPY ./cmd/devpi/docker-entrypoint.sh .
 RUN chmod +x ./docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["devpi"]
