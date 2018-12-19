@@ -83,15 +83,15 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 
 	ctx := r.Context()
 	if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
-		if err := downloadDockerfile(ctx); err != nil {
-			log.Sugar.Errorw("error downloading dockerfile",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
+		// if err := downloadDockerfile(ctx); err != nil {
+		log.Sugar.Errorw("dockerfile missing",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		// }
 	}
 
 	linkedDocker := filepath.Join(inputDir, "Dockerfile")

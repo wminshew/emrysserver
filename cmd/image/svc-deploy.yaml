@@ -79,7 +79,7 @@ spec:
         - name: DOCKER_HOST
           value: "tcp://127.0.0.1:2375"
         - name: DOCKER_PATH
-          value: "Dockerfiles/Dockerfile"
+          value: "/Dockerfiles/dockerfile"
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
         - name: REGISTRY_HOST
@@ -87,6 +87,9 @@ spec:
         volumeMounts:
           - name: image-creds
             mountPath: /secrets/google_application_credentials
+            readOnly: true
+          - name: base-dockerfile
+            mountPath: /Dockerfiles
             readOnly: true
         readinessProbe:
           httpGet:
@@ -151,6 +154,7 @@ spec:
             readOnly: true
           - name: registry-config
             mountPath: /etc/docker/registry
+            readOnly: true
       volumes:
       - name: image-creds
         secret:
@@ -160,3 +164,6 @@ spec:
       - name: registry-config
         configMap:
           name: image-registry-config
+      - name: base-dockerfile
+        configMap:
+          name: base-dockerfile

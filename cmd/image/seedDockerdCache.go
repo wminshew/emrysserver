@@ -16,6 +16,7 @@ import (
 var (
 	localBaseJobRef   string
 	dockerBaseCudaRef string
+	dockerfilePath    = os.Getenv("DOCKER_PATH")
 )
 
 // seedDockerdCache downloads and possibly builds early-stage docker images
