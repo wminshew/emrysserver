@@ -129,9 +129,16 @@ spec:
         volumeMounts: 
           - name: notebook-sshd-config
             mountPath: /etc/sshd
+            readOnly: true
+          - name: ssh-host-keys
+            mountPath: /etc/sshd-keys
+            readOnly: true
       volumes:
       # - name: ssh-dir
       #   emptyDir: {}
       - name: notebook-sshd-config
         configMap:
           name: notebook-sshd-config
+      - name: ssh-host-keys
+        secret:
+          secretName: ssh-host-keys
