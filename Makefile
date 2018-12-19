@@ -171,7 +171,7 @@ rollout-job:
 	kubectl rollout status sts/job-sts
 
 rollout-notebook:
-	# kubectl set image deploy/notebook-deploy notebook-container=gcr.io/emrys-12/notebook:latest
+	kubectl set image deploy/notebook-deploy notebook-container=gcr.io/emrys-12/notebook:latest
 	kubectl set image deploy/notebook-deploy notebook-sshd-container=gcr.io/emrys-12/notebook-sshd:latest
 	kubectl rollout status deploy/notebook-deploy
 

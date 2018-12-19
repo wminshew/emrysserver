@@ -11,7 +11,7 @@ import (
 	// "github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"github.com/wminshew/emrysserver/pkg/storage"
+	// "github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,10 +19,11 @@ import (
 	"time"
 )
 
-var (
-	authSecret = os.Getenv("AUTH_SECRET")
-	debugCors  = (os.Getenv("DEBUG_CORS") == "true")
-)
+//
+// var (
+// 	authSecret = os.Getenv("AUTH_SECRET")
+// 	debugCors  = (os.Getenv("DEBUG_CORS") == "true")
+// )
 
 func main() {
 	log.Init()
@@ -33,7 +34,7 @@ func main() {
 	}()
 	db.Init()
 	defer db.Close()
-	storage.Init()
+	// storage.Init()
 
 	// uuidRegexpMux := validate.UUIDRegexpMux()
 
