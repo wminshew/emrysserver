@@ -139,6 +139,8 @@ spec:
       - name: notebook-sshd-config
         configMap:
           name: notebook-sshd-config
+          defaultMode: 0600
       - name: ssh-host-keys
         secret:
           secretName: ssh-host-keys
+          defaultMode: 0600
