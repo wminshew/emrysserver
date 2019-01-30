@@ -31,6 +31,9 @@ var verifyUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error getting job ssh pubkey for user"}
 	}
 
+	// TODO: remove log
+	log.Sugar.Infof("%s", sshKey)
+
 	if _, err := w.Write([]byte(sshKey)); err != nil {
 		log.Sugar.Errorw("error writing job ssh key",
 			"method", r.Method,

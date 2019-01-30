@@ -4,10 +4,17 @@ RUN go install github.com/wminshew/emrysserver/cmd/notebook
 
 FROM alpine:3.8
 RUN apk --update upgrade && \
-  apk add curl ca-certificates && \
+  apk add curl ca-certificates bash openssh && \
   update-ca-certificates && \
   rm -rf /var/cache/apk/*
 RUN addgroup emrys
 RUN mkdir /ssh-keys
+
+COPY ./cmd/notebook/verify-user.sh .
+RUN chmod 0555 ./verify-user.sh
+COPY ./cmd/notebook/entrypoint.sh .
+RUN chmod +x ./entrypoint.sh
+
 COPY --from=0 /go/bin/notebook .
-CMD ["./notebook"]
+
+CMD ["./entrypoint.sh"]

@@ -50,6 +50,7 @@ spec:
             memory: "50Mi"
         ports:
         - containerPort: 8080
+        - containerPort: 2222
         env:
         # - name: AUTH_SECRET
         #   valueFrom:
@@ -76,35 +77,6 @@ spec:
               key: username
         # - name: DEBUG_CORS
         #   value: "false"
-        # volumeMounts:
-        #   - name: notebook-creds
-        #     mountPath: /secrets/google_application_credentials
-        #     readOnly: true
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 1
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-          initialDelaySeconds: 20
-          periodSeconds: 20
-          timeoutSeconds: 1
-          successThreshold: 1
-          failureThreshold: 3
-      - name: notebook-sshd-container
-        image: gcr.io/emrys-12/notebook-sshd
-        resources:
-          requests:
-            cpu: 50m
-            memory: "50Mi"
-        ports:
-        - containerPort: 2222
-        env:
         - name: PUBLIC_KEY
           valueFrom:
             secretKeyRef:
@@ -112,27 +84,69 @@ spec:
               key: secret
         - name: SSHD_CONFIG
           value: "/etc/sshd/sshd_config"
-        readinessProbe:
-          tcpSocket:
-            port: 2222
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 1
-        livenessProbe:
-          tcpSocket:
-            port: 2222
-          initialDelaySeconds: 20
-          periodSeconds: 20
-          timeoutSeconds: 1
-          successThreshold: 1
-          failureThreshold: 3
         volumeMounts: 
+        #   - name: notebook-creds
+        #     mountPath: /secrets/google_application_credentials
+        #     readOnly: true
           - name: notebook-sshd-config
             mountPath: /etc/sshd
             readOnly: true
           - name: ssh-host-keys
             mountPath: /etc/sshd-keys
             readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+      # - name: notebook-sshd-container
+      #   image: gcr.io/emrys-12/notebook-sshd
+      #   resources:
+      #     requests:
+      #       cpu: 50m
+      #       memory: "50Mi"
+      #   ports:
+      #   - containerPort: 2222
+      #   env:
+      #   - name: PUBLIC_KEY
+      #     valueFrom:
+      #       secretKeyRef:
+      #         name: ssh-secret
+      #         key: secret
+      #   - name: SSHD_CONFIG
+      #     value: "/etc/sshd/sshd_config"
+      #   readinessProbe:
+      #     tcpSocket:
+      #       port: 2222
+      #     initialDelaySeconds: 10
+      #     periodSeconds: 10
+      #     timeoutSeconds: 1
+      #   livenessProbe:
+      #     tcpSocket:
+      #       port: 2222
+      #     initialDelaySeconds: 20
+      #     periodSeconds: 20
+      #     timeoutSeconds: 1
+      #     successThreshold: 1
+      #     failureThreshold: 3
+      #   volumeMounts: 
+      #     - name: notebook-sshd-config
+      #       mountPath: /etc/sshd
+      #       readOnly: true
+      #     - name: ssh-host-keys
+      #       mountPath: /etc/sshd-keys
+      #       readOnly: true
       volumes:
       # - name: ssh-dir
       #   emptyDir: {}

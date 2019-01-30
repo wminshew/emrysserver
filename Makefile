@@ -64,7 +64,7 @@ build-job: cmd/job/cloudbuild.yaml cmd/job/dockerfile dep-ensure
 	# container-builder-local --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
 	gcloud builds submit --config ./cmd/job/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
 
-build-notebook: cmd/notebook/cloudbuild.yaml cmd/notebook/dockerfile cmd/notebook/dockerfile-sshd cmd/notebook/entrypoint-sshd.sh dep-ensure
+build-notebook: cmd/notebook/cloudbuild.yaml cmd/notebook/dockerfile cmd/notebook/entrypoint.sh dep-ensure
 	# container-builder-local --config ./cmd/notebook/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=true --push=false .
 	# container-builder-local --config ./cmd/notebook/cloudbuild.yaml --substitutions=_BUILD=$(DATE) --dryrun=false --push=false .
 	gcloud builds submit --config ./cmd/notebook/cloudbuild.yaml --substitutions=_BUILD=$(DATE) .
@@ -172,7 +172,6 @@ rollout-job:
 
 rollout-notebook:
 	kubectl set image deploy/notebook-deploy notebook-container=gcr.io/emrys-12/notebook:latest
-	kubectl set image deploy/notebook-deploy notebook-sshd-container=gcr.io/emrys-12/notebook-sshd:latest
 	kubectl rollout status deploy/notebook-deploy
 
 rollout-image:

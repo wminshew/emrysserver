@@ -52,15 +52,6 @@ var postUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error creating user"}
 	}
 
-	// if err := chownHomeDir(jUUID); err != nil {
-	// 	log.Sugar.Errorw("error changing home dir ownership",
-	// 		"method", r.Method,
-	// 		"url", r.URL,
-	// 		"err", err.Error(),
-	// 	)
-	// 	return &app.Error{Code: http.StatusInternalServerError, Message: "error creating user"}
-	// }
-	//
 	if err := unlockUser(jUUID); err != nil {
 		log.Sugar.Errorw("error unlocking user",
 			"method", r.Method,
@@ -139,14 +130,6 @@ func addUser(jUUID uuid.UUID) error {
 	return cmd.Run()
 }
 
-// func chownHomeDir(jUUID uuid.UUID) error {
-// 	homeDir := filepath.Join("home", jUUID.String())
-// 	cmdStr := "chown"
-// 	args := []string{jUUID.String(), homeDir}
-// 	cmd := exec.Command(cmdStr, args...)
-// 	return cmd.Run()
-// }
-//
 func unlockUser(jUUID uuid.UUID) error {
 	cmdStr := "passwd"
 	args := []string{"-u", jUUID.String()}
