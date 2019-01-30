@@ -4,7 +4,11 @@ RUN apk --update upgrade && \
   update-ca-certificates && \
   rm -rf /var/cache/apk/*
 EXPOSE 2222
+RUN mkdir /ssh-keys
+RUN addgroup emrys
 
+COPY ./cmd/notebook/verify-user.sh .
+RUN chmod 0555 ./verify-user.sh
 COPY ./cmd/notebook/entrypoint-sshd.sh .
 RUN chmod +x ./entrypoint-sshd.sh
 CMD ["./entrypoint-sshd.sh"]

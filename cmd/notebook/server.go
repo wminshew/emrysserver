@@ -42,6 +42,10 @@ func main() {
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
+	r.Handle("/user", postUser).Methods("POST")
+	r.Handle("/user", deleteUser).Methods("DELETE")
+	r.Handle("/user", verifyUser).Methods("GET")
+
 	// notebookPathPrefix := fmt.Sprintf("/notebook/{jID:%s}", uuidRegexpMux)
 	// rNotebook := r.PathPrefix(notebookPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	//

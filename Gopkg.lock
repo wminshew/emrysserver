@@ -324,7 +324,13 @@
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
-    "blowfish"
+    "blowfish",
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "internal/chacha20",
+    "poly1305",
+    "ssh"
   ]
   revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
 
@@ -468,6 +474,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "efd8a586daa7186166ef8e78210865f7e0ea351a2e3c2b4f7201291d473af0d3"
+  inputs-digest = "eff345e9cbb177669f18659a3c327dfa6c74b58f7302306e1f6d1c3a06159b13"
   solver-name = "gps-cdcl"
   solver-version = 1

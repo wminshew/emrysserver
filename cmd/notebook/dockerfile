@@ -7,5 +7,7 @@ RUN apk --update upgrade && \
   apk add curl ca-certificates && \
   update-ca-certificates && \
   rm -rf /var/cache/apk/*
+RUN addgroup emrys
+RUN mkdir /ssh-keys
 COPY --from=0 /go/bin/notebook .
 CMD ["./notebook"]
