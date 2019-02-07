@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -57,6 +58,9 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
+	nbQuery := r.URL.Query().Get("notebook")
+	notebook := (nbQuery == "1")
+	notebookStr := strconv.FormatBool(notebook)
 
 	inputDir := filepath.Join("job", jID, "input")
 	if err := os.MkdirAll(inputDir, 0755); err != nil {
@@ -83,7 +87,6 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 
 	ctx := r.Context()
 	if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
-		// if err := downloadDockerfile(ctx); err != nil {
 		log.Sugar.Errorw("dockerfile missing",
 			"method", r.Method,
 			"url", r.URL,
@@ -91,7 +94,6 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 			"jID", jID,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// }
 	}
 
 	linkedDocker := filepath.Join(inputDir, "Dockerfile")
@@ -110,9 +112,11 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	main := r.Header.Get("X-Main")
 	reqs := r.Header.Get("X-Reqs")
 	ctxFiles := []string{
-		filepath.Join(inputDir, main),
 		filepath.Join(inputDir, reqs),
 		filepath.Join(inputDir, "Dockerfile"),
+	}
+	if main != "" {
+		ctxFiles = append(ctxFiles, filepath.Join(inputDir, main))
 	}
 
 	defer func() {
@@ -209,6 +213,7 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 				"DEVPI_TRUSTED_HOST": &devpiTrustedHost,
 				"MAIN":               &main,
 				"REQS":               &reqs,
+				"NOTEBOOK":           &notebookStr,
 			},
 			CacheFrom:      cacheSlice,
 			ForceRemove:    true,

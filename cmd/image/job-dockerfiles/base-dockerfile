@@ -31,11 +31,15 @@ ARG DEVPI_TRUSTED_HOST="devpi-svc"
 ARG PIP_TIMEOUT=30
 ARG PIP_RETRIES=10
 ARG REQS
-COPY $REQS $REQS
+COPY $REQS .
 RUN ./venv/bin/pip --no-cache-dir --timeout=$PIP_TIMEOUT --retries=$PIP_RETRIES install -i $DEVPI_HOST/root/pypi/+simple/ --trusted-host $DEVPI_TRUSTED_HOST -r $REQS
+ARG NOTEBOOK=false
+ENV NOTEBOOK $NOTEBOOK
+RUN if [ "$NOTEBOOK" = true ] ; then ./venv/bin/pip --no-cache-dir --timeout=$PIP_TIMEOUT --retries=$PIP_RETRIES install -i $DEVPI_HOST/root/pypi/+simple/ --trusted-host $DEVPI_TRUSTED_HOST jupyter ; fi
 USER user
 
 ARG MAIN
 ENV MAIN $MAIN
-COPY --chown=user:user $MAIN $MAIN
-CMD ./venv/bin/python $MAIN
+COPY --chown=user:user $REQS $MAIN .
+# CMD ./venv/bin/python $MAIN
+CMD sh -c 'if [ "$NOTEBOOK" = true ]; then ./venv/bin/jupyter notebook "$MAIN" ; else ./venv/bin/python "$MAIN" ; fi'
