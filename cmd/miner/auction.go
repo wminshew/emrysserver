@@ -19,6 +19,7 @@ type auction struct {
 	winner
 	late
 	requirements *job.Specs
+	notebook     bool
 }
 
 type late struct {

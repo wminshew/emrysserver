@@ -106,11 +106,15 @@ var postAuction app.Handler = func(w http.ResponseWriter, r *http.Request) *app.
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
 	}
 
+	nbQuery := r.URL.Query().Get("notebook")
+	notebook := (nbQuery == "1")
+
 	a = &auction{
 		jobID:        jUUID,
 		late:         late{bool: false},
 		winner:       winner{},
 		requirements: reqs,
+		notebook:     notebook,
 	}
 	return a.run(r)
 }
