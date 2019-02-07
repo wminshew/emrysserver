@@ -129,5 +129,23 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		return &app.Error{Code: http.StatusPaymentRequired, Message: "your bid was not selected"}
 	}
 
+	// TODO: change to get key miner
+	// TODO: what if this fails? use a retry ?
+	// TODO: does this fail for non-notebook jobs with no sshKey?
+	sshKey, err := db.GetJobSSHKeyUser(b.JobID)
+	if err != nil {
+		log.Sugar.Errorw("error getting job ssh pubkey for miner",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "error getting job ssh pubkey for miner"}
+	}
+
+	// TODO: remove log
+	log.Sugar.Infof("%s", sshKey)
+
+	w.Header().Set("X-SSH-Key", sshKey)
+
 	return nil
 }

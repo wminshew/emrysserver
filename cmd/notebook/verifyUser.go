@@ -21,6 +21,7 @@ var verifyUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
+	// TODO: verify should return user & miner keys, right?
 	sshKey, err := db.GetJobSSHKeyUser(jUUID)
 	if err != nil {
 		log.Sugar.Errorw("error getting job ssh pubkey for user",

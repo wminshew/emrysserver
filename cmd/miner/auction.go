@@ -39,6 +39,7 @@ const (
 
 func (a *auction) run(r *http.Request) *app.Error {
 	a.winner.Lock()
+	// TODO: add Notebook to Job struct; pass as query into run auction & as flag into auction.run (or as part of auction? vs pass by value)
 	j := &job.Job{
 		ID: a.jobID,
 	}
