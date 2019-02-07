@@ -10,7 +10,7 @@ import (
 )
 
 // InsertJob inserts a new job, status, and payment into the db
-func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID) *app.Error {
+func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID, notebook bool) *app.Error {
 	ctx := r.Context()
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
@@ -40,10 +40,10 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 		}
 
 		sqlStmt = `
-	INSERT INTO jobs (uuid, project_uuid, active)
-	VALUES ($1, $2, true)
+	INSERT INTO jobs (uuid, project_uuid, active, notebook)
+	VALUES ($1, $2, true, $3)
 	`
-		if _, err := tx.Exec(sqlStmt, jUUID, pUUID); err != nil {
+		if _, err := tx.Exec(sqlStmt, jUUID, pUUID, notebook); err != nil {
 			return "error inserting job", err
 		}
 
