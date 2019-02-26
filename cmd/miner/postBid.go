@@ -2,13 +2,23 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/cenkalti/backoff"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"time"
+)
+
+const (
+	maxBackoffRetries = 5
 )
 
 // postBid accepts a job.Bid from a miner
@@ -129,23 +139,61 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		return &app.Error{Code: http.StatusPaymentRequired, Message: "your bid was not selected"}
 	}
 
-	// TODO: change to get key miner
-	// TODO: what if this fails? use a retry ?
-	// TODO: does this fail for non-notebook jobs with no sshKey?
 	if a.notebook {
-		sshKey, err := db.GetJobSSHKeyUser(b.JobID)
-		if err != nil {
-			log.Sugar.Errorw("error getting job ssh pubkey for miner",
+		ctx := r.Context()
+		client := http.Client{}
+		u := url.URL{
+			Scheme: "http",
+			Host:   "notebook-svc:8080",
+			Path:   "miner",
+		}
+		q := u.Query()
+		q.Set("jID", b.JobID.String())
+		u.RawQuery = q.Encode()
+
+		operation := func() error {
+			req, err := http.NewRequest(post, u.String(), nil)
+			if err != nil {
+				return err
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				return err
+			}
+			defer check.Err(resp.Body.Close)
+
+			if resp.StatusCode == http.StatusBadGateway {
+				return fmt.Errorf("server: temporary error")
+			} else if resp.StatusCode >= 300 {
+				b, _ := ioutil.ReadAll(resp.Body)
+				return backoff.Permanent(fmt.Errorf("server: %v", string(b)))
+			}
+
+			sshKeyBytes, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return backoff.Permanent(err)
+			}
+			log.Sugar.Infof("ssh-key-miner: %s", string(sshKeyBytes)) // TODO: remove
+			w.Header().Set("X-SSH-Key", string(sshKeyBytes))
+			return nil
+		}
+		if err := backoff.RetryNotify(operation,
+			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxBackoffRetries), ctx),
+			func(err error, t time.Duration) {
+				log.Sugar.Errorw("error adding notebook user, retrying",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+				)
+			}); err != nil {
+			log.Sugar.Errorw("error adding notebook user, aborting",
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "error getting job ssh pubkey for miner"}
+			return &app.Error{Code: http.StatusInternalServerError, Message: "error posting notebook job"}
 		}
-		// TODO: remove log
-		log.Sugar.Infof("%s", sshKey)
-
-		w.Header().Set("X-SSH-Key", sshKey)
 	}
 
 	return nil
