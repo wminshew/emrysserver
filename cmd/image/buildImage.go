@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mholt/archiver"
 	"github.com/satori/go.uuid"
+	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrys/pkg/jsonmessage"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -96,9 +97,22 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	linkedDocker := filepath.Join(inputDir, "Dockerfile")
-	if _, err := os.Stat(linkedDocker); os.IsNotExist(err) {
-		if err := os.Link(dockerfilePath, linkedDocker); err != nil {
+	inputDockerfilePath := filepath.Join(inputDir, "Dockerfile")
+	if _, err := os.Stat(inputDockerfilePath); os.IsNotExist(err) {
+		if err := func() error {
+			dockerfile, err := os.Open(dockerfilePath)
+			if err != nil {
+				return err
+			}
+			defer check.Err(dockerfile.Close)
+			inputDockerfile, err := os.Create(inputDockerfilePath)
+			if err != nil {
+				return err
+			}
+			defer check.Err(inputDockerfile.Close)
+			_, err = io.Copy(inputDockerfile, dockerfile)
+			return err
+		}(); err != nil {
 			log.Sugar.Errorw("error linking dockerfile into user dir",
 				"method", r.Method,
 				"url", r.URL,
@@ -107,6 +121,16 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
+		// if err := os.Symlink(dockerfilePath, inputDockerfilePath); err != nil {
+		// 	// if err := os.Link(dockerfilePath, inputDockerfilePath); err != nil {
+		// 	log.Sugar.Errorw("error linking dockerfile into user dir",
+		// 		"method", r.Method,
+		// 		"url", r.URL,
+		// 		"err", err.Error(),
+		// 		"jID", jID,
+		// 	)
+		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		// }
 	}
 
 	main := r.Header.Get("X-Main")
