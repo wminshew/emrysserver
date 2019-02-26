@@ -79,7 +79,7 @@ spec:
         - name: DOCKER_HOST
           value: "tcp://127.0.0.1:2375"
         - name: DOCKER_PATH
-          value: "/Dockerfiles/dockerfile"
+          value: "/Dockerfiles/base-dockerfile"
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
         - name: REGISTRY_HOST
