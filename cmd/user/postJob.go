@@ -41,6 +41,15 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 	nbQuery := r.URL.Query().Get("notebook")
 	notebook := (nbQuery == "1")
 
+	if err := db.InsertJob(r, uUUID, project, jobID, notebook); err != nil {
+		log.Sugar.Errorw("error inserting job",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "error inserting job"}
+	}
+
 	if notebook {
 		ctx := r.Context()
 		client := http.Client{}
@@ -97,5 +106,5 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		}
 	}
 
-	return db.InsertJob(r, uUUID, project, jobID, notebook)
+	return nil
 }
