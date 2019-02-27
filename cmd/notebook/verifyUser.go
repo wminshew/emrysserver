@@ -21,8 +21,9 @@ var verifyUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	// TODO: verify should return user & miner keys, right?
-	sshKey, err := db.GetJobSSHKeyUser(jUUID)
+	log.Sugar.Infof("VERIFYING USER: %s", jID) // TODO: remove
+
+	userSSHKeyPub, err := db.GetJobSSHKeyPubUser(jUUID)
 	if err != nil {
 		log.Sugar.Errorw("error getting job ssh pubkey for user",
 			"method", r.Method,
@@ -32,16 +33,31 @@ var verifyUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error getting job ssh pubkey for user"}
 	}
 
-	// TODO: remove log
-	log.Sugar.Infof("%s", sshKey)
+	log.Sugar.Infof("USER KEY: %s", userSSHKeyPub) // TODO: remove
 
-	if _, err := w.Write([]byte(sshKey)); err != nil {
-		log.Sugar.Errorw("error writing job ssh key",
+	minerSSHKeyPub, err := db.GetJobSSHKeyPubMiner(jUUID)
+	if err != nil {
+		log.Sugar.Errorw("error getting job ssh pubkey for miner",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "error writing job ssh key"}
+		return &app.Error{Code: http.StatusInternalServerError, Message: "error getting job ssh pubkey for miner"}
+	}
+
+	log.Sugar.Infof("MINER KEY: %s", minerSSHKeyPub) // TODO: remove
+
+	sshKeyFile := append([]byte(userSSHKeyPub), append([]byte("\n"), []byte(minerSSHKeyPub)...)...)
+
+	log.Sugar.Infof("KEY FILE: %s", string(sshKeyFile))
+
+	if _, err := w.Write(sshKeyFile); err != nil {
+		log.Sugar.Errorw("error writing job ssh key file",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "error writing job ssh key file"}
 	}
 
 	return nil

@@ -61,6 +61,7 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		q := u.Query()
 		q.Set("jID", jobID.String())
 		u.RawQuery = q.Encode()
+		var sshKeyBytes []byte
 
 		operation := func() error {
 			req, err := http.NewRequest(post, u.String(), nil)
@@ -81,11 +82,10 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 				return backoff.Permanent(fmt.Errorf("server: %v", string(b)))
 			}
 
-			sshKeyBytes, err := ioutil.ReadAll(resp.Body)
+			sshKeyBytes, err = ioutil.ReadAll(resp.Body)
 			if err != nil {
-				return backoff.Permanent(err)
+				return backoff.Permanent(fmt.Errorf("reading response: %v", err))
 			}
-			w.Header().Set("X-SSH-Key", string(sshKeyBytes))
 			return nil
 		}
 		if err := backoff.RetryNotify(operation,
@@ -103,6 +103,15 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 				"err", err.Error(),
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "error posting notebook job"}
+		}
+		// TODO: add json wrapper?
+		if _, err := w.Write(sshKeyBytes); err != nil {
+			log.Sugar.Errorw("error returning ssh key",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "error returning ssh key"}
 		}
 	}
 

@@ -6,14 +6,14 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 )
 
-// SetJobSSHKeyUser sets job ssh_key_user for job jUUID
-func SetJobSSHKeyUser(jUUID uuid.UUID, sshKeyUser string) error {
+// SetJobSSHKeyPubUser sets job ssh_key_user for job jUUID
+func SetJobSSHKeyPubUser(jUUID uuid.UUID, sshKeyPubUser string) error {
 	sqlStmt := `
 	UPDATE jobs j
 	SET ssh_key_user = $2
 	WHERE j.uuid = $1
 	`
-	_, err := db.Exec(sqlStmt, jUUID, sshKeyUser)
+	_, err := db.Exec(sqlStmt, jUUID, sshKeyPubUser)
 	if err != nil {
 		message := "error updating jobs ssh_key_user"
 		pqErr, ok := err.(*pq.Error)

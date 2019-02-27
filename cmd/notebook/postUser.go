@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/app"
@@ -61,7 +62,7 @@ var postUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error creating user"}
 	}
 
-	sshKeyPath := filepath.Join("ssh-keys", jUUID.String())
+	sshKeyPath := filepath.Join("ssh-keys", fmt.Sprintf("%s-user", jUUID.String()))
 	sshKeyPubPath := sshKeyPath + ".pub"
 	if err := createSSHKeyPair(sshKeyPath, sshKeyPubPath); err != nil {
 		log.Sugar.Errorw("error creating ssh key pair",
@@ -80,7 +81,6 @@ var postUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 			)
 		}
 	}()
-	// TODO: generate & delete ssh key for miner?
 
 	sshKeyPubBytes, err := ioutil.ReadFile(sshKeyPubPath)
 	if err != nil {
@@ -92,7 +92,8 @@ var postUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error reading ssh pubkey file"}
 	}
 	sshKeyPub := string(sshKeyPubBytes)
-	if err := db.SetJobSSHKeyUser(jUUID, sshKeyPub); err != nil {
+
+	if err := db.SetJobSSHKeyPubUser(jUUID, sshKeyPub); err != nil {
 		log.Sugar.Errorw("error setting job ssh pubkey for user",
 			"method", r.Method,
 			"url", r.URL,
@@ -119,7 +120,6 @@ var postUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error writing job ssh key to user"}
 	}
 
-	// TODO: update db status?
 	return nil
 }
 
@@ -137,6 +137,7 @@ func unlockUser(jUUID uuid.UUID) error {
 	return cmd.Run()
 }
 
+// TODO: replace file storage with []byte or strings
 func createSSHKeyPair(sshKeyPath, sshKeyPubPath string) error {
 	privKey, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {

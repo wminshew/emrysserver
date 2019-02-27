@@ -24,7 +24,8 @@ HostKey /etc/sshd-keys/ssh_host_ed25519_key
 
 # Logging
 SyslogFacility AUTH
-LogLevel INFO
+LogLevel DEBUG
+# LogLevel INFO
 
 # Authentication:
 
@@ -55,7 +56,8 @@ AuthorizedKeysCommandUser nobody
 
 # To disable tunneled clear text passwords, change to no here!
 PasswordAuthentication no
-#PermitEmptyPasswords no
+PermitEmptyPasswords yes
+# PermitEmptyPasswords no TODO
 
 # Change to no to disable s/key passwords
 #ChallengeResponseAuthentication yes

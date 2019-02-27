@@ -1,22 +1,21 @@
 package db
 
 import (
-	"database/sql"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/log"
 )
 
-// GetJobSSHKeyUser gets ssh_key_user for job jUUID
-func GetJobSSHKeyUser(jUUID uuid.UUID) (string, error) {
-	var sshKey sql.NullString
+// SetJobSSHKeyPubMiner sets job ssh_key_miner for job jUUID
+func SetJobSSHKeyPubMiner(jUUID uuid.UUID, sshKeyPubMiner string) error {
 	sqlStmt := `
-	SELECT j.ssh_key_user
-	FROM jobs j
+	UPDATE jobs j
+	SET ssh_key_miner = $2
 	WHERE j.uuid = $1
 	`
-	if err := db.QueryRow(sqlStmt, jUUID).Scan(&sshKey); err != nil {
-		message := "error getting job ssh_key_user"
+	_, err := db.Exec(sqlStmt, jUUID, sshKeyPubMiner)
+	if err != nil {
+		message := "error updating jobs ssh_key_miner"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -30,10 +29,6 @@ func GetJobSSHKeyUser(jUUID uuid.UUID) (string, error) {
 				"err", err.Error(),
 			)
 		}
-		return "", err
 	}
-	if sshKey.Valid {
-		return sshKey.String, nil
-	}
-	return "", nil
+	return err
 }

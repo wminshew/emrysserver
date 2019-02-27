@@ -12,7 +12,8 @@ import (
 // deleteUser handles user removal for notebook service
 var deleteUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	jID := r.URL.Query().Get("jID")
-	jUUID, err := uuid.FromString(jID)
+	// jUUID, err := uuid.FromString(jID)
+	_, err := uuid.FromString(jID)
 	if err != nil {
 		log.Sugar.Errorw("error parsing job ID",
 			"method", r.Method,
@@ -22,24 +23,16 @@ var deleteUser app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	if err := delUser(jUUID); err != nil {
-		log.Sugar.Errorw("error removing notebook user",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "error removing notebook user"}
-	}
-
-	// if err := db.SetStatusNotebookUserRemoved(jUUID); err != nil {
-	// 	log.Sugar.Errorw("error setting notebook user removed",
+	// TODO: add back in
+	// if err := delUser(jUUID); err != nil {
+	// 	log.Sugar.Errorw("error removing notebook user",
 	// 		"method", r.Method,
 	// 		"url", r.URL,
 	// 		"err", err.Error(),
 	// 	)
-	// 	return &app.Error{Code: http.StatusInternalServerError, Message: "error setting notebook user removed"}
+	// 	return &app.Error{Code: http.StatusInternalServerError, Message: "error removing notebook user"}
 	// }
-	//
+
 	return nil
 }
 

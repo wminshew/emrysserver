@@ -46,6 +46,8 @@ func main() {
 	r.Handle("/user", deleteUser).Methods("DELETE")
 	r.Handle("/user", verifyUser).Methods("GET")
 
+	r.Handle("/miner", postMiner).Methods("POST")
+
 	// notebookPathPrefix := fmt.Sprintf("/notebook/{jID:%s}", uuidRegexpMux)
 	// rNotebook := r.PathPrefix(notebookPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 	//
