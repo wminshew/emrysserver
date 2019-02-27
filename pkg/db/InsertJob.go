@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 )
 
 // InsertJob inserts a new job, status, and payment into the db
-func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID, notebook bool) *app.Error {
+func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID, notebook bool) error {
 	ctx := r.Context()
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
@@ -92,7 +91,7 @@ func InsertJob(r *http.Request, uUUID uuid.UUID, project string, jUUID uuid.UUID
 				log.Sugar.Errorf("Error rolling tx back: %v", jUUID, err)
 			}
 		}
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		return err
 	}
 	return nil
 }
