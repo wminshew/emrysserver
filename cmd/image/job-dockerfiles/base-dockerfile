@@ -42,5 +42,4 @@ ARG MAIN
 ENV MAIN $MAIN
 # re-copying REQS keeps command from failing if MAIN is blank, which may be the case for notebook jobs
 COPY --chown=user:user $REQS $MAIN ./
-# CMD ./venv/bin/python $MAIN
 CMD sh -c 'if [ "$NOTEBOOK" = true ]; then ./venv/bin/jupyter notebook "$MAIN" ; else ./venv/bin/python "$MAIN" ; fi'
