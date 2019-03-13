@@ -55,7 +55,7 @@ func main() {
 	rJobUser := rJob.NewRoute().Methods("GET").Subrouter()
 	rJobUser.Use(auth.Jwt(authSecret, []string{"user"}))
 	rJobUser.Use(auth.UserJobMiddleware)
-	rJobUser.Handle("/log", streamOutputLog)
+	rJobUser.Handle("/log", auth.JobActive(streamOutputLog))
 	rJobUser.Handle("/log/download", downloadOutputLog)
 	rJobUser.Handle("/data", getOutputData)
 
