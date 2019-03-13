@@ -42,4 +42,4 @@ ARG MAIN
 ENV MAIN $MAIN
 # re-copying REQS keeps command from failing if MAIN is blank, which may be the case for notebook jobs
 COPY --chown=user:user $REQS $MAIN ./
-CMD sh -c 'if [ "$NOTEBOOK" = true ]; then ./venv/bin/jupyter notebook --ip=0.0.0.0 --NotebookApp.token='' --no-browser "$MAIN" ; else ./venv/bin/python "$MAIN" ; fi'
+CMD sh -c 'if [ "$NOTEBOOK" = true ]; then ./venv/bin/jupyter notebook --ip=0.0.0.0 --no-browser "$MAIN" ; else ./venv/bin/python "$MAIN" ; fi'
