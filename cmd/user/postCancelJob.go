@@ -127,8 +127,8 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 	}
 
 	u := url.URL{
-		Scheme: "https",
-		Host:   "job-svc",
+		Scheme: "http",
+		Host:   "job-svc:8080",
 		Path:   fmt.Sprintf("job/%s/log", jUUID),
 	}
 	operation := func() error {
@@ -171,6 +171,7 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error canceling notebook job"}
 	}
+
 	operation = func() error {
 		// POST with empty body signifies log upload complete
 		req, err := http.NewRequest(post, u.String(), nil)

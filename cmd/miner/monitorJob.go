@@ -60,8 +60,8 @@ func monitorJob(jUUID uuid.UUID) {
 
 			client := http.Client{}
 			u := url.URL{
-				Scheme: "https",
-				Host:   "job-svc",
+				Scheme: "http",
+				Host:   "job-svc:8080",
 				Path:   fmt.Sprintf("job/%s/log", jUUID),
 			}
 			operation := func() error {
