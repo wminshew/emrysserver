@@ -45,19 +45,22 @@ func main() {
 	jobPathPrefix := fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)
 	rJob := r.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 
-	rJobMiner := rJob.NewRoute().Methods("POST").Subrouter()
+	// rJobMiner := rJob.NewRoute().Methods("POST").Subrouter()
+	rJobMiner := rJob.NewRoute().Subrouter()
 	rJobMiner.Use(auth.Jwt(authSecret, []string{"miner"}))
 	rJobMiner.Use(auth.MinerJobMiddleware)
 	rJobMiner.Use(auth.JobActive)
-	rJobMiner.Handle("/log", postOutputLog)
-	rJobMiner.Handle("/data", postOutputData)
+	rJobMiner.Handle("/log", postOutputLog).Methods("POST")
+	rJobMiner.Handle("/data", postOutputData).Methods("POST")
+	rJobMiner.Handle("/cancel", getJobCancel).Methods("GET")
 
-	rJobUser := rJob.NewRoute().Methods("GET").Subrouter()
+	rJobUser := rJob.NewRoute().Subrouter()
 	rJobUser.Use(auth.Jwt(authSecret, []string{"user"}))
 	rJobUser.Use(auth.UserJobMiddleware)
-	rJobUser.Handle("/log", auth.JobActive(streamOutputLog))
-	rJobUser.Handle("/log/download", downloadOutputLog)
-	rJobUser.Handle("/data", getOutputData)
+	rJobUser.Handle("/log", auth.JobActive(streamOutputLog)).Methods("GET")
+	rJobUser.Handle("/log/download", downloadOutputLog).Methods("GET")
+	rJobUser.Handle("/data", getOutputData).Methods("GET")
+	rJobUser.Handle("/cancel", postJobCancel).Methods("POST")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{

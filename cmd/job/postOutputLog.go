@@ -57,7 +57,7 @@ var postOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 
 	if r.ContentLength == 0 {
 		if err := jobsManager.Publish(jID, struct{}{}); err != nil {
-			log.Sugar.Errorw("error publishing bytes",
+			log.Sugar.Errorw("error publishing empty struct for log posted",
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
