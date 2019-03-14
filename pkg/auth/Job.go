@@ -91,7 +91,11 @@ func UserJobMiddleware(h http.Handler) http.Handler {
 			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt"}
 		}
 
-		log.Sugar.Infof("valid user, owns job")
+		log.Sugar.Infow("valid user, owns job",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jUUID,
+		)
 		h.ServeHTTP(w, r)
 		return nil
 	})
@@ -139,7 +143,11 @@ func MinerJobMiddleware(h http.Handler) http.Handler {
 			return &app.Error{Code: http.StatusUnauthorized, Message: "unauthorized jwt"}
 		}
 
-		log.Sugar.Infof("valid miner, won job")
+		log.Sugar.Infow("valid miner, won job",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jUUID,
+		)
 		h.ServeHTTP(w, r)
 		return nil
 	})
