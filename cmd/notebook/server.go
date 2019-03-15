@@ -76,7 +76,6 @@ func main() {
 	// })
 	// h := c.Handler(r)
 
-	// TODO: make sure external access not available
 	server := http.Server{
 		Addr: ":8080",
 		// Handler:           log.Log(h),

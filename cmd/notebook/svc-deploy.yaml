@@ -7,6 +7,23 @@ metadata:
 spec:
   selector:
     app: notebook
+  type: NodePort
+  externalTrafficPolicy: Local
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notebook-sshd-svc
+  labels:
+    app: notebook
+spec:
+  selector:
+    app: notebook
   type: LoadBalancer
   loadBalancerIP: "35.202.18.216"
   externalTrafficPolicy: Local
@@ -14,10 +31,6 @@ spec:
   - name: ssh
     port: 2222
     targetPort: 2222
-    protocol: TCP
-  - name: http
-    port: 8080
-    targetPort: 8080
     protocol: TCP
 ---
 apiVersion: apps/v1
