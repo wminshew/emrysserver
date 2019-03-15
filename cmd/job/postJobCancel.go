@@ -23,12 +23,6 @@ var postJobCancel app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	log.Sugar.Infow("canceling job...",
-		"method", r.Method,
-		"url", r.URL,
-		"jID", jID,
-	)
-
 	if err := jobsManager.Publish(fmt.Sprintf("%s-canceled", jID), struct{}{}); err != nil {
 		log.Sugar.Errorw("error publishing empty struct for job canceled",
 			"method", r.Method,

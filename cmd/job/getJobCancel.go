@@ -23,12 +23,6 @@ var getJobCancel app.Handler = func(w http.ResponseWriter, r *http.Request) *app
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	log.Sugar.Infow("watching for job cancellations...",
-		"method", r.Method,
-		"url", r.URL,
-		"jID", jID,
-	)
-
 	q := r.URL.Query()
 	q.Set("category", fmt.Sprintf("%s-canceled", jID))
 	q.Set("timeout", fmt.Sprintf("%d", maxTimeout))
