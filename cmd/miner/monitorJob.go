@@ -66,7 +66,7 @@ func monitorJob(jUUID uuid.UUID) {
 			}
 			operation := func() error {
 				req, err := http.NewRequest(post, u.String(), strings.NewReader("ERROR: supplier "+
-					"has crashed. Please re-submit this job, you will not be charged."))
+					"has crashed. Please re-submit this job, you will not be charged.\n"))
 				if err != nil {
 					return err
 				}
