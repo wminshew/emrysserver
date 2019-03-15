@@ -3,13 +3,11 @@ package db
 import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"net/http"
 )
 
 // SetStatusOutputDataPosted sets job jUUID status in database to output_data_posted=NOW()
-func SetStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
+func SetStatusOutputDataPosted(jUUID uuid.UUID) error {
 	sqlStmt := `
 	UPDATE statuses
 	SET output_data_posted = NOW()
@@ -21,8 +19,6 @@ func SetStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 				"pq_sev", pqErr.Severity,
@@ -31,13 +27,11 @@ func SetStatusOutputDataPosted(r *http.Request, jUUID uuid.UUID) *app.Error {
 			)
 		} else {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 				"jID", jUUID,
 			)
 		}
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		return err
 	}
 
 	return nil

@@ -60,6 +60,7 @@ func main() {
 	rJobUser.Handle("/log", auth.JobActive(streamOutputLog)).Methods("GET")
 	rJobUser.Handle("/log/download", downloadOutputLog).Methods("GET")
 	rJobUser.Handle("/data", getOutputData).Methods("GET")
+	rJobUser.Handle("/data/posted", getJobOutputDataPosted).Methods("GET") // TODO: add JobActive mdlwre?
 	rJobUser.Handle("/cancel", postJobCancel).Methods("POST")
 
 	c := cors.New(cors.Options{
