@@ -42,6 +42,9 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 		return &app.Error{Code: http.StatusBadRequest, Message: "must successfully download data, image and post output log before posting output data"}
 	}
 
+	jcQuery := r.URL.Query().Get("jobcanceled")
+	jobCanceled := (jcQuery == "1")
+
 	outputDir := path.Join("output", jID)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		log.Sugar.Errorw("error making output dir",
@@ -114,5 +117,8 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 		}()
 	}()
 
+	if jobCanceled {
+		return db.SetStatusOutputDataPosted(r, jUUID)
+	}
 	return db.SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r, jUUID)
 }

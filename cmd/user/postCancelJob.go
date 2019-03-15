@@ -214,5 +214,22 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error canceling notebook job"}
 	}
 
+	// wait for output data to be posted
+	for {
+		if tOutputDataPosted, err := db.GetStatusOutputData(r, jUUID); err != nil {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+		} else if !tOutputDataPosted.IsZero() {
+			break
+		}
+
+		// check if job is still active [miner might fail here]
+		if active, err := db.GetJobActive(r, jUUID); err != nil {
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+		} else if !active {
+			return &app.Error{Code: http.StatusOK, Message: "the miner failed to upload your output. You will not be charged for this job accordingly"} // err already logged
+		}
+		time.Sleep(10 * time.Second)
+	}
+
 	return db.SetJobCanceledAndDebitUser(r, jUUID)
 }
