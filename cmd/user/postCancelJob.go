@@ -95,126 +95,8 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		}
 	}
 
-	// save log, if exists
-	mUUID, err := db.GetJobWinner(jUUID)
-	if err != nil {
-		log.Sugar.Errorw("error getting job winner",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "error canceling notebook job"}
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"aud":   "emrys.io",
-		"exp":   time.Now().Add(time.Minute * 5).Unix(),
-		"iss":   "emrys.io",
-		"iat":   time.Now().Unix(),
-		"sub":   mUUID,
-		"scope": []string{"miner"},
-	})
-
-	authToken, err := token.SignedString([]byte(authSecret))
-	if err != nil {
-		log.Sugar.Errorw("error signing token",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "error canceling notebook job"}
-	}
-
-	u := url.URL{
-		Scheme: "http",
-		Host:   "job-svc:8080",
-		Path:   fmt.Sprintf("job/%s/log", jUUID),
-	}
-	operation := func() error {
-		req, err := http.NewRequest(post, u.String(), strings.NewReader("JOB CANCELED BY USER."))
-		if err != nil {
-			return err
-		}
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", authToken))
-
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer check.Err(resp.Body.Close)
-
-		if resp.StatusCode == http.StatusBadGateway {
-			return fmt.Errorf("server: temporary error")
-		} else if resp.StatusCode >= 300 {
-			b, _ := ioutil.ReadAll(resp.Body)
-			return fmt.Errorf("server: %v", string(b))
-		}
-
-		return nil
-	}
-	if err := backoff.RetryNotify(operation,
-		backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries),
-		func(err error, t time.Duration) {
-			log.Sugar.Errorw("error posting cancellation to job output log--retrying",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jUUID,
-			)
-		}); err != nil {
-		log.Sugar.Errorw("error posting cancellation to job output log--abort",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "error canceling notebook job"}
-	}
-
-	operation = func() error {
-		// POST with empty body signifies log upload complete
-		req, err := http.NewRequest(post, u.String(), nil)
-		if err != nil {
-			return err
-		}
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", authToken))
-
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer check.Err(resp.Body.Close)
-
-		if resp.StatusCode == http.StatusBadGateway {
-			return fmt.Errorf("server: temporary error")
-		} else if resp.StatusCode >= 300 {
-			b, _ := ioutil.ReadAll(resp.Body)
-			return fmt.Errorf("server: %v", string(b))
-		}
-
-		return nil
-	}
-	if err := backoff.RetryNotify(operation,
-		backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries),
-		func(err error, t time.Duration) {
-			log.Sugar.Errorw("error posting error to job output log--retrying",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jUUID,
-			)
-		}); err != nil {
-		log.Sugar.Errorw("error posting error to job output log--abort",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-			"jID", jUUID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "error canceling notebook job"}
-	}
-
 	// wait for output data to be posted
+	log.Sugar.Infof("wait for output data")
 	for {
 		if tOutputDataPosted, err := db.GetStatusOutputData(r, jUUID); err != nil {
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
@@ -228,8 +110,10 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		} else if !active {
 			return &app.Error{Code: http.StatusOK, Message: "the miner failed to upload your output. You will not be charged for this job accordingly"} // err already logged
 		}
+		log.Sugar.Infof("sleeping...")
 		time.Sleep(10 * time.Second)
 	}
 
+	log.Sugar.Infof("canceling job and debiting user...")
 	return db.SetJobCanceledAndDebitUser(r, jUUID)
 }
