@@ -132,7 +132,7 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		Path:   fmt.Sprintf("job/%s/log", jUUID),
 	}
 	operation := func() error {
-		req, err := http.NewRequest(post, u.String(), strings.NewReader("JOB CANCELED."))
+		req, err := http.NewRequest(post, u.String(), strings.NewReader("JOB CANCELED BY USER."))
 		if err != nil {
 			return err
 		}
