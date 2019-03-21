@@ -41,7 +41,7 @@ spec:
         image: gcr.io/emrys-12/image:latest
         resources:
           requests:
-            cpu: 100m
+            cpu: 50m
             memory: "100Mi"
           # limits:
           #   cpu: 250m
@@ -111,7 +111,7 @@ spec:
         image: docker:18.03.1-ce-dind 
         resources:
           requests:
-            cpu: 100m
+            cpu: 50m
             memory: "500Mi"
           # limits:
           #   cpu: 500m
@@ -131,7 +131,7 @@ spec:
         args: [ "/etc/docker/registry/registry-config.yaml" ]
         resources:
           requests:
-            cpu: 100m
+            cpu: 50m
             memory: "500Mi"
           # limits:
           #   cpu: 500m
