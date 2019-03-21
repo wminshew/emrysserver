@@ -19,8 +19,7 @@ import (
 )
 
 const (
-	del        = "DELETE"
-	maxRetries = 5
+	maxRetries = 10
 	buffer     = 10
 	maxTimeout = 600
 )
@@ -69,7 +68,7 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		u.RawQuery = q.Encode()
 
 		operation := func() error {
-			req, err := http.NewRequest(del, u.String(), nil)
+			req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
 			if err != nil {
 				return err
 			}
@@ -149,7 +148,7 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 			Path:   p,
 		}
 		operation := func() error {
-			req, err := http.NewRequest(post, u.String(), nil)
+			req, err := http.NewRequest(http.MethodPost, u.String(), nil)
 			if err != nil {
 				return err
 			}

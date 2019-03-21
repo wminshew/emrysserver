@@ -21,8 +21,7 @@ var (
 
 const (
 	baseMinerPenalty = 0.5
-	maxRetries       = 5
-	post             = "POST"
+	maxRetries       = 10
 )
 
 func monitorJob(jUUID uuid.UUID) {
@@ -65,7 +64,7 @@ func monitorJob(jUUID uuid.UUID) {
 				Path:   fmt.Sprintf("job/%s/log", jUUID),
 			}
 			operation := func() error {
-				req, err := http.NewRequest(post, u.String(), strings.NewReader("ERROR: supplier "+
+				req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader("ERROR: supplier "+
 					"has crashed. Please re-submit this job, you will not be charged.\n"))
 				if err != nil {
 					return err
@@ -103,7 +102,7 @@ func monitorJob(jUUID uuid.UUID) {
 			}
 			operation = func() error {
 				// POST with empty body signifies log upload complete
-				req, err := http.NewRequest(post, u.String(), nil)
+				req, err := http.NewRequest(http.MethodPost, u.String(), nil)
 				if err != nil {
 					return err
 				}

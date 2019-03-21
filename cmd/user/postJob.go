@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	post              = "POST"
-	maxBackoffRetries = 5
+	maxBackoffRetries = 10
 )
 
 // postJob handles new jobs posted by users
@@ -64,7 +63,7 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		var sshKeyBytes []byte
 
 		operation := func() error {
-			req, err := http.NewRequest(post, u.String(), nil)
+			req, err := http.NewRequest(http.MethodPost, u.String(), nil)
 			if err != nil {
 				return err
 			}
