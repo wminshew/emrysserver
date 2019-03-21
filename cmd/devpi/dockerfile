@@ -10,13 +10,14 @@ RUN apk add --update --no-cache bash ca-certificates python3 \
     && rm -r /root/.cache
 
 RUN apk add --no-cache --virtual .build-deps gcc python3-dev libffi-dev musl-dev \
-    && pip install -U devpi-web \
+    && pip install -U devpi-server==4.8.1 \
+    # && pip install -U devpi-web \
     # && pip3 install https://m.devpi.net/devpi-travis/devpi_devpi_master/+f/697/b0a1580db86a3/devpi-server-4.7.2.dev0.tar.gz#sha256=697b0a1580db86a3c5227c571a02079ac964b8b314a33d42bbeb4744017245ca \
     && apk del .build-deps \
     && rm -r /root/.cache
 
 EXPOSE 3141
-COPY ./cmd/devpi/docker-entrypoint.sh .
+COPY ./docker-entrypoint.sh .
 RUN chmod +x ./docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["devpi"]
