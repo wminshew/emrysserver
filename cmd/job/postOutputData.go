@@ -4,18 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/cenkalti/backoff"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"time"
@@ -127,83 +123,12 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 		var err error
 		defer func() {
 			if err == nil {
-				// post to {jID}-output-data-posted
-				mID := r.Header.Get("X-Jwt-Claims-Subject")
-				mUUID, err := uuid.FromString(mID)
-				if err != nil {
-					log.Sugar.Errorw("error parsing miner ID",
+				if err := jobsManager.Publish(fmt.Sprintf("%s-output-data-posted", jID), struct{}{}); err != nil {
+					log.Sugar.Errorw("error publishing empty struct for output-data-posted",
 						"method", r.Method,
 						"url", r.URL,
 						"err", err.Error(),
-						"jID", jUUID,
-					)
-					return
-				}
-				token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-					"aud":   "emrys.io",
-					"exp":   time.Now().Add(time.Minute * 5).Unix(),
-					"iss":   "emrys.io",
-					"iat":   time.Now().Unix(),
-					"sub":   mUUID,
-					"scope": []string{"miner"},
-				})
-				authToken, err := token.SignedString([]byte(authSecret))
-				if err != nil {
-					log.Sugar.Errorw("error signing token",
-						"method", r.Method,
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jUUID,
-					)
-					return
-				}
-
-				client := http.Client{}
-				p := path.Join("job", jUUID.String(), "cancel")
-				u := url.URL{
-					Scheme: "http",
-					Host:   "job-svc:8080",
-					Path:   p,
-				}
-				ctx := r.Context()
-				operation := func() error {
-					req, err := http.NewRequest(http.MethodPost, u.String(), nil)
-					if err != nil {
-						return err
-					}
-					req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", authToken))
-					req = req.WithContext(ctx)
-
-					resp, err := client.Do(req)
-					if err != nil {
-						return err
-					}
-					defer check.Err(resp.Body.Close)
-
-					if resp.StatusCode == http.StatusBadGateway {
-						return fmt.Errorf("server: temporary error")
-					} else if resp.StatusCode >= 300 {
-						b, _ := ioutil.ReadAll(resp.Body)
-						return backoff.Permanent(fmt.Errorf("server: %v", string(b)))
-					}
-
-					return nil
-				}
-				if err := backoff.RetryNotify(operation,
-					backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
-					func(err error, t time.Duration) {
-						log.Sugar.Errorw("error posting output-data-posted to longpoll, retrying",
-							"method", r.Method,
-							"url", r.URL,
-							"err", err.Error(),
-							"jID", jUUID,
-						)
-					}); err != nil {
-					log.Sugar.Errorw("error posting output-data-posted to longpoll--aborting",
-						"method", r.Method,
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jUUID,
+						"jID", jID,
 					)
 					return
 				}
@@ -222,5 +147,6 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 
 		return nil
 	}
+
 	return db.SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r, jUUID)
 }
