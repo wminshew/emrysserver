@@ -52,11 +52,6 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
-	log.Sugar.Infow("user canceled job",
-		"method", r.Method,
-		"url", r.URL,
-		"jID", jUUID,
-	)
 
 	nbQuery := r.URL.Query().Get("notebook")
 	notebook := (nbQuery == "1")
@@ -193,7 +188,6 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 	}
 
 	// wait for output data to be posted
-	log.Sugar.Infof("wait for output data")
 	p = path.Join("job", jUUID.String(), "data", "posted")
 	u.Path = p
 	q := u.Query()
