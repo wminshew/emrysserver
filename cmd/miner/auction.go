@@ -40,6 +40,7 @@ const (
 
 func (a *auction) run(r *http.Request) *app.Error {
 	a.winner.Lock()
+	defer a.winner.Unlock()
 	// TODO: add Notebook to Job struct; pass as query into run auction & as flag into auction.run (or as part of auction? vs pass by value)
 	j := &job.Job{
 		ID: a.jobID,
@@ -58,17 +59,17 @@ func (a *auction) run(r *http.Request) *app.Error {
 			"err", err.Error(),
 			"jID", a.jobID,
 		)
-		a.winner.Unlock()
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	auctions[a.jobID] = a
 	success := false
 	defer func() {
-		a.winner.Unlock()
-		if success { // if auction fails, delete immediately to start a new one
-			time.Sleep(deleteAfter)
-		}
-		delete(auctions, a.jobID)
+		go func() {
+			if success { // if auction fails, delete immediately to start a new one
+				time.Sleep(deleteAfter)
+			}
+			delete(auctions, a.jobID)
+		}()
 	}()
 
 	time.Sleep(duration)
@@ -117,13 +118,20 @@ func (a *auction) run(r *http.Request) *app.Error {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	if n == 0 {
-		log.Sugar.Infof("no bids received")
+		log.Sugar.Infow("no bids received",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", a.jobID,
+		)
 		return &app.Error{Code: http.StatusPaymentRequired, Message: "no bids received, please try again"}
 	} else if n == 1 {
 		payRate = winRate
 	}
 	success = true
 	log.Sugar.Infow("successful auction",
+		"method", r.Method,
+		"url", r.URL,
+		"jID", a.jobID,
 		"bids", n,
 		"winner", a.winner.bid,
 		"rate", payRate,
