@@ -239,10 +239,9 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 				"REQS":               &reqs,
 				"NOTEBOOK":           &notebookStr,
 			},
-			CacheFrom:      cacheSlice,
-			ForceRemove:    true,
-			SuppressOutput: true,
-			Tags:           strRefs,
+			CacheFrom:   cacheSlice,
+			ForceRemove: true,
+			Tags:        strRefs,
 		})
 		if err != nil {
 			return err
