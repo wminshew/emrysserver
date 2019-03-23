@@ -124,8 +124,8 @@ deploy-notebook: cmd/notebook/svc-deploy.yaml
 	# gcloud compute backend-services list --filter='notebook' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-image: cmd/image/svc-deploy.yaml
-	# kubectl apply -f cmd/image/svc-deploy.yaml
-	linkerd inject cmd/image/svc-deploy.yaml | kubectl apply -f -
+	kubectl apply -f cmd/image/svc-deploy.yaml
+	# linkerd inject cmd/image/svc-deploy.yaml | kubectl apply -f -
 	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(IMAGE_TIMEOUT)
 	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
