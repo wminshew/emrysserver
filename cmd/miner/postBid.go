@@ -123,8 +123,6 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		b.Specs.Disk >= a.requirements.Disk &&
 		b.Specs.Pcie >= a.requirements.Pcie
 
-	log.Sugar.Infof("%+v meets reqs: %v", b, meetsReqs) // TODO: remove
-
 	if err := db.InsertBid(r, b, meetsReqs); err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
