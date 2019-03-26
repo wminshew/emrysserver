@@ -250,10 +250,21 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 			}
 
 			// check if job is still active [miner might fail here]
-			if active, err := db.GetJobActive(r, jUUID); err != nil {
-				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
+			if active, err := db.GetJobActive(jUUID); err != nil {
+				log.Sugar.Errorw("error checking if job is active",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jUUID,
+				)
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 			} else if !active {
-				return &app.Error{Code: http.StatusOK, Message: "the miner failed to upload your output. You will not be charged for this job accordingly"} // err already logged
+				log.Sugar.Errorw("miner failed to complete job during user cancellation",
+					"method", r.Method,
+					"url", r.URL,
+					"jID", jUUID,
+				)
+				return &app.Error{Code: http.StatusGone, Message: "the miner failed to upload your output. You will not be charged for this job accordingly"}
 			}
 
 			if pr.Timestamp > sinceTime {

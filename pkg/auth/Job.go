@@ -25,9 +25,9 @@ func JobActive(h http.Handler) http.Handler {
 			return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 		}
 
-		active, err := db.GetJobActive(r, jUUID)
+		active, err := db.GetJobActive(jUUID)
 		if err != nil {
-			log.Sugar.Errorw("checking if job is active",
+			log.Sugar.Errorw("error checking if job is active",
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),

@@ -30,6 +30,19 @@ func monitorJob(jUUID uuid.UUID) {
 	for {
 		select {
 		case <-time.After(time.Second * time.Duration(minerTimeout)):
+			// check if job has completed or been canceled [i.e. is active]
+			if active, err := db.GetJobActive(jUUID); err != nil {
+				log.Sugar.Errorw("error checking if job is active",
+					"jID", jUUID,
+				)
+				return
+			} else if !active {
+				log.Sugar.Infow("removing job monitoring from inactive job",
+					"jID", jUUID,
+				)
+				return
+			}
+
 			mUUID, err := db.GetJobWinner(jUUID)
 			if err != nil {
 				log.Sugar.Errorw("error getting job winner",
