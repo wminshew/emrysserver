@@ -127,7 +127,8 @@ deploy-image: cmd/image/svc-deploy.yaml
 	kubectl apply -f cmd/image/svc-deploy.yaml
 	# linkerd inject cmd/image/svc-deploy.yaml | kubectl apply -f -
 	# linkerd inject cmd/image/svc-deploy.yaml --skip-outbound-ports=3141 | kubectl apply -f -
-	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(IMAGE_TIMEOUT)
+	# linkerd inject cmd/image/svc-deploy.yaml --proxy-log-level=warn,linkerd2_proxy=trace | kubectl apply -f -
+		gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(IMAGE_TIMEOUT)
 	gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-registry: cmd/registry/svc-deploy.yaml
@@ -148,8 +149,8 @@ deploy-sqlproxy: cmd/sqlproxy/svc-deploy.yaml
 	# gcloud compute backend-services list --filter='sqlproxy' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-devpi: cmd/devpi/svc-sts.yaml
-	kubectl apply -f cmd/devpi/svc-sts.yaml
-	# linkerd inject cmd/devpi/svc-sts.yaml | kubectl apply -f -
+	# kubectl apply -f cmd/devpi/svc-sts.yaml
+	linkerd inject cmd/devpi/svc-sts.yaml | kubectl apply -f -
 	# linkerd inject cmd/devpi/svc-sts.yaml --skip-inbound-ports=3141 | kubectl apply -f -
 	# linkerd inject cmd/devpi/svc-sts.yaml --proxy-log-level=warn,linkerd2_proxy=info,linkerd_proxy::app=debug | kubectl apply -f -
 	# gcloud compute backend-services list --filter='devpi' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(DEVPITIMEOUT)

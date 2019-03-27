@@ -27,12 +27,8 @@ func initDocker(ctx context.Context) {
 		panic(err)
 	}
 
-	// if err = downloadDockerfile(ctx); err != nil {
-	// 	log.Sugar.Errorf("error downloading dockerfile: %v", err)
-	// 	panic(err)
-	// }
-	//
-	seedDockerdCache(ctx)
+	// TODO: move to initContainer
+	go seedDockerdCache(ctx)
 
 	go pruneDocker(ctx, dClient)
 }

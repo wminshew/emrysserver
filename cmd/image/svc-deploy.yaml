@@ -102,11 +102,14 @@ spec:
           httpGet:
             path: /healthz
             port: 8080
-          initialDelaySeconds: 60
-          periodSeconds: 20
+          initialDelaySeconds: 30
+          # initialDelaySeconds: 60
+          periodSeconds: 30
+          # periodSeconds: 10
           timeoutSeconds: 1
           successThreshold: 1
-          failureThreshold: 3
+          # failureThreshold: 3
+          failureThreshold: 7
       - name: dind-daemon 
         image: docker:18.03.1-ce-dind 
         resources:
@@ -127,7 +130,7 @@ spec:
           - name: docker-graph-storage 
             mountPath: /var/lib/docker 
       - name: registry
-        image: registry:2.6.2
+        image: registry:2.7.1
         args: [ "/etc/docker/registry/registry-config.yaml" ]
         resources:
           requests:

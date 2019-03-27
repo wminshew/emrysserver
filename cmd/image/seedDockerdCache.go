@@ -23,6 +23,7 @@ var (
 func seedDockerdCache(ctx context.Context) {
 	// TODO: make wait period ENV
 	time.Sleep(10 * time.Second) // wait for dockerd to boot
+	// TODO: move to initContainers
 	log.Sugar.Infof("Seeding dockerd cache...")
 
 	var pullResp io.ReadCloser
