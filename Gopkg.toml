@@ -95,4 +95,4 @@
 
 [[constraint]]
   name = "github.com/stripe/stripe-go"
-  version = "54.2.0"
+  version = "60.0.0"

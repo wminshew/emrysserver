@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	stripe "github.com/stripe/stripe-go"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -42,6 +43,7 @@ func main() {
 		log.Sugar.Errorf("Error adding weekly payments to cron: %v", err)
 		panic(err)
 	}
+	stripe.Key = stripeSecretKey
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 	projectRegexpMux := validate.ProjectRegexpMux()
@@ -62,6 +64,8 @@ func main() {
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripe)).
 		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(redirectStripeDashboard)).
+		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 
 	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()

@@ -252,6 +252,16 @@
   revision = "2438403eeee449d9db818864b275bd4900043720"
 
 [[projects]]
+  name = "github.com/stripe/stripe-go"
+  packages = [
+    ".",
+    "form",
+    "loginlink"
+  ]
+  revision = "05fff5baa4adda87ab885237a0722e0147098581"
+  version = "v60.0.0"
+
+[[projects]]
   name = "github.com/ulikunitz/xz"
   packages = [
     ".",
@@ -474,6 +484,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "eff345e9cbb177669f18659a3c327dfa6c74b58f7302306e1f6d1c3a06159b13"
+  inputs-digest = "264b55d823bc0c56b89cbeec84ec6c342f63b66bb8ebd96d87f555c8d68969a1"
   solver-name = "gps-cdcl"
   solver-version = 1
