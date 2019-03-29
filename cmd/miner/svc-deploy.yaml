@@ -76,7 +76,7 @@ spec:
         - name: DEBUG_LONGPOLL
           value: "false"
         - name: MINER_SEMVER
-          value: "0.3.0"
+          value: "0.4.0"
         - name: MINER_TIMEOUT
           value: "60"
         - name: SENDGRID_SECRET
