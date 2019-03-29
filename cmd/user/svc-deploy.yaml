@@ -73,6 +73,16 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: STRIPE_PUB_KEY
+          valueFrom:
+            secretKeyRef:
+              name: stripe-keys
+              key: pub-key
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: stripe-keys
+              key: secret-key
         - name: USER_SEMVER
           value: "0.4.0"
         volumeMounts:

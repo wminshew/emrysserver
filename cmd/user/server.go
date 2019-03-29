@@ -21,8 +21,10 @@ import (
 )
 
 var (
-	authSecret = os.Getenv("AUTH_SECRET")
-	debugCors  = (os.Getenv("DEBUG_CORS") == "true")
+	authSecret      = os.Getenv("AUTH_SECRET")
+	stripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
+	stripePubKey    = os.Getenv("STRIPE_PUB_KEY")
+	debugCors       = (os.Getenv("DEBUG_CORS") == "true")
 )
 
 func main() {
@@ -54,8 +56,12 @@ func main() {
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/balance", auth.Jwt(authSecret, []string{})(getAccountBalance)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).
+		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeID)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripe)).
+		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
 
 	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
