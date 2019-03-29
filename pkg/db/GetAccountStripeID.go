@@ -1,22 +1,23 @@
 package db
 
 import (
+	"database/sql"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 )
 
-// GetAccountBalance gets the account aUUID's balance
-func GetAccountBalance(r *http.Request, aUUID uuid.UUID) (float64, error) {
-	var balance float64
+// GetAccountStripeID gets the account aUUID's stripe id
+func GetAccountStripeID(r *http.Request, aUUID uuid.UUID) (string, error) {
+	var stripeID sql.NullString
 	sqlStmt := `
-	SELECT a.balance
+	SELECT a.stripe_id
 	FROM accounts a
 	WHERE a.uuid = $1
 	`
-	if err := db.QueryRow(sqlStmt, aUUID).Scan(&balance); err != nil {
-		message := "error querying account balance"
+	if err := db.QueryRow(sqlStmt, aUUID).Scan(&stripeID); err != nil {
+		message := "error querying account stripe ID"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -34,7 +35,10 @@ func GetAccountBalance(r *http.Request, aUUID uuid.UUID) (float64, error) {
 				"err", err.Error(),
 			)
 		}
-		return 0, err
+		return "", err
 	}
-	return balance, nil
+	if stripeID.Valid {
+		return stripeID.String, nil
+	}
+	return "", nil
 }
