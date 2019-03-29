@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -9,14 +10,14 @@ import (
 
 // GetAccountEmail returns account email given the account uuid
 func GetAccountEmail(r *http.Request, aUUID uuid.UUID) (string, error) {
-	var email *string
+	var email sql.NullString
 	sqlStmt := `
 	SELECT a.email
 	FROM accounts a
 	WHERE a.uuid=$1
 	`
-	if err := db.QueryRow(sqlStmt, aUUID).Scan(email); err != nil {
-		message := "error querying for email"
+	if err := db.QueryRow(sqlStmt, aUUID).Scan(&email); err != nil {
+		message := "error querying for account email"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -38,5 +39,8 @@ func GetAccountEmail(r *http.Request, aUUID uuid.UUID) (string, error) {
 		}
 		return "", err
 	}
-	return *email, nil
+	if email.Valid {
+		return email.String, nil
+	}
+	return "", nil
 }
