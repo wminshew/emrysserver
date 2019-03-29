@@ -17,10 +17,6 @@ import (
 	"time"
 )
 
-const (
-	maxBackoffRetries = 10
-)
-
 // postBid accepts a job.Bid from a miner
 var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	var err error
@@ -139,7 +135,7 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 
 	if a.notebook {
 		ctx := r.Context()
-		client := http.Client{}
+		client := &http.Client{}
 		u := url.URL{
 			Scheme: "http",
 			Host:   "notebook-svc:8080",
@@ -176,7 +172,7 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 			return nil
 		}
 		if err := backoff.RetryNotify(operation,
-			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxBackoffRetries), ctx),
+			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 			func(err error, t time.Duration) {
 				log.Sugar.Errorw("error adding notebook user, retrying",
 					"method", r.Method,

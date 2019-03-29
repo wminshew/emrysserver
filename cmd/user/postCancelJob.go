@@ -19,7 +19,6 @@ import (
 )
 
 const (
-	maxRetries = 10
 	buffer     = 10
 	maxTimeout = 600
 )
@@ -56,7 +55,7 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 	notebook := (nbQuery == "1")
 
 	ctx := r.Context()
-	client := http.Client{}
+	client := &http.Client{}
 	if notebook {
 		u := url.URL{
 			Scheme: "http",
@@ -89,7 +88,7 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 			return nil
 		}
 		if err := backoff.RetryNotify(operation,
-			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxBackoffRetries), ctx),
+			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 			func(err error, t time.Duration) {
 				log.Sugar.Errorw("error deleting notebook user, retrying",
 					"method", r.Method,
@@ -171,7 +170,7 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 			return nil
 		}
 		if err := backoff.RetryNotify(operation,
-			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxBackoffRetries), ctx),
+			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 			func(err error, t time.Duration) {
 				log.Sugar.Errorw("error posting user cancellation to job-svc, retrying",
 					"method", r.Method,
@@ -227,7 +226,7 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 				return nil
 			}
 			if err := backoff.RetryNotify(operation,
-				backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxBackoffRetries), ctx),
+				backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 				func(err error, t time.Duration) {
 					log.Sugar.Errorw("error polling for output-data-posted, retrying",
 						"method", r.Method,

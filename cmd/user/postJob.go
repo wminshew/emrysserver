@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	maxBackoffRetries = 10
+	maxRetries = 10
 )
 
 // postJob handles new jobs posted by users
@@ -51,7 +51,7 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 
 	if notebook {
 		ctx := r.Context()
-		client := http.Client{}
+		client := &http.Client{}
 		u := url.URL{
 			Scheme: "http",
 			Host:   "notebook-svc:8080",
@@ -88,7 +88,7 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 			return nil
 		}
 		if err := backoff.RetryNotify(operation,
-			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxBackoffRetries), ctx),
+			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 			func(err error, t time.Duration) {
 				log.Sugar.Errorw("error adding notebook user, retrying",
 					"method", r.Method,

@@ -70,7 +70,7 @@ func monitorJob(jUUID uuid.UUID) {
 				)
 			}
 
-			client := http.Client{}
+			client := &http.Client{}
 			u := url.URL{
 				Scheme: "http",
 				Host:   "job-svc:8080",
