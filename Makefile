@@ -126,6 +126,7 @@ deploy-notebook: cmd/notebook/svc-deploy.yaml
 deploy-image: cmd/image/svc-deploy.yaml
 	kubectl apply -f cmd/image/svc-deploy.yaml
 	# linkerd inject cmd/image/svc-deploy.yaml | kubectl apply -f -
+	# linkerd inject cmd/image/svc-deploy.yaml --skip-inbound-ports=3141 | kubectl apply -f -
 	# linkerd inject cmd/image/svc-deploy.yaml --skip-outbound-ports=3141 | kubectl apply -f -
 	# linkerd inject cmd/image/svc-deploy.yaml --proxy-log-level=warn,linkerd2_proxy=trace | kubectl apply -f -
 		gcloud compute backend-services list --filter='image' --format='value(name)' | xargs -n 1 gcloud compute backend-services update --global --timeout $(IMAGE_TIMEOUT)
