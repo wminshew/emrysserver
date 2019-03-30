@@ -93,7 +93,8 @@ build-devpi: cmd/devpi/cloudbuild.yaml cmd/devpi/dockerfile dep-ensure
 deploy: deploy-default-backend deploy-auth deploy-user deploy-miner deploy-job deploy-notebook deploy-image deploy-registry deploy-data deploy-sqlproxy deploy-devpi deploy-ing
 
 deploy-default-backend: cmd/default-backend/svc-deploy.yaml
-	kubectl apply -f cmd/default-backend/svc-deploy.yaml
+	# kubectl apply -f cmd/default-backend/svc-deploy.yaml
+	linkerd inject cmd/default-backend/svc-deploy.yaml | kubectl apply -f -
 
 deploy-auth: cmd/auth/svc-deploy.yaml
 	# kubectl apply -f cmd/auth/svc-deploy.yaml
