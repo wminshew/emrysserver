@@ -104,8 +104,6 @@ var postConfirmStripe app.Handler = func(w http.ResponseWriter, r *http.Request)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error posting stripe authorization code"}
 	}
 
-	log.Sugar.Infof("stripe ID: %s", stripeResp.StripeUserID)
-
 	if err := db.SetAccountStripeID(r, aUUID, stripeResp.StripeUserID); err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
 	}
