@@ -77,17 +77,13 @@ func main() {
 		auth.JobActive(auth.UserJobMiddleware(postCancelJob))).Methods("POST")
 
 	c := cors.New(cors.Options{
-		// AllowedOrigins: []string{
-		// 	"https://www.emrys.io",
-		// 	"http://localhost:8080",
-		// },
-		AllowedHeaders: []string{"*"},
-		// AllowedHeaders: []string{
-		// 	"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
-		// 	// "Accept-Encoding", "Accept-Language", "Access-Control-Request-Headers",
-		// 	// "Access-Control-Request-Method", "Dnt", "User-Agent", "Via",
-		// 	// "X-Cloud-Trace-Context", "X-Forwarded-For", "X-Forwarded-Proto",
-		// },
+		AllowedOrigins: []string{
+			"https://www.emrys.io",
+			"http://localhost:8080",
+		},
+		AllowedHeaders: []string{
+			"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
+		},
 		Debug: debugCors,
 	})
 	h := c.Handler(r)

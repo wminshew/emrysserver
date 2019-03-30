@@ -8,7 +8,6 @@ spec:
   selector:
     app: user
   type: NodePort
-  # TODO externalTrafficPolicy: Local
   ports:
   - name: http
     port: 8080
