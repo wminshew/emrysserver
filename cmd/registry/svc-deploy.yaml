@@ -8,7 +8,6 @@ spec:
   selector:
     app: registry
   type: NodePort
-  externalTrafficPolicy: Local
   ports:
   - name: registry
     port: 5000
@@ -72,8 +71,10 @@ spec:
               key: username
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
-        # - name: DEBUG_CORS
-        #   value: "false"
+        - name: DEBUG_CORS
+          value: "false"
+        - name: DEBUG_LOG
+          value: "false"
         - name: REGISTRY_HOST
           value: "127.0.0.1:5001"
         volumeMounts:

@@ -8,7 +8,6 @@ spec:
   selector:
     app: image
   type: NodePort
-  externalTrafficPolicy: Local
   ports:
   - name: http
     port: 8080
@@ -70,8 +69,10 @@ spec:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: username
-        # - name: DEBUG_CORS
-        #   value: "false"
+        - name: DEBUG_CORS
+          value: "false"
+        - name: DEBUG_LOG
+          value: "false"
         - name: DEVPI_HOST
           value: "http://devpi-svc:3141"
         - name: DOCKER_API_VERSION
@@ -102,14 +103,14 @@ spec:
           httpGet:
             path: /healthz
             port: 8080
-          initialDelaySeconds: 30
-          # initialDelaySeconds: 60
-          periodSeconds: 30
-          # periodSeconds: 10
+          # initialDelaySeconds: 30
+          initialDelaySeconds: 60
+          # periodSeconds: 30
+          periodSeconds: 10
           timeoutSeconds: 1
           successThreshold: 1
-          # failureThreshold: 3
-          failureThreshold: 7
+          failureThreshold: 3
+          # failureThreshold: 7
       - name: dind-daemon 
         image: docker:18.03.1-ce-dind 
         resources:

@@ -8,7 +8,6 @@ spec:
   selector:
     app: auth
   type: NodePort
-  externalTrafficPolicy: Local
   ports:
   - name: http
     port: 8080
@@ -53,8 +52,6 @@ spec:
             secretKeyRef:
               name: auth-secret
               key: secret
-        # - name: GOOGLE_APPLICATION_CREDENTIALS
-        #   value: "/secrets/google_application_credentials/credentials.json"
         - name: DBNAME
           value: "emrysserver"
         - name: DBNETLOC
@@ -80,10 +77,6 @@ spec:
             secretKeyRef:
               name: sendgrid-secret
               key: secret
-        # volumeMounts:
-        #   - name: auth-creds
-        #     mountPath: /secrets/google_application_credentials
-        #     readOnly: true
         readinessProbe:
           httpGet:
             path: /healthz
@@ -100,7 +93,3 @@ spec:
           timeoutSeconds: 1
           successThreshold: 1
           failureThreshold: 3
-      # volumes:
-      # - name: auth-creds
-      #   secret:
-      #     secretName: auth-creds

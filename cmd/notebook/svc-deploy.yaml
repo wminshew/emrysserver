@@ -8,7 +8,6 @@ spec:
   selector:
     app: notebook
   type: NodePort
-  externalTrafficPolicy: Local
   ports:
   - name: http
     port: 8080
@@ -26,7 +25,6 @@ spec:
     app: notebook
   type: LoadBalancer
   loadBalancerIP: "35.202.18.216"
-  externalTrafficPolicy: Local
   ports:
   - name: ssh
     port: 2222

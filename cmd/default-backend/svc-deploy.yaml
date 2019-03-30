@@ -8,7 +8,6 @@ spec:
   selector:
     app: default-backend
   type: NodePort
-  externalTrafficPolicy: Local
   ports:
   - name: default-backend
     port: 8080

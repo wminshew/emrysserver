@@ -8,7 +8,6 @@ spec:
   selector:
     app: devpi
   type: NodePort
-  externalTrafficPolicy: Local
   ports:
   - name: http
     port: 3141

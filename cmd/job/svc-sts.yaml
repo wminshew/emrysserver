@@ -8,7 +8,6 @@ spec:
   selector:
     app: job
   type: NodePort
-  externalTrafficPolicy: Local
   ports:
   - name: http
     port: 8080
