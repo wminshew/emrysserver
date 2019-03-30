@@ -26,10 +26,11 @@ var (
 	stripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
 	stripePubKey    = os.Getenv("STRIPE_PUB_KEY")
 	debugCors       = (os.Getenv("DEBUG_CORS") == "true")
+	debugLog        = (os.Getenv("DEBUG_LOG") == "true")
 )
 
 func main() {
-	log.Init()
+	log.Init(debugLog)
 	defer func() {
 		if err := log.Sugar.Sync(); err != nil {
 			log.Sugar.Errorf("Error syncing log: %v\n", err)
@@ -64,7 +65,7 @@ func main() {
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripe)).
 		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(redirectStripeDashboard)).
+	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeDashboard)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 
 	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
@@ -76,13 +77,17 @@ func main() {
 		auth.JobActive(auth.UserJobMiddleware(postCancelJob))).Methods("POST")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"https://www.emrys.io",
-			"http://localhost:8080",
-		},
-		AllowedHeaders: []string{
-			"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
-		},
+		// AllowedOrigins: []string{
+		// 	"https://www.emrys.io",
+		// 	"http://localhost:8080",
+		// },
+		AllowedHeaders: []string{"*"},
+		// AllowedHeaders: []string{
+		// 	"Origin", "Accept", "Content-Type", "X-Requested-With", "Authorization",
+		// 	// "Accept-Encoding", "Accept-Language", "Access-Control-Request-Headers",
+		// 	// "Access-Control-Request-Method", "Dnt", "User-Agent", "Via",
+		// 	// "X-Cloud-Trace-Context", "X-Forwarded-For", "X-Forwarded-Proto",
+		// },
 		Debug: debugCors,
 	})
 	h := c.Handler(r)

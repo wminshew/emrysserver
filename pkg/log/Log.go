@@ -1,11 +1,11 @@
 package log
 
 import (
-	// "fmt"
+	"fmt"
 	"github.com/blendle/zapdriver"
 	"go.uber.org/zap"
 	"net/http"
-	// "net/http/httputil"
+	"net/http/httputil"
 	"os"
 )
 
@@ -14,11 +14,12 @@ var (
 	// Logger provides highly performant, strongly typed structured logging
 	Logger *zap.Logger
 	// Sugar provides performant weakly typed, structured logging
-	Sugar *zap.SugaredLogger
+	Sugar    *zap.SugaredLogger
+	debugLog = false
 )
 
 // Init initializes Logger and Sugar
-func Init() {
+func Init(debug bool) {
 	var err error
 	if appEnv == "dev" {
 		if Logger, err = zapdriver.NewDevelopment(); err != nil {
@@ -29,6 +30,7 @@ func Init() {
 			panic(err)
 		}
 	}
+	debugLog = debug
 	Sugar = Logger.Sugar()
 	Sugar.Infow("Initialized Logger!")
 }
@@ -37,11 +39,13 @@ func Init() {
 func Log(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		Sugar.Infof("%s %s from %s", r.Method, r.URL, r.RemoteAddr)
-		// dump, err := httputil.DumpRequest(r, false)
-		// if err != nil {
-		// 	Sugar.Errorf("Dump request error: %v", err)
-		// }
-		// fmt.Printf("%s", dump)
+		if debugLog {
+			dump, err := httputil.DumpRequest(r, false)
+			if err != nil {
+				Sugar.Errorf("Dump request error: %v", err)
+			}
+			fmt.Printf("%s", dump)
+		}
 		h.ServeHTTP(w, r)
 	})
 }

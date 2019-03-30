@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/cenkalti/backoff"
@@ -53,24 +52,13 @@ var postConfirmStripe app.Handler = func(w http.ResponseWriter, r *http.Request)
 		Host:   "connect.stripe.com",
 		Path:   path.Join("oauth", "token"),
 	}
-	stripeBody := map[string]string{
-		"client_secret": stripeSecretKey,
-		"code":          code,
-		"grant_type":    "authorization_code",
-	}
+	data := url.Values{}
+	data.Set("client_secret", stripeSecretKey)
+	data.Set("code", code)
+	data.Set("grant_type", "authorization_code")
 	var stripeResp stripeOAuth
 	operation := func() error {
-		var body bytes.Buffer
-		if err := json.NewEncoder(&body).Encode(stripeBody); err != nil {
-			return backoff.Permanent(fmt.Errorf("json encoding: %v", err))
-		}
-
-		req, err := http.NewRequest(http.MethodPost, u.String(), &body)
-		if err != nil {
-			return err
-		}
-
-		resp, err := client.Do(req)
+		resp, err := client.PostForm(u.String(), data)
 		if err != nil {
 			return err
 		}
@@ -83,7 +71,7 @@ var postConfirmStripe app.Handler = func(w http.ResponseWriter, r *http.Request)
 			return backoff.Permanent(fmt.Errorf("server: %v", string(b)))
 		}
 
-		if err := json.NewDecoder(r.Body).Decode(&stripeResp); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&stripeResp); err != nil {
 			return backoff.Permanent(fmt.Errorf("decoding response: %v", err))
 		}
 
@@ -115,6 +103,8 @@ var postConfirmStripe app.Handler = func(w http.ResponseWriter, r *http.Request)
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error posting stripe authorization code"}
 	}
+
+	log.Sugar.Infof("stripe ID: %s", stripeResp.StripeUserID)
 
 	if err := db.SetAccountStripeID(r, aUUID, stripeResp.StripeUserID); err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged

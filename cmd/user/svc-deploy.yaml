@@ -8,7 +8,7 @@ spec:
   selector:
     app: user
   type: NodePort
-  externalTrafficPolicy: Local
+  # TODO externalTrafficPolicy: Local
   ports:
   - name: http
     port: 8080
@@ -72,6 +72,8 @@ spec:
               name: cloudsql-db-credentials
               key: username
         - name: DEBUG_CORS
+          value: "false"
+        - name: DEBUG_LOG
           value: "false"
         - name: STRIPE_PUB_KEY
           valueFrom:

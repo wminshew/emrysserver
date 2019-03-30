@@ -101,8 +101,8 @@ deploy-auth: cmd/auth/svc-deploy.yaml
 	gcloud compute backend-services list --filter='auth' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-user: cmd/user/svc-deploy.yaml
-	# kubectl apply -f cmd/user/svc-deploy.yaml
-	linkerd inject cmd/user/svc-deploy.yaml | kubectl apply -f -
+	kubectl apply -f cmd/user/svc-deploy.yaml
+	# linkerd inject cmd/user/svc-deploy.yaml | kubectl apply -f -
 	gcloud compute backend-services list --filter='user' --format='value(name)' | xargs -n 1 gcloud compute backend-services update-backend --max-rate-per-instance $(MAX_RPS_PER_INSTANCE) --global --instance-group=k8s-ig--5e862efea9931d79 --instance-group-zone=us-central1-a
 
 deploy-miner: cmd/miner/svc-deploy.yaml

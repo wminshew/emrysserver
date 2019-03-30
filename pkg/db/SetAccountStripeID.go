@@ -11,8 +11,8 @@ import (
 func SetAccountStripeID(r *http.Request, aUUID uuid.UUID, stripeID string) error {
 	sqlStmt := `
 	UPDATE accounts
-	SET a.stripe_id = $2
-	WHERE a.uuid = $1
+	SET stripe_id = $2
+	WHERE uuid = $1
 	`
 	if _, err := db.Exec(sqlStmt, aUUID, stripeID); err != nil {
 		message := "error updating account stripe ID"
