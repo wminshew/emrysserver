@@ -8,16 +8,16 @@ import (
 	"net/http"
 )
 
-// GetAccountStripeID gets the account aUUID's stripe id
-func GetAccountStripeID(r *http.Request, aUUID uuid.UUID) (string, error) {
-	var stripeID sql.NullString
+// GetAccountStripeCustomerID gets the account aUUID's stripe customer id
+func GetAccountStripeCustomerID(r *http.Request, aUUID uuid.UUID) (string, error) {
+	var stripeCustomerID sql.NullString
 	sqlStmt := `
-	SELECT a.stripe_id
+	SELECT a.stripe_customer_id
 	FROM accounts a
 	WHERE a.uuid = $1
 	`
-	if err := db.QueryRow(sqlStmt, aUUID).Scan(&stripeID); err != nil {
-		message := "error querying account stripe ID"
+	if err := db.QueryRow(sqlStmt, aUUID).Scan(&stripeCustomerID); err != nil {
+		message := "error querying stripe customer ID"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -37,8 +37,8 @@ func GetAccountStripeID(r *http.Request, aUUID uuid.UUID) (string, error) {
 		}
 		return "", err
 	}
-	if stripeID.Valid {
-		return stripeID.String, nil
+	if stripeCustomerID.Valid {
+		return stripeCustomerID.String, nil
 	}
 	return "", nil
 }

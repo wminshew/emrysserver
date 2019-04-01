@@ -25,6 +25,7 @@ var (
 	authSecret      = os.Getenv("AUTH_SECRET")
 	stripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
 	stripePubKey    = os.Getenv("STRIPE_PUB_KEY")
+	stripePlanID    = os.Getenv("STRIPE_USER_PLAN_ID")
 	debugCors       = (os.Getenv("DEBUG_CORS") == "true")
 	debugLog        = (os.Getenv("DEBUG_LOG") == "true")
 )
@@ -61,12 +62,14 @@ func main() {
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeID)).
+	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeAccountID)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripe)).
+	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripeAccount)).
 		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeDashboard)).
+	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeAccountDashboard)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/stripe/token", auth.Jwt(authSecret, []string{})(postStripeCustomerToken)).
+		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
 
 	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()

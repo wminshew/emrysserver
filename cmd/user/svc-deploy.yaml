@@ -74,6 +74,8 @@ spec:
           value: "false"
         - name: DEBUG_LOG
           value: "false"
+        - name: STRIPE_USER_PLAN_ID
+          value: "plan_EnSQKotvAnYrtO"
         - name: STRIPE_PUB_KEY
           valueFrom:
             secretKeyRef:

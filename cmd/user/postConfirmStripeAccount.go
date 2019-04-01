@@ -27,8 +27,8 @@ type stripeOAuth struct {
 	ErrDetail    string `json:"error_description,omitempty"`
 }
 
-// postConfirmStripe confirms a new stripe account
-var postConfirmStripe app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+// postConfirmStripeAccount confirms a new stripe account
+var postConfirmStripeAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		return &app.Error{Code: http.StatusBadRequest, Message: "no stripe authorization code"}
@@ -104,12 +104,12 @@ var postConfirmStripe app.Handler = func(w http.ResponseWriter, r *http.Request)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error posting stripe authorization code"}
 	}
 
-	if err := db.SetAccountStripeID(r, aUUID, stripeResp.StripeUserID); err != nil {
+	if err := db.SetAccountStripeAccountID(r, aUUID, stripeResp.StripeUserID); err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
 	}
 
 	if _, err := w.Write([]byte(stripeResp.StripeUserID)); err != nil {
-		log.Sugar.Errorw("error writing account stripe ID",
+		log.Sugar.Errorw("error writing stripe account ID",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),

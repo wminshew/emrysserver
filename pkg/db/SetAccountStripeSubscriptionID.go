@@ -7,15 +7,15 @@ import (
 	"net/http"
 )
 
-// SetAccountStripeToken sets the account aUUID's stripe token
-func SetAccountStripeToken(r *http.Request, aUUID uuid.UUID, stripeToken string) error {
+// SetAccountStripeSubscriptionID sets the account aUUID's stripe's subscription ID
+func SetAccountStripeSubscriptionID(r *http.Request, aUUID uuid.UUID, stripeSubscriptionID string) error {
 	sqlStmt := `
 	UPDATE accounts
-	SET stripe_token = $2
+	SET stripe_subscription_id = $2
 	WHERE uuid = $1
 	`
-	if _, err := db.Exec(sqlStmt, aUUID, stripeToken); err != nil {
-		message := "error updating account stripe token"
+	if _, err := db.Exec(sqlStmt, aUUID, stripeSubscriptionID); err != nil {
+		message := "error updating account stripe subscription ID"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,

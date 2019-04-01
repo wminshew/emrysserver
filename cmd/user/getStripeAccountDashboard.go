@@ -10,8 +10,8 @@ import (
 	"net/http"
 )
 
-// getStripeDashboard returns the user's stripe dashboard url
-var getStripeDashboard app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+// getStripeAccountDashboard returns the user's stripe dashboard url
+var getStripeAccountDashboard app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	aID := r.Header.Get("X-Jwt-Claims-Subject")
 	aUUID, err := uuid.FromString(aID)
 	if err != nil {
@@ -23,20 +23,20 @@ var getStripeDashboard app.Handler = func(w http.ResponseWriter, r *http.Request
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	stripeID, err := db.GetAccountStripeID(r, aUUID)
+	stripeAccountID, err := db.GetAccountStripeAccountID(r, aUUID)
 	if err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
-	} else if stripeID == "" {
-		log.Sugar.Errorw("account has no stripe ID but trying to access dashboard",
+	} else if stripeAccountID == "" {
+		log.Sugar.Errorw("account has no stripe account ID but trying to access dashboard",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "No stripe ID exists for this acount"}
+		return &app.Error{Code: http.StatusBadRequest, Message: "No stripe account ID exists for this acount"}
 	}
 
 	params := &stripe.LoginLinkParams{
-		Account: stripe.String(stripeID),
+		Account: stripe.String(stripeAccountID),
 	}
 	link, err := loginlink.New(params)
 	if err != nil {
