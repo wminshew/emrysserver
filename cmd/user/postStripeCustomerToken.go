@@ -9,6 +9,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
+	"time"
 )
 
 // postStripeCustomerToken creates or updates the account's stripe customer with payment info,
@@ -103,15 +104,17 @@ var postStripeCustomerToken app.Handler = func(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
 	} else if stripeSubID == "" {
-
+		t := time.Now()
+		begOfNextMonth := time.Date(t.Year(), t.Month()+1, 1, 0, 0, 0, 0, time.UTC)
 		subItems := []*stripe.SubscriptionItemsParams{
 			{
 				Plan: stripe.String(stripePlanID),
 			},
 		}
 		subParams := &stripe.SubscriptionParams{
-			Customer: stripe.String(stripeCustomerID),
-			Items:    subItems,
+			BillingCycleAnchor: stripe.Int64(begOfNextMonth.Unix()),
+			Customer:           stripe.String(stripeCustomerID),
+			Items:              subItems,
 		}
 		subscription, err := sub.New(subParams)
 		if err != nil {
