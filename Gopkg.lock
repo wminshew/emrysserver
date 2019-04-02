@@ -255,6 +255,7 @@
   name = "github.com/stripe/stripe-go"
   packages = [
     ".",
+    "account",
     "charge",
     "customer",
     "form",
@@ -483,6 +484,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "15a482acf7b7b097793bf4af1f97cacc12a8126bee40bb5a3c009bfb3723924c"
+  inputs-digest = "9696553b3367887b1f7b4c7319fb0e7e76daf981753e55933e98c580fd2785fc"
   solver-name = "gps-cdcl"
   solver-version = 1

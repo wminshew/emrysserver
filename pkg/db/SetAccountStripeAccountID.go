@@ -4,11 +4,10 @@ import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"net/http"
 )
 
 // SetAccountStripeAccountID sets the account aUUID's stripe id
-func SetAccountStripeAccountID(r *http.Request, aUUID uuid.UUID, stripeAccountID string) error {
+func SetAccountStripeAccountID(aUUID uuid.UUID, stripeAccountID string) error {
 	sqlStmt := `
 	UPDATE accounts
 	SET stripe_account_id = $2
@@ -19,8 +18,6 @@ func SetAccountStripeAccountID(r *http.Request, aUUID uuid.UUID, stripeAccountID
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
@@ -28,8 +25,6 @@ func SetAccountStripeAccountID(r *http.Request, aUUID uuid.UUID, stripeAccountID
 			)
 		} else {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 			)
 		}

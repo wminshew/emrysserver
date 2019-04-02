@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/cenkalti/backoff"
 	"github.com/satori/go.uuid"
+	stripe "github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/account"
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -84,12 +86,14 @@ var postConfirmStripeAccount app.Handler = func(w http.ResponseWriter, r *http.R
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
+				"aID", aUUID,
 			)
 		}); err != nil {
 		log.Sugar.Errorw("error posting stripe code for new account--aborting",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
+			"aID", aUUID,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error posting stripe authorization code"}
 	}
@@ -100,12 +104,41 @@ var postConfirmStripeAccount app.Handler = func(w http.ResponseWriter, r *http.R
 			"url", r.URL,
 			"err", stripeResp.Err,
 			"errDetail", stripeResp.ErrDetail,
+			"aID", aUUID,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "error posting stripe authorization code"}
 	}
 
-	if err := db.SetAccountStripeAccountID(r, aUUID, stripeResp.StripeUserID); err != nil {
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
+	if err := db.SetAccountStripeAccountID(aUUID, stripeResp.StripeUserID); err != nil {
+		log.Sugar.Errorw("error setting stripe account ID",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"aID", aUUID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	// set account payout schedule to monthly with anchor on the 1st
+	params := &stripe.AccountParams{
+		Settings: &stripe.AccountSettingsParams{
+			Payouts: &stripe.AccountSettingsPayoutsParams{
+				Schedule: &stripe.PayoutScheduleParams{
+					DelayDays:     stripe.Int64(7),
+					Interval:      stripe.String("monthly"),
+					MonthlyAnchor: stripe.Int64(1),
+				},
+			},
+		},
+	}
+	if _, err := account.Update(stripeResp.StripeUserID, params); err != nil {
+		log.Sugar.Errorw("error updating stripe account",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"aID", aUUID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	if _, err := w.Write([]byte(stripeResp.StripeUserID)); err != nil {
@@ -113,6 +146,7 @@ var postConfirmStripeAccount app.Handler = func(w http.ResponseWriter, r *http.R
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
+			"aID", aUUID,
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
