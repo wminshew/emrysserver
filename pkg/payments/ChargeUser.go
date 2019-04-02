@@ -56,7 +56,6 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 		return
 	}
 
-	// TODO: user credits, if available
 	credit, err := db.GetAccountCredit(aUUID)
 	if err != nil {
 		log.Sugar.Errorw("error getting account credit",
@@ -80,7 +79,7 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 			return
 		}
 
-		if err := db.SetPaymentsUserCharged(jUUID, "credit", jobAmount); err != nil {
+		if err := db.SetPaymentsUserCharged(jUUID, "", 0, jobAmount); err != nil {
 			log.Sugar.Errorw("error setting payments user charged",
 				"method", r.Method,
 				"url", r.URL,
@@ -91,7 +90,7 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 		}
 
 		return
-	} else if credit != 0 {
+	} else if credit > 0 {
 		jobAmount -= credit
 		if err := db.SetAccountCredit(aUUID, 0); err != nil {
 			log.Sugar.Errorw("error setting account credit",
@@ -102,12 +101,6 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 			)
 			return
 		}
-		log.Sugar.Infow("job partially paid with credit",
-			"method", r.Method,
-			"url", r.URL,
-			"jID", jUUID,
-			"credit", credit,
-		)
 	}
 
 	params := &stripe.InvoiceItemParams{
@@ -126,7 +119,7 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 		return
 	}
 
-	if err := db.SetPaymentsUserCharged(jUUID, ii.ID, ii.Amount); err != nil {
+	if err := db.SetPaymentsUserCharged(jUUID, ii.ID, ii.Amount, credit); err != nil {
 		log.Sugar.Errorw("error setting payments user charged",
 			"method", r.Method,
 			"url", r.URL,

@@ -7,15 +7,16 @@ import (
 )
 
 // SetPaymentsUserCharged sets payments user charged
-func SetPaymentsUserCharged(jUUID uuid.UUID, invoiceID string, jobAmount int64) error {
+func SetPaymentsUserCharged(jUUID uuid.UUID, invoiceID string, chargeAmount, credit int64) error {
 	sqlStmt := `
 		UPDATE payments
 		SET user_charged_at = NOW(),
 		user_charged_id = $2,
-		user_charged_amt = $3
+		user_charged_amt = $3,
+		user_charged_credit = $4
 		WHERE job_uuid = $1
 		`
-	if _, err := db.Exec(sqlStmt, jUUID, invoiceID, jobAmount); err != nil {
+	if _, err := db.Exec(sqlStmt, jUUID, invoiceID, chargeAmount, credit); err != nil {
 		message := "error updating payments user charged"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
