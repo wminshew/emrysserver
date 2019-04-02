@@ -5,6 +5,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+	"github.com/stripe/stripe-go/sub"
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -32,6 +33,36 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 			"err", err.Error(),
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing user ID"}
+	}
+
+	subID, err := db.GetAccountStripeSubscriptionID(r, uUUID)
+	if err != nil {
+		log.Sugar.Errorw("error getting stripe subscription ID",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	sub, err := sub.Get(subID, nil)
+	if err != nil {
+		log.Sugar.Errorw("error getting stripe subscription",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	if sub.Status != "active" {
+		log.Sugar.Errorw("user posted job with inactive stripe subscription",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "your stripe subscription is currently inactive. " +
+			"Please verify your payment information on https://www.emrys.io and reach out to support if problems continue."}
 	}
 
 	jobID := uuid.NewV4()
