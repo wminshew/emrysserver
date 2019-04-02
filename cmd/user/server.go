@@ -31,7 +31,7 @@ var (
 )
 
 func main() {
-	log.Init(debugLog)
+	log.Init(debugLog, true)
 	defer func() {
 		if err := log.Sugar.Sync(); err != nil {
 			log.Sugar.Errorf("Error syncing log: %v\n", err)
@@ -70,6 +70,8 @@ func main() {
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/stripe/token", auth.Jwt(authSecret, []string{})(postStripeCustomerToken)).
 		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/stripe/last4", auth.Jwt(authSecret, []string{})(getAccountStripeCustomerLast4)).
+		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 
 	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
