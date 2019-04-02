@@ -1,4 +1,4 @@
-FROM golang:1.9.2-alpine
+FROM golang:1.11.2-alpine
 COPY . /go/src/github.com/wminshew/emrysserver/
 RUN go install github.com/wminshew/emrysserver/cmd/notebook
 

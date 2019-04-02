@@ -1,5 +1,5 @@
-FROM golang:1.9.2-alpine as builder
-# FROM golang:1.9.2-stretch
+FROM golang:1.11.2-alpine as builder
+# FROM golang:1.11.2-stretch
 COPY . /go/src/github.com/wminshew/emrysserver
 RUN go install github.com/wminshew/emrysserver/cmd/auth 
 # RUN CGO_ENABLED=0 go install -tags netgo -a github.com/wminshew/emrysserver/cmd/auth 
