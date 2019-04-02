@@ -16,10 +16,11 @@ var (
 	// Sugar provides performant weakly typed, structured logging
 	Sugar    *zap.SugaredLogger
 	debugLog = false
+	showBody = false
 )
 
 // Init initializes Logger and Sugar
-func Init(debug bool) {
+func Init(debug, debugShowBody bool) {
 	var err error
 	if appEnv == "dev" {
 		if Logger, err = zapdriver.NewDevelopment(); err != nil {
@@ -31,6 +32,7 @@ func Init(debug bool) {
 		}
 	}
 	debugLog = debug
+	showBody = debugShowBody
 	Sugar = Logger.Sugar()
 	Sugar.Infow("Initialized Logger!")
 }
@@ -40,7 +42,7 @@ func Log(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		Sugar.Infof("%s %s from %s", r.Method, r.URL, r.RemoteAddr)
 		if debugLog {
-			dump, err := httputil.DumpRequest(r, false)
+			dump, err := httputil.DumpRequest(r, showBody)
 			if err != nil {
 				Sugar.Errorf("Dump request error: %v", err)
 			}
