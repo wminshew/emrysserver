@@ -8,6 +8,8 @@ import (
 	"math"
 )
 
+const minJobAmt = 1
+
 func getJobAmount(jUUID uuid.UUID) (int64, error) {
 	rate, createdAt, completedAt, canceledAt, failedAt, err := db.GetJobPaymentInfo(jUUID)
 	if err != nil {
@@ -18,7 +20,6 @@ func getJobAmount(jUUID uuid.UUID) (int64, error) {
 		return 0, err
 	}
 
-	// else if tDataDownloaded.IsZero() || tImageDownloaded.IsZero() || tOutputLogPosted.IsZero() {
 	if rate == 0 || createdAt.IsZero() {
 		message := "error no job rate or created_at"
 		err := fmt.Errorf(message)
@@ -44,6 +45,10 @@ func getJobAmount(jUUID uuid.UUID) (int64, error) {
 			"jID", jUUID,
 		)
 		return 0, err
+	}
+
+	if amt < minJobAmt {
+		amt = minJobAmt
 	}
 
 	return amt, nil
