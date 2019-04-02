@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	stripe "github.com/stripe/stripe-go"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -23,13 +24,15 @@ import (
 var (
 	authSecret      = os.Getenv("AUTH_SECRET")
 	sendgridSecret  = os.Getenv("SENDGRID_SECRET")
+	stripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
 	debugCors       = (os.Getenv("DEBUG_CORS") == "true")
+	debugLog        = (os.Getenv("DEBUG_LOG") == "true")
 	minerTimeoutStr = os.Getenv("MINER_TIMEOUT")
 	minerTimeout    int
 )
 
 func main() {
-	log.Init()
+	log.Init(debugLog, false)
 	defer func() {
 		if err := log.Sugar.Sync(); err != nil {
 			log.Sugar.Errorf("Error syncing log: %v\n", err)
@@ -43,6 +46,7 @@ func main() {
 		panic(err)
 	}
 	initMinerManager()
+	stripe.Key = stripeSecretKey
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 

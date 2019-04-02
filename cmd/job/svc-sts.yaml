@@ -73,8 +73,15 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: DEBUG_LOG
+          value: "false"
         - name: DEBUG_LONGPOLL
           value: "false"
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: stripe-keys
+              key: secret-key
         volumeMounts:
           - name: job-creds
             mountPath: /secrets/google_application_credentials

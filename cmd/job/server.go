@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	stripe "github.com/stripe/stripe-go"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -20,12 +21,14 @@ import (
 )
 
 var (
-	authSecret = os.Getenv("AUTH_SECRET")
-	debugCors  = (os.Getenv("DEBUG_CORS") == "true")
+	authSecret      = os.Getenv("AUTH_SECRET")
+	debugCors       = (os.Getenv("DEBUG_CORS") == "true")
+	debugLog        = (os.Getenv("DEBUG_LOG") == "true")
+	stripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
 )
 
 func main() {
-	log.Init()
+	log.Init(debugLog, false)
 	defer func() {
 		if err := log.Sugar.Sync(); err != nil {
 			log.Sugar.Errorf("Error syncing log: %v\n", err)
@@ -35,6 +38,7 @@ func main() {
 	defer db.Close()
 	storage.Init()
 	initJobsManager()
+	stripe.Key = stripeSecretKey
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 
@@ -45,7 +49,6 @@ func main() {
 	jobPathPrefix := fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)
 	rJob := r.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
 
-	// rJobMiner := rJob.NewRoute().Methods("POST").Subrouter()
 	rJobMiner := rJob.NewRoute().Subrouter()
 	rJobMiner.Use(auth.Jwt(authSecret, []string{"miner"}))
 	rJobMiner.Use(auth.MinerJobMiddleware)

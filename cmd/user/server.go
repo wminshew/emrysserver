@@ -12,8 +12,6 @@ import (
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"github.com/wminshew/emrysserver/pkg/payments"
-	cronPkg "gopkg.in/robfig/cron.v2"
 	"net/http"
 	"os"
 	"os/signal"
@@ -39,12 +37,6 @@ func main() {
 	}()
 	db.Init()
 	defer db.Close()
-	cron := cronPkg.New()
-	defer cron.Stop()
-	if _, err := cron.AddFunc("@weekly", payments.AccountsPayout); err != nil {
-		log.Sugar.Errorf("Error adding weekly payments to cron: %v", err)
-		panic(err)
-	}
 	stripe.Key = stripeSecretKey
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
@@ -58,7 +50,7 @@ func main() {
 	rUser.Handle("/version", getVersion).Methods("GET")
 	rUser.Handle("/job-history", auth.Jwt(authSecret, []string{})(getJobHistory)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/balance", auth.Jwt(authSecret, []string{})(getAccountBalance)).
+	rUser.Handle("/credit", auth.Jwt(authSecret, []string{})(getAccountCredit)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")

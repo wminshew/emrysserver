@@ -11,6 +11,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/payments"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -107,7 +108,8 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		}
 	}
 
-	if auctionCompleted, err := db.GetStatusAuctionCompleted(r, jUUID); err != nil {
+	auctionCompleted, err := db.GetStatusAuctionCompleted(r, jUUID)
+	if err != nil {
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // err already logged
 	} else if !auctionCompleted.IsZero() {
 		uID := r.Header.Get("X-Jwt-Claims-Subject")
@@ -276,5 +278,15 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 		}
 	}
 
-	return db.SetJobCanceledAndDebitUser(r, jUUID)
+	if err := db.SetJobCanceled(r, jUUID); err != nil {
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
+	}
+
+	// no rate for user to pay if auction hasn't completed
+	if !auctionCompleted.IsZero() {
+		go payments.ChargeUser(r, jUUID)
+		go payments.PayMiner(r, jUUID)
+	}
+
+	return nil
 }

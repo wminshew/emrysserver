@@ -72,6 +72,8 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: DEBUG_LOG
+          value: "false"
         - name: DEBUG_LONGPOLL
           value: "false"
         - name: MINER_SEMVER
@@ -83,6 +85,11 @@ spec:
             secretKeyRef:
               name: sendgrid-secret
               key: secret
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: stripe-keys
+              key: secret-key
         volumeMounts:
           - name: miner-creds
             mountPath: /secrets/google_application_credentials

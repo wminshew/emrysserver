@@ -5,11 +5,10 @@ import (
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/log"
-	"net/http"
 )
 
 // GetAccountStripeAccountID gets the account aUUID's stripe account id
-func GetAccountStripeAccountID(r *http.Request, aUUID uuid.UUID) (string, error) {
+func GetAccountStripeAccountID(aUUID uuid.UUID) (string, error) {
 	var stripeAccountID sql.NullString
 	sqlStmt := `
 	SELECT a.stripe_account_id
@@ -21,8 +20,6 @@ func GetAccountStripeAccountID(r *http.Request, aUUID uuid.UUID) (string, error)
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
@@ -30,8 +27,6 @@ func GetAccountStripeAccountID(r *http.Request, aUUID uuid.UUID) (string, error)
 			)
 		} else {
 			log.Sugar.Errorw(message,
-				"method", r.Method,
-				"url", r.URL,
 				"err", err.Error(),
 			)
 		}

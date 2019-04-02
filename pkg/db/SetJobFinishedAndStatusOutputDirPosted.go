@@ -1,19 +1,16 @@
 package db
 
 import (
-	"database/sql"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
-	"time"
 )
 
-// SetJobFinishedAndStatusOutputDataPostedAndDebitUser sets job completed
-// (and inactive) and status for job jUUID and debits user accordingly
-func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
-	jUUID uuid.UUID) *app.Error {
+// SetJobFinishedAndStatusOutputDataPosted sets job completed
+// (and inactive) and status for job jUUID
+func SetJobFinishedAndStatusOutputDataPosted(r *http.Request,
+	jUUID uuid.UUID) error {
 	ctx := r.Context()
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
@@ -21,11 +18,7 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 			return errBeginTx, txerr
 		}
 
-		uUUID := uuid.UUID{}
-		mUUID := uuid.UUID{}
-		createdAt := time.Time{}
 		completedAt := pq.NullTime{}
-		rate := sql.NullFloat64{}
 		sqlStmt := `
 		UPDATE jobs j
 		SET completed_at = NOW(),
@@ -37,9 +30,9 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 			u.uuid = proj.user_uuid AND
 			b.uuid = j.win_bid_uuid AND
 			m.uuid = b.miner_uuid
-		RETURNING u.uuid, m.uuid, j.created_at, j.completed_at, j.rate
+		RETURNING j.completed_at
 		`
-		if err := tx.QueryRow(sqlStmt, jUUID).Scan(&uUUID, &mUUID, &createdAt, &completedAt, &rate); err != nil {
+		if err := tx.QueryRow(sqlStmt, jUUID).Scan(&completedAt); err != nil {
 			return "error updating jobs completed_at, active", err
 		}
 
@@ -53,44 +46,9 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 			if _, err := db.Exec(sqlStmt, jUUID, completedAt.Time); err != nil {
 				return "error updating statuses output_data_posted", err
 			}
-
-			if rate.Valid {
-				amt := rate.Float64 * completedAt.Time.Sub(createdAt).Hours()
-				sqlStmt = `
-				UPDATE accounts a
-				SET balance = balance - $2
-				WHERE a.uuid = $1
-				`
-				if _, err := db.Exec(sqlStmt, uUUID, amt); err != nil {
-					return "error updating user accounts balance", err
-				}
-
-				sqlStmt = `
-				UPDATE accounts a
-				SET balance = balance + $2
-				WHERE a.uuid = $1
-				`
-				if _, err := db.Exec(sqlStmt, mUUID, amt); err != nil {
-					return "error updating miner accounts balance", err
-				}
-
-				sqlStmt = `
-				UPDATE payments p
-				SET processed = $2,
-				amount = $3
-				WHERE p.job_uuid = $1 AND
-					p.processed IS NULL
-				`
-				if _, err := db.Exec(sqlStmt, jUUID, completedAt.Time, amt); err != nil {
-					return "error updating payments processed, amount", err
-				}
-			} else {
-				// shouldn't happen
-				log.Sugar.Errorf("null rate")
-			}
 		} else {
 			// shouldn't happen
-			log.Sugar.Errorf("null createdAt")
+			log.Sugar.Errorf("null completedAt")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -123,7 +81,7 @@ func SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r *http.Request,
 				log.Sugar.Errorf("Error rolling tx back: %v", err)
 			}
 		}
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		return err
 	}
 	return nil
 }

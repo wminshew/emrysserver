@@ -9,6 +9,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/payments"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"io"
 	"net/http"
@@ -148,5 +149,18 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 		return nil
 	}
 
-	return db.SetJobFinishedAndStatusOutputDataPostedAndDebitUser(r, jUUID)
+	if err := db.SetJobFinishedAndStatusOutputDataPosted(r, jUUID); err != nil {
+		log.Sugar.Errorw("error setting job finished and output data posted status",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	go payments.ChargeUser(r, jUUID)
+	go payments.PayMiner(r, jUUID)
+
+	return nil
 }

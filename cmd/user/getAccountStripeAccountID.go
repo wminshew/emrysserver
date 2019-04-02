@@ -21,13 +21,18 @@ var getAccountStripeAccountID app.Handler = func(w http.ResponseWriter, r *http.
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	stripeAccountID, err := db.GetAccountStripeAccountID(r, aUUID)
+	stripeAccountID, err := db.GetAccountStripeAccountID(aUUID)
 	if err != nil {
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
+		log.Sugar.Errorw("error getting stripe account ID",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	if _, err := w.Write([]byte(stripeAccountID)); err != nil {
-		log.Sugar.Errorw("error writing account stripe account ID",
+		log.Sugar.Errorw("error writing stripe account ID",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),

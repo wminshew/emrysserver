@@ -8,6 +8,7 @@ import (
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/payments"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -20,8 +21,7 @@ var (
 )
 
 const (
-	baseMinerPenalty = 0.5
-	maxRetries       = 10
+	maxRetries = 10
 )
 
 func monitorJob(jUUID uuid.UUID) {
@@ -151,12 +151,17 @@ func monitorJob(jUUID uuid.UUID) {
 				return
 			}
 
-			if err := db.SetJobFailed(jUUID, baseMinerPenalty); err != nil {
-				log.Sugar.Errorw("error setting job failed",
+			if active, err := db.GetJobActive(jUUID); err != nil {
+				log.Sugar.Errorw("error getting job active",
 					"err", err.Error(),
 					"jID", jUUID,
 				)
 				return
+			} else if active {
+				if err := db.SetJobFailed(jUUID); err != nil {
+					return // already logged
+				}
+				go payments.ChargeMiner(jUUID)
 			}
 			return
 		case <-activeWorker[jUUID]:

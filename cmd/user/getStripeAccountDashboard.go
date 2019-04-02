@@ -23,9 +23,14 @@ var getStripeAccountDashboard app.Handler = func(w http.ResponseWriter, r *http.
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	stripeAccountID, err := db.GetAccountStripeAccountID(r, aUUID)
+	stripeAccountID, err := db.GetAccountStripeAccountID(aUUID)
 	if err != nil {
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
+		log.Sugar.Errorw("error getting stripe account ID",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	} else if stripeAccountID == "" {
 		log.Sugar.Errorw("account has no stripe account ID but trying to access dashboard",
 			"method", r.Method,

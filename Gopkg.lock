@@ -255,10 +255,13 @@
   name = "github.com/stripe/stripe-go"
   packages = [
     ".",
+    "charge",
     "customer",
     "form",
+    "invoiceitem",
     "loginlink",
-    "sub"
+    "sub",
+    "transfer"
   ]
   revision = "05fff5baa4adda87ab885237a0722e0147098581"
   version = "v60.0.0"
@@ -477,15 +480,9 @@
   revision = "7a6a684ca69eb4cae85ad0a484f2e531598c047b"
   version = "v1.12.2"
 
-[[projects]]
-  branch = "v2"
-  name = "gopkg.in/robfig/cron.v2"
-  packages = ["."]
-  revision = "be2e0b0deed5a68ffee390b4583a13aff8321535"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d5766374e3417851b79de2f21d01f05c54ae2cace3c14e4b622463a59692c5d5"
+  inputs-digest = "15a482acf7b7b097793bf4af1f97cacc12a8126bee40bb5a3c009bfb3723924c"
   solver-name = "gps-cdcl"
   solver-version = 1

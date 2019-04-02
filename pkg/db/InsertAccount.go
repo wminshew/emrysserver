@@ -29,7 +29,7 @@ func InsertAccount(r *http.Request, email, hashedPassword string, aUUID uuid.UUI
 		}
 
 		sqlStmt := `
-		INSERT INTO accounts (uuid, email, password, balance)
+		INSERT INTO accounts (uuid, email, password, credit)
 		VALUES ($1, $2, $3, $4)
 		`
 		if _, err := tx.Exec(sqlStmt, aUUID, email, hashedPassword, newUserCredit); err != nil {

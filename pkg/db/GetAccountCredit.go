@@ -7,16 +7,16 @@ import (
 	"net/http"
 )
 
-// GetAccountBalance gets the account aUUID's balance
-func GetAccountBalance(r *http.Request, aUUID uuid.UUID) (float64, error) {
-	var balance float64
+// GetAccountCredit gets the account aUUID's credit
+func GetAccountCredit(r *http.Request, aUUID uuid.UUID) (float64, error) {
+	var credit float64
 	sqlStmt := `
-	SELECT a.balance
+	SELECT a.credit
 	FROM accounts a
 	WHERE a.uuid = $1
 	`
-	if err := db.QueryRow(sqlStmt, aUUID).Scan(&balance); err != nil {
-		message := "error querying account balance"
+	if err := db.QueryRow(sqlStmt, aUUID).Scan(&credit); err != nil {
+		message := "error querying account credit"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -36,5 +36,5 @@ func GetAccountBalance(r *http.Request, aUUID uuid.UUID) (float64, error) {
 		}
 		return 0, err
 	}
-	return balance, nil
+	return credit, nil
 }
