@@ -1,13 +1,16 @@
 package payments
 
 import (
+	"context"
 	"fmt"
+	"github.com/cenkalti/backoff"
 	"github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/transfer"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
+	"time"
 )
 
 // PayMiner pays the miner for job jUUID
@@ -51,9 +54,26 @@ func PayMiner(r *http.Request, jUUID uuid.UUID) {
 		Currency:      stripe.String(string(stripe.CurrencyUSD)),
 		TransferGroup: stripe.String(fmt.Sprintf("Payout for job %s", jUUID.String())),
 	}
-	t, err := transfer.New(params)
-	if err != nil {
-		log.Sugar.Errorw("error creating miner transfer",
+	params.SetIdempotencyKey(uuid.NewV4().String())
+
+	ctx := context.Background()
+	t := &stripe.Transfer{}
+	operation := func() error {
+		var err error
+		t, err = transfer.New(params)
+		return err
+	}
+	if err := backoff.RetryNotify(operation,
+		backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+		func(err error, t time.Duration) {
+			log.Sugar.Errorw("error creating miner transfer, retrying",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+		}); err != nil {
+		log.Sugar.Errorw("error creating miner transfer--aborting",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),

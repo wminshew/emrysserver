@@ -1,12 +1,15 @@
 package payments
 
 import (
+	"context"
 	"fmt"
+	"github.com/cenkalti/backoff"
 	"github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/charge"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"time"
 )
 
 const baseMinerPenalty = 50
@@ -53,9 +56,24 @@ func ChargeMiner(jUUID uuid.UUID) {
 		)
 		return
 	}
-	ch, err := charge.New(params)
-	if err != nil {
-		log.Sugar.Errorw("error creating miner charge",
+	params.SetIdempotencyKey(uuid.NewV4().String())
+
+	ctx := context.Background()
+	ch := &stripe.Charge{}
+	operation := func() error {
+		var err error
+		ch, err = charge.New(params)
+		return err
+	}
+	if err := backoff.RetryNotify(operation,
+		backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+		func(err error, t time.Duration) {
+			log.Sugar.Errorw("error creating miner charge, retrying",
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+		}); err != nil {
+		log.Sugar.Errorw("error creating miner charge--aborting",
 			"err", err.Error(),
 			"jID", jUUID,
 		)

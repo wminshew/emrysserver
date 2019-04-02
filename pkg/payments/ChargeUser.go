@@ -1,14 +1,19 @@
 package payments
 
 import (
+	"context"
 	"fmt"
+	"github.com/cenkalti/backoff"
 	"github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/invoiceitem"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
+	"time"
 )
+
+const maxRetries = 10
 
 // ChargeUser charges the user for job jUUID
 func ChargeUser(r *http.Request, jUUID uuid.UUID) {
@@ -110,9 +115,28 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 		Currency:     stripe.String(string(stripe.CurrencyUSD)),
 		Description:  stripe.String(fmt.Sprintf("Payment for job %s", jUUID.String())),
 	}
-	ii, err := invoiceitem.New(params)
-	if err != nil {
-		log.Sugar.Errorw("error creating customer invoice",
+	params.SetIdempotencyKey(uuid.NewV4().String())
+
+	ctx := context.Background()
+	ii := &stripe.InvoiceItem{}
+	operation := func() error {
+		var err error
+		ii, err = invoiceitem.New(params)
+		return err
+	}
+	if err := backoff.RetryNotify(operation,
+		backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+		func(err error, t time.Duration) {
+			log.Sugar.Errorw("error creating user invoice, retrying",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+		}); err != nil {
+		log.Sugar.Errorw("error creating user invoice--aborting",
+			"method", r.Method,
+			"url", r.URL,
 			"err", err.Error(),
 			"jID", jUUID,
 		)
