@@ -22,12 +22,17 @@ var getAccountCredit app.Handler = func(w http.ResponseWriter, r *http.Request) 
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
 	}
 
-	credit, err := db.GetAccountCredit(r, aUUID)
+	credit, err := db.GetAccountCredit(aUUID)
 	if err != nil {
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
+		log.Sugar.Errorw("error getting account credit",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	if _, err := w.Write([]byte(fmt.Sprintf("%.2f", credit))); err != nil {
+	if _, err := w.Write([]byte(fmt.Sprintf("%d", credit))); err != nil {
 		log.Sugar.Errorw("error writing account credit",
 			"method", r.Method,
 			"url", r.URL,

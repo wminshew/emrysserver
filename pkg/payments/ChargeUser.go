@@ -56,6 +56,60 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 		return
 	}
 
+	// TODO: user credits, if available
+	credit, err := db.GetAccountCredit(aUUID)
+	if err != nil {
+		log.Sugar.Errorw("error getting account credit",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jUUID,
+		)
+		return
+	}
+
+	if credit >= jobAmount {
+		credit -= jobAmount
+		if err := db.SetAccountCredit(aUUID, credit); err != nil {
+			log.Sugar.Errorw("error setting account credit",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+			return
+		}
+
+		if err := db.SetPaymentsUserCharged(jUUID, "credit", jobAmount); err != nil {
+			log.Sugar.Errorw("error setting payments user charged",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+			return
+		}
+
+		return
+	} else if credit != 0 {
+		jobAmount -= credit
+		if err := db.SetAccountCredit(aUUID, 0); err != nil {
+			log.Sugar.Errorw("error setting account credit",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jUUID,
+			)
+			return
+		}
+		log.Sugar.Infow("job partially paid with credit",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jUUID,
+			"credit", credit,
+		)
+	}
+
 	params := &stripe.InvoiceItemParams{
 		Customer:     stripe.String(stripeCustomerID),
 		Subscription: stripe.String(stripeSubscriptionID),

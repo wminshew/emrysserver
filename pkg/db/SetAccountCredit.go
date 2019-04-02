@@ -6,15 +6,14 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 )
 
-// GetAccountCredit gets the account aUUID's credit
-func GetAccountCredit(aUUID uuid.UUID) (int64, error) {
-	var credit int64
+// SetAccountCredit sets the account aUUID's credit
+func SetAccountCredit(aUUID uuid.UUID, newCredit int64) error {
 	sqlStmt := `
-	SELECT credit
-	FROM accounts
+	UPDATE accounts
+	SET credit = $2
 	WHERE uuid = $1
 	`
-	if err := db.QueryRow(sqlStmt, aUUID).Scan(&credit); err != nil {
+	if _, err := db.Exec(sqlStmt, aUUID, newCredit); err != nil {
 		message := "error querying account credit"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
@@ -29,7 +28,7 @@ func GetAccountCredit(aUUID uuid.UUID) (int64, error) {
 				"err", err.Error(),
 			)
 		}
-		return 0, err
+		return err
 	}
-	return credit, nil
+	return nil
 }
