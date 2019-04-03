@@ -1,11 +1,9 @@
 package main
 
 import (
-	// "fmt"
-	// "github.com/satori/go.uuid"
-	// stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/webhook"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/email"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"io/ioutil"
 	"net/http"
@@ -25,7 +23,7 @@ var postStripeWebhookConnect app.Handler = func(w http.ResponseWriter, r *http.R
 
 	event, err := webhook.ConstructEvent(body, r.Header.Get("Stripe-Signature"), stripeWebhookSecretConnect)
 	if err != nil {
-		log.Sugar.Errorw("error verrifying stripe webhook signature",
+		log.Sugar.Errorw("error verifying stripe webhook signature",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
@@ -45,12 +43,22 @@ var postStripeWebhookConnect app.Handler = func(w http.ResponseWriter, r *http.R
 				"status", event.GetObjectValue("status"),
 			)
 		case "payout.failed":
+			amt := event.GetObjectValue("amount")
+			dest := event.GetObjectValue("destination")
 			log.Sugar.Errorw("payout.failed",
-				"amt", event.GetObjectValue("amount"),
+				"amt", amt,
 				"tx", event.GetObjectValue("balance_transaction"),
-				"dest", event.GetObjectValue("destination"),
+				"dest", dest,
 				"status", event.GetObjectValue("status"),
 			)
+			if err := email.SendPayoutFailed(dest, amt); err != nil {
+				log.Sugar.Errorw("error sending payout-failed email to support",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+				)
+				return
+			}
 		default:
 		}
 	}()
