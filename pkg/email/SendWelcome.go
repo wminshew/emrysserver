@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// TODO: move to ENV
 	welcomeTemplateID = "d-b92233a304484298ac2ffb85c4b307b1"
 )
 

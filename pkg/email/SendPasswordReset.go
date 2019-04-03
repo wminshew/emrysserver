@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// TODO: move to ENV
 	resetPasswordTemplateID = "d-9f09c620fc724ea4ba20f248b48f6d37"
 )
 
