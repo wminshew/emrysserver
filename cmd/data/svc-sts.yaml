@@ -73,6 +73,8 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: DEBUG_LOG
+          value: "false"
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
         - name: PVC_CAP_GB

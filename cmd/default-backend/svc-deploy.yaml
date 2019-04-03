@@ -66,6 +66,8 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: DEBUG_LOG
+          value: "false"
         readinessProbe:
           httpGet:
             path: /healthz

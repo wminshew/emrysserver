@@ -70,6 +70,8 @@ spec:
               key: username
         - name: DEBUG_CORS
           value: "false"
+        - name: DEBUG_LOG
+          value: "false"
         - name: NEW_USER_CREDIT
           value: "10"
         - name: SENDGRID_SECRET

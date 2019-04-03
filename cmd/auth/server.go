@@ -19,11 +19,12 @@ import (
 var (
 	authSecret    = os.Getenv("AUTH_SECRET")
 	debugCors     = (os.Getenv("DEBUG_CORS") == "true")
+	debugLog      = (os.Getenv("DEBUG_LOG") == "true")
 	newUserCredit int
 )
 
 func main() {
-	log.Init()
+	log.Init(debugLog, false)
 	defer func() {
 		if err := log.Sugar.Sync(); err != nil {
 			log.Sugar.Errorf("Error syncing log: %v\n", err)

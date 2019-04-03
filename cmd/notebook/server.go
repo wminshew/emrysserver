@@ -19,7 +19,7 @@ var (
 )
 
 func main() {
-	log.Init(debugLog)
+	log.Init(debugLog, false)
 	defer func() {
 		if err := log.Sugar.Sync(); err != nil {
 			log.Sugar.Errorf("Error syncing log: %v\n", err)
