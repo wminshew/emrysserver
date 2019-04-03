@@ -136,7 +136,7 @@ func (a *auction) run(r *http.Request) *app.Error {
 		"winner", a.winner.bid,
 		"rate", payRate,
 	)
-	go monitorJob(a.jobID)
+	go monitorJob(a.jobID, a.notebook)
 
 	return db.SetJobWinnerAndAuctionStatus(r, a.jobID, a.winner.bid, payRate)
 }

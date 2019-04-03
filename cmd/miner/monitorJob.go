@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/cenkalti/backoff"
 	"github.com/dgrijalva/jwt-go"
@@ -24,7 +25,7 @@ const (
 	maxRetries = 10
 )
 
-func monitorJob(jUUID uuid.UUID) {
+func monitorJob(jUUID uuid.UUID, notebook bool) {
 	activeWorker[jUUID] = make(chan struct{})
 	defer delete(activeWorker, jUUID)
 	for {
@@ -41,6 +42,55 @@ func monitorJob(jUUID uuid.UUID) {
 					"jID", jUUID,
 				)
 				return
+			}
+
+			ctx := context.Background()
+			client := &http.Client{}
+			if notebook {
+				u := url.URL{
+					Scheme: "http",
+					Host:   "notebook-svc:8080",
+					Path:   "user",
+				}
+				q := u.Query()
+				q.Set("jID", jUUID.String())
+				u.RawQuery = q.Encode()
+
+				operation := func() error {
+					req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
+					if err != nil {
+						return err
+					}
+
+					resp, err := client.Do(req)
+					if err != nil {
+						return err
+					}
+					defer check.Err(resp.Body.Close)
+
+					if resp.StatusCode == http.StatusBadGateway {
+						return fmt.Errorf("server: temporary error")
+					} else if resp.StatusCode >= 300 {
+						b, _ := ioutil.ReadAll(resp.Body)
+						return backoff.Permanent(fmt.Errorf("server: %v", string(b)))
+					}
+
+					return nil
+				}
+				if err := backoff.RetryNotify(operation,
+					backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+					func(err error, t time.Duration) {
+						log.Sugar.Errorw("error deleting notebook user, retrying",
+							"err", err.Error(),
+							"jID", jUUID,
+						)
+					}); err != nil {
+					log.Sugar.Errorw("error deleting notebook user--aborting",
+						"err", err.Error(),
+						"jID", jUUID,
+					)
+					return
+				}
 			}
 
 			mUUID, err := db.GetJobWinner(jUUID)
@@ -70,7 +120,6 @@ func monitorJob(jUUID uuid.UUID) {
 				)
 			}
 
-			client := &http.Client{}
 			u := url.URL{
 				Scheme: "http",
 				Host:   "job-svc:8080",
@@ -100,7 +149,7 @@ func monitorJob(jUUID uuid.UUID) {
 				return nil
 			}
 			if err := backoff.RetryNotify(operation,
-				backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries),
+				backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 				func(err error, t time.Duration) {
 					log.Sugar.Errorw("error posting error to job output log--retrying",
 						"err", err.Error(),
@@ -137,7 +186,7 @@ func monitorJob(jUUID uuid.UUID) {
 				return nil
 			}
 			if err := backoff.RetryNotify(operation,
-				backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries),
+				backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 				func(err error, t time.Duration) {
 					log.Sugar.Errorw("error posting error to job output log--retrying",
 						"err", err.Error(),
@@ -151,18 +200,11 @@ func monitorJob(jUUID uuid.UUID) {
 				return
 			}
 
-			if active, err := db.GetJobActive(jUUID); err != nil {
-				log.Sugar.Errorw("error getting job active",
-					"err", err.Error(),
-					"jID", jUUID,
-				)
-				return
-			} else if active {
-				if err := db.SetJobFailed(jUUID); err != nil {
-					return // already logged
-				}
-				go payments.ChargeMiner(jUUID)
+			if err := db.SetJobFailed(jUUID); err != nil {
+				return // already logged
 			}
+			go payments.ChargeMiner(jUUID)
+
 			return
 		case <-activeWorker[jUUID]:
 		}

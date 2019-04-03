@@ -2,11 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	// "github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/job"
 	"github.com/wminshew/emrysserver/pkg/app"
-	// "github.com/wminshew/emrysserver/pkg/db"
+	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
 )
@@ -65,7 +64,17 @@ var postDeviceSnapshot app.Handler = func(w http.ResponseWriter, r *http.Request
 		ch <- struct{}{}
 	} else {
 		// should only happen if the pod is restarted while a job is running
-		go monitorJob(jUUID)
+		notebook, err := db.GetJobNotebook(jUUID)
+		if err != nil {
+			log.Sugar.Errorw("error getting job notebook",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		go monitorJob(jUUID, notebook)
 	}
 
 	return nil
