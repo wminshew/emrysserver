@@ -24,6 +24,10 @@ spec:
         backend:
           serviceName: user-svc
           servicePort: 8080
+      - path: /stripe/*
+        backend:
+          serviceName: user-svc
+          servicePort: 8080
       - path: /image/*
         backend:
           serviceName: image-svc

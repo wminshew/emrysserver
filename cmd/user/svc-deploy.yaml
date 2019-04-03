@@ -86,6 +86,16 @@ spec:
             secretKeyRef:
               name: stripe-keys
               key: secret-key
+        - name: STRIPE_WEBHOOK_SECRET_ACCOUNT
+          valueFrom:
+            secretKeyRef:
+              name: stripe-webhook-keys
+              key: account-key
+        - name: STRIPE_WEBHOOK_SECRET_CONNECT
+          valueFrom:
+            secretKeyRef:
+              name: stripe-webhook-keys
+              key: connect-key
         - name: USER_SEMVER
           value: "0.5.0"
         volumeMounts:

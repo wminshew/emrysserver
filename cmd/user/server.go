@@ -20,12 +20,14 @@ import (
 )
 
 var (
-	authSecret      = os.Getenv("AUTH_SECRET")
-	stripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
-	stripePubKey    = os.Getenv("STRIPE_PUB_KEY")
-	stripePlanID    = os.Getenv("STRIPE_USER_PLAN_ID")
-	debugCors       = (os.Getenv("DEBUG_CORS") == "true")
-	debugLog        = (os.Getenv("DEBUG_LOG") == "true")
+	authSecret                 = os.Getenv("AUTH_SECRET")
+	stripeSecretKey            = os.Getenv("STRIPE_SECRET_KEY")
+	stripePubKey               = os.Getenv("STRIPE_PUB_KEY")
+	stripeWebhookSecretAccount = os.Getenv("STRIPE_WEBHOOK_SECRET_ACCOUNT")
+	stripeWebhookSecretConnect = os.Getenv("STRIPE_WEBHOOK_SECRET_CONNECT")
+	stripePlanID               = os.Getenv("STRIPE_USER_PLAN_ID")
+	debugCors                  = (os.Getenv("DEBUG_CORS") == "true")
+	debugLog                   = (os.Getenv("DEBUG_LOG") == "true")
 )
 
 func main() {
@@ -45,6 +47,10 @@ func main() {
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+
+	rStripe := r.PathPrefix("/stripe").Subrouter()
+	rStripe.Handle("/webhook/account", postStripeWebhookAccount).Methods("POST")
+	rStripe.Handle("/webhook/connect", postStripeWebhookConnect).Methods("POST")
 
 	rUser := r.PathPrefix("/user").Subrouter()
 	rUser.Handle("/version", getVersion).Methods("GET")

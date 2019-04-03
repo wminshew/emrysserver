@@ -262,10 +262,11 @@
     "invoiceitem",
     "loginlink",
     "sub",
-    "transfer"
+    "transfer",
+    "webhook"
   ]
-  revision = "05fff5baa4adda87ab885237a0722e0147098581"
-  version = "v60.0.0"
+  revision = "9379b3cb94d8542cd8796f7da1e7a0c651e22aa1"
+  version = "v60.0.1"
 
 [[projects]]
   name = "github.com/ulikunitz/xz"
@@ -484,6 +485,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9696553b3367887b1f7b4c7319fb0e7e76daf981753e55933e98c580fd2785fc"
+  inputs-digest = "2e1af1f314e19834f492d4f18c4e40c6ada2da7fc68b794a79f9a4fbac786eec"
   solver-name = "gps-cdcl"
   solver-version = 1
