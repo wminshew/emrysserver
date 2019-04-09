@@ -43,6 +43,14 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 			"err", err.Error(),
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	} else if subID == "" {
+		log.Sugar.Errorw("user posted job with no stripe subscription",
+			"method", r.Method,
+			"url", r.URL,
+			"uID", uUUID,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "no payment information on file. " +
+			"Please verify your payment information on https://www.emrys.io/account and reach out to support if problems continue."}
 	}
 
 	sub, err := sub.Get(subID, nil)
@@ -59,10 +67,10 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		log.Sugar.Errorw("user posted job with inactive stripe subscription",
 			"method", r.Method,
 			"url", r.URL,
-			"err", err.Error(),
+			"uID", uUUID,
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "your stripe subscription is currently inactive. " +
-			"Please verify your payment information on https://www.emrys.io and reach out to support if problems continue."}
+			"Please verify your payment information on https://www.emrys.io/account and reach out to support if problems continue."}
 	}
 
 	jobID := uuid.NewV4()
