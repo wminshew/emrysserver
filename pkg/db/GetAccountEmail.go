@@ -12,9 +12,9 @@ import (
 func GetAccountEmail(r *http.Request, aUUID uuid.UUID) (string, error) {
 	var email sql.NullString
 	sqlStmt := `
-	SELECT a.email
-	FROM accounts a
-	WHERE a.uuid=$1
+	SELECT email
+	FROM accounts
+	WHERE uuid = $1
 	`
 	if err := db.QueryRow(sqlStmt, aUUID).Scan(&email); err != nil {
 		message := "error querying for account email"
@@ -24,7 +24,6 @@ func GetAccountEmail(r *http.Request, aUUID uuid.UUID) (string, error) {
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"email", email,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
 				"pq_detail", pqErr.Detail,
@@ -34,7 +33,6 @@ func GetAccountEmail(r *http.Request, aUUID uuid.UUID) (string, error) {
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
-				"email", email,
 			)
 		}
 		return "", err

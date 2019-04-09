@@ -74,20 +74,24 @@ var confirmEmail app.Handler = func(w http.ResponseWriter, r *http.Request) *app
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	userEmail, err := db.GetAccountEmail(r, aUUID)
-	if err != nil {
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
-	}
+	go func() {
+		userEmail, err := db.GetAccountEmail(r, aUUID)
+		if err != nil {
+			// return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"} // already logged
+			return
+		}
 
-	if err := email.SendWelcome(userEmail); err != nil {
-		log.Sugar.Errorw("error sending account welcome email",
-			"method", r.Method,
-			"url", r.URL,
-			"err", err.Error(),
-			"aID", aUUID,
-		)
-		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-	}
+		if err := email.SendWelcome(userEmail); err != nil {
+			log.Sugar.Errorw("error sending account welcome email",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"aID", aUUID,
+			)
+			// return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+			return
+		}
+	}()
 
 	return nil
 }
