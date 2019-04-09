@@ -18,7 +18,7 @@ func SendWelcome(email string) error {
 	e := mail.NewEmail(fromName, fromAddress)
 	m.SetFrom(e)
 
-	m.SetTemplateID(registrationTemplateID)
+	m.SetTemplateID(welcomeTemplateID)
 
 	p := mail.NewPersonalization()
 	tos := []*mail.Email{
@@ -38,7 +38,7 @@ func SendWelcome(email string) error {
 	}
 
 	// TODO: remove? handle non 2xx status codes?
-	log.Sugar.Infow("user registration email confirmation sent",
+	log.Sugar.Infow("user welcome email sent",
 		"StatusCode", response.StatusCode,
 		"Body", response.Body,
 		"Headers", response.Headers,
