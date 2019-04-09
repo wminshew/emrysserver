@@ -18,7 +18,7 @@ func GetJobPaymentInfo(jUUID uuid.UUID) (float64, time.Time, time.Time, time.Tim
 	sqlStmt := `
 	SELECT rate, created_at, completed_at, canceled_at, failed_at
 	FROM jobs
-	WHERE job_uuid = $1
+	WHERE uuid = $1
 	`
 	if err := db.QueryRow(sqlStmt, jUUID).Scan(&rate, &createdAt, &completedAt, &canceledAt, &failedAt); err != nil {
 		message := "error querying jobs payment info"
