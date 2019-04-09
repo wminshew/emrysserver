@@ -74,12 +74,10 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 
 		client := &http.Client{}
 		ctx := context.Background()
-
 		// check if user has exceeded disk quota & cancel if so
 		for _, wStats := range minerStats.WorkerStats {
-			if wStats.JobID.String() != "" {
+			if !uuid.Equal(wStats.JobID, uuid.Nil) {
 				diskQuota, err := db.GetJobDiskQuota(wStats.JobID)
-				// diskReq, err := db.GetJobDiskReqs(wStats.JobID)
 				if err != nil {
 					log.Sugar.Errorw("error getting job disk requirements",
 						"method", r.Method,
