@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
+	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"io"
@@ -24,6 +25,23 @@ var getOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 			"err", err.Error(),
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing job ID"}
+	}
+
+	if jobFailed, err := db.GetJobFailed(jUUID); err != nil {
+		log.Sugar.Errorw("error getting job failed",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	} else if jobFailed {
+		log.Sugar.Errorw("error getting job output data -- job failed",
+			"method", r.Method,
+			"url", r.URL,
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusPreconditionFailed, Message: "miner failed job, no output data available"}
 	}
 
 	p := path.Join("output", jID, "data.tar.gz")
