@@ -79,7 +79,7 @@ spec:
         - name: MINER_SEMVER
           value: "0.5.0"
         - name: MINER_TIMEOUT
-          value: "60"
+          value: "120"
         - name: SENDGRID_SECRET
           valueFrom:
             secretKeyRef:

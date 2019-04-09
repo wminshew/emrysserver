@@ -46,6 +46,12 @@
   version = "v0.4.7"
 
 [[projects]]
+  name = "github.com/StackExchange/wmi"
+  packages = ["."]
+  revision = "5d049714c4a64225c3c79a7cf7d02f7fb5b96338"
+  version = "1.0.0"
+
+[[projects]]
   name = "github.com/blang/semver"
   packages = ["."]
   revision = "2ee87856327ba09384cabd113bc6b5d174e9ec0f"
@@ -114,6 +120,15 @@
   packages = ["."]
   revision = "9f541cc9db5d55bce703bd99987c9d5cb8eea45e"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/go-ole/go-ole"
+  packages = [
+    ".",
+    "oleutil"
+  ]
+  revision = "97b6244175ae18ea6eef668034fd6565847501c9"
+  version = "v1.2.4"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -252,6 +267,17 @@
   revision = "2438403eeee449d9db818864b275bd4900043720"
 
 [[projects]]
+  name = "github.com/shirou/gopsutil"
+  packages = [
+    "cpu",
+    "disk",
+    "internal/common",
+    "mem"
+  ]
+  revision = "2cbc9195c892b304060269ef280375236d2fcac9"
+  version = "v2.19.03"
+
+[[projects]]
   name = "github.com/stripe/stripe-go"
   packages = [
     ".",
@@ -289,7 +315,7 @@
     "pkg/jsonmessage",
     "pkg/validate"
   ]
-  revision = "dd493fd2156f9638a3544652a52fc24f01e83de2"
+  revision = "bd3d7bfe0c193e42b68e990251235e87fa75cb69"
 
 [[projects]]
   name = "go.opencensus.io"
@@ -383,7 +409,10 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "3b87a42e500a6dc65dae1a55d0b641295971163e"
 
 [[projects]]
