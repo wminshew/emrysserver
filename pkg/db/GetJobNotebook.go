@@ -6,16 +6,16 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 )
 
-// GetJobActive returns whether job is active
-func GetJobActive(jUUID uuid.UUID) (bool, error) {
-	var active bool
+// GetJobNotebook returns whether job is a notebook
+func GetJobNotebook(jUUID uuid.UUID) (bool, error) {
+	var notebook bool
 	sqlStmt := `
-	SELECT active
+	SELECT notebook
 	FROM jobs
 	WHERE uuid = $1
 	`
-	if err := db.QueryRow(sqlStmt, jUUID).Scan(&active); err != nil {
-		message := "error querying for jobs.active"
+	if err := db.QueryRow(sqlStmt, jUUID).Scan(&notebook); err != nil {
+		message := "error querying for jobs.notebook"
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			log.Sugar.Errorw(message,
@@ -33,5 +33,5 @@ func GetJobActive(jUUID uuid.UUID) (bool, error) {
 		}
 		return false, err
 	}
-	return active, nil
+	return notebook, nil
 }

@@ -45,7 +45,7 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 	}
 
 	for _, wStats := range minerStats.WorkerStats {
-		if wStats.JobID.String() != "" {
+		if !uuid.Equal(wStats.JobID, uuid.Nil) {
 			if ch, ok := activeWorker[wStats.JobID]; ok {
 				ch <- struct{}{}
 			} else {
