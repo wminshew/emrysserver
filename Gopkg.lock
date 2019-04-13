@@ -321,7 +321,6 @@
   name = "go.opencensus.io"
   packages = [
     ".",
-    "exporter/stackdriver/propagation",
     "internal",
     "internal/tagencoding",
     "plugin/ochttp",
@@ -447,10 +446,12 @@
     "internal",
     "iterator",
     "option",
+    "sheets/v4",
     "storage/v1",
-    "transport/http"
+    "transport/http",
+    "transport/http/internal/propagation"
   ]
-  revision = "2eea9ba0a3d94f6ab46508083e299a00bbbc65f6"
+  revision = "88172be0df6e7f3fb97717c830a21e29eecc5acf"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -514,6 +515,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2e1af1f314e19834f492d4f18c4e40c6ada2da7fc68b794a79f9a4fbac786eec"
+  inputs-digest = "d2553622b50d661349fe870481baf068716c9effad7a5fdaf857e45725be64b9"
   solver-name = "gps-cdcl"
   solver-version = 1

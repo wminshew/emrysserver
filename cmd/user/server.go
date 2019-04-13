@@ -12,6 +12,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/auth"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	sheets "google.golang.org/api/sheets/v4"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,15 +29,22 @@ var (
 	stripePlanID               = os.Getenv("STRIPE_USER_PLAN_ID")
 	debugCors                  = (os.Getenv("DEBUG_CORS") == "true")
 	debugLog                   = (os.Getenv("DEBUG_LOG") == "true")
+	sheetsService              *sheets.Service
 )
 
 func main() {
+	var err error
+	ctx := context.Background()
 	log.Init(debugLog, true)
 	defer func() {
 		if err := log.Sugar.Sync(); err != nil {
 			log.Sugar.Errorf("Error syncing log: %v\n", err)
 		}
 	}()
+	if sheetsService, err = sheets.NewService(ctx); err != nil {
+		log.Sugar.Errorf("Error initializing google sheets service: %v", err)
+		return
+	}
 	db.Init()
 	defer db.Close()
 	stripe.Key = stripeSecretKey
@@ -60,6 +68,9 @@ func main() {
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/feedback", auth.Jwt(authSecret, []string{})(postFeedback)).
+		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
+
 	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeAccountID)).
 		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
 	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripeAccount)).
@@ -105,7 +116,6 @@ func main() {
 		}
 	}()
 
-	ctx := context.Background()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	<-stop

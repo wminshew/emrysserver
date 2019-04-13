@@ -92,3 +92,7 @@
 [[constraint]]
   name = "github.com/stripe/stripe-go"
   version = "60.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "google.golang.org/api"
