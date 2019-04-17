@@ -123,4 +123,4 @@ spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: 100Gi
+          storage: 100Gi # since updated, but can't change to reflect
