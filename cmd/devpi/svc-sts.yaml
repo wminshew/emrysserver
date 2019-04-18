@@ -42,11 +42,11 @@ spec:
         image: gcr.io/emrys-12/devpi:latest
         resources:
           requests:
-            cpu: 200m
+            cpu: 500m
             memory: "1Gi"
-          # limits:
-          #   cpu: 200m
-          #   memory: "200Mi"
+          limits:
+            cpu: 500m
+            memory: "1Gi"
         ports:
         - containerPort: 3141
         env:

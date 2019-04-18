@@ -23,7 +23,7 @@ metadata:
     app: auth
   namespace: emrys-prod
 spec:
-  replicas: 1
+  replicas: 2
   strategy:
     type: RollingUpdate
   revisionHistoryLimit: 3
@@ -43,9 +43,9 @@ spec:
           requests:
             cpu: 50m
             memory: "50Mi"
-          # limits:
-          #   cpu: 250m
-          #   memory: "500Mi"
+          limits:
+            cpu: 50m
+            memory: "50Mi"
         ports:
         - containerPort: 8080
         env:

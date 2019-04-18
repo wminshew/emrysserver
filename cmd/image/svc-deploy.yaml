@@ -23,7 +23,7 @@ metadata:
     app: image
   namespace: emrys-prod
 spec:
-  replicas: 1
+  replicas: 2
   strategy:
     type: RollingUpdate
   revisionHistoryLimit: 3
@@ -42,11 +42,11 @@ spec:
         image: gcr.io/emrys-12/image:latest
         resources:
           requests:
-            cpu: 50m
+            cpu: 100m
             memory: "100Mi"
-          # limits:
-          #   cpu: 250m
-          #   memory: "500Mi"
+          limits:
+            cpu: 100m
+            memory: "100Mi"
         ports:
         - containerPort: 8080
         env:
@@ -117,11 +117,11 @@ spec:
         image: docker:18.03.1-ce-dind 
         resources:
           requests:
-            cpu: 50m
-            memory: "500Mi"
-          # limits:
-          #   cpu: 500m
-          #   memory: "2Gi"
+            cpu: 200m
+            memory: "1Gi"
+          limits:
+            cpu: 200m
+            memory: "1Gi"
         securityContext: 
           privileged: true 
         ports:
@@ -137,11 +137,11 @@ spec:
         args: [ "/etc/docker/registry/registry-config.yaml" ]
         resources:
           requests:
-            cpu: 50m
+            cpu: 100m
             memory: "500Mi"
-          # limits:
-          #   cpu: 500m
-          #   memory: "2Gi"
+          limits:
+            cpu: 100m
+            memory: "500Mi"
         ports:
         - containerPort: 5000
         env:

@@ -23,7 +23,7 @@ metadata:
     app: registry
   namespace: emrys-prod
 spec:
-  replicas: 1
+  replicas: 2
   strategy:
     type: RollingUpdate
   revisionHistoryLimit: 3
@@ -42,11 +42,11 @@ spec:
         image: gcr.io/emrys-12/registry:latest
         resources:
           requests:
-            cpu: 50m
-            memory: "100Mi"
-          # limits:
-          #   cpu: 250m
-          #   memory: "500Mi"
+            cpu: 100m
+            memory: "200Mi"
+          limits:
+            cpu: 100m
+            memory: "200Mi"
         ports:
         - containerPort: 5000
         env:
@@ -106,9 +106,9 @@ spec:
           requests:
             cpu: 100m
             memory: "500Mi"
-          # limits:
-          #   cpu: 500m
-          #   memory: "2Gi"
+          limits:
+            cpu: 100m
+            memory: "500Mi"
         ports:
         - containerPort: 5001
         env:

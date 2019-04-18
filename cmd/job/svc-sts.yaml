@@ -42,11 +42,11 @@ spec:
         image: gcr.io/emrys-12/job
         resources:
           requests:
-            cpu: 100m
+            cpu: 500m
             memory: "1Gi"
-          # limits:
-          #   cpu: 200m
-          #   memory: "200Mi"
+          limits:
+            cpu: 500m
+            memory: "1Gi"
         ports:
         - containerPort: 8080
         env:

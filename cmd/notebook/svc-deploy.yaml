@@ -60,8 +60,11 @@ spec:
         image: gcr.io/emrys-12/notebook
         resources:
           requests:
-            cpu: 50m
-            memory: "50Mi"
+            cpu: 500m
+            memory: "1Gi"
+          limits:
+            cpu: 500m
+            memory: "1Gi"
         ports:
         - containerPort: 8080
         - containerPort: 2222
