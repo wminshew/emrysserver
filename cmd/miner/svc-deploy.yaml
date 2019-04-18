@@ -4,6 +4,7 @@ metadata:
   name: miner-svc
   labels:
     app: miner
+  namespace: emrys-prod
 spec:
   selector:
     app: miner
@@ -20,6 +21,7 @@ metadata:
   name: miner-deploy
   labels:
     app: miner
+  namespace: emrys-prod
 spec:
   replicas: 1
   strategy:

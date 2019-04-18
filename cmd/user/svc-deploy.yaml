@@ -4,6 +4,7 @@ metadata:
   name: user-svc
   labels:
     app: user
+  namespace: emrys-prod
 spec:
   selector:
     app: user
@@ -20,6 +21,7 @@ metadata:
   name: user-deploy
   labels:
     app: user
+  namespace: emrys-prod
 spec:
   replicas: 1
   strategy:

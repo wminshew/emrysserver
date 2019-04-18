@@ -4,6 +4,7 @@ metadata:
   name: default-backend-svc
   labels:
     app: default-backend
+  namespace: emrys-prod
 spec:
   selector:
     app: default-backend
@@ -20,6 +21,7 @@ metadata:
   name: default-backend-deploy
   labels:
     app: default-backend
+  namespace: emrys-prod
 spec:
   replicas: 1
   strategy:

@@ -4,6 +4,7 @@ metadata:
   name: auth-svc
   labels:
     app: auth
+  namespace: emrys-prod
 spec:
   selector:
     app: auth
@@ -20,6 +21,7 @@ metadata:
   name: auth-deploy
   labels:
     app: auth
+  namespace: emrys-prod
 spec:
   replicas: 1
   strategy:

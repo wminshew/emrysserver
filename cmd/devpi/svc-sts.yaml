@@ -4,6 +4,7 @@ metadata:
   name: devpi-svc
   labels:
     app: devpi
+  namespace: emrys-prod
 spec:
   selector:
     app: devpi
@@ -20,6 +21,7 @@ metadata:
   name: devpi-sts
   labels:
     app: devpi
+  namespace: emrys-prod
 spec:
   replicas: 1
   serviceName: "devpi-svc"

@@ -4,6 +4,7 @@ metadata:
   name: job-svc
   labels:
     app: job
+  namespace: emrys-prod
 spec:
   selector:
     app: job
@@ -20,6 +21,7 @@ metadata:
   name: job-sts
   labels:
     app: job
+  namespace: emrys-prod
 spec:
   replicas: 1
   serviceName: "job-svc"

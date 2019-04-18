@@ -4,6 +4,7 @@ metadata:
   name: data-svc
   labels:
     app: data
+  namespace: emrys-prod
 spec:
   selector:
     app: data
@@ -20,6 +21,7 @@ metadata:
   name: data-sts
   labels:
     app: data
+  namespace: emrys-prod
 spec:
   replicas: 1
   serviceName: "data-svc"

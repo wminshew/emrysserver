@@ -4,6 +4,7 @@ metadata:
   name: image-svc
   labels:
     app: image
+  namespace: emrys-prod
 spec:
   selector:
     app: image
@@ -20,6 +21,7 @@ metadata:
   name: image-deploy
   labels:
     app: image
+  namespace: emrys-prod
 spec:
   replicas: 1
   strategy:

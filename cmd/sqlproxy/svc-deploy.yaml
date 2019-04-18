@@ -4,6 +4,7 @@ metadata:
   name: sqlproxy-svc
   labels:
     app: sqlproxy
+  namespace: emrys-prod
 spec:
   selector:
     app: sqlproxy
@@ -20,6 +21,7 @@ metadata:
   name: sqlproxy-deploy
   labels:
     app: sqlproxy
+  namespace: emrys-prod
 spec:
   replicas: 2
   strategy:

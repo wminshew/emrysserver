@@ -4,6 +4,7 @@ metadata:
   name: registry-svc
   labels:
     app: registry
+  namespace: emrys-prod
 spec:
   selector:
     app: registry
@@ -20,6 +21,7 @@ metadata:
   name: registry-deploy
   labels:
     app: registry
+  namespace: emrys-prod
 spec:
   replicas: 1
   strategy:
