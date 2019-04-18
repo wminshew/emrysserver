@@ -7,7 +7,8 @@ metadata:
 spec:
   selector:
     app: sqlproxy
-  type: NodePort
+  type: ClusterIP
+  # type: NodePort # kubectl edit svc/sqlproxy-svc -o yaml; change type, remove nodePort
   ports:
   - name: http
     port: 5432
