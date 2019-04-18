@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	dbUser               = os.Getenv("DBUSER")
-	dbPassword           = os.Getenv("DBPASSWORD")
-	dbNetloc             = os.Getenv("DBNETLOC")
-	dbPort               = os.Getenv("DBPORT")
-	dbName               = os.Getenv("DBNAME")
+	dbUser               = os.Getenv("DB_USER")
+	dbPassword           = os.Getenv("DB_PASSWORD")
+	dbNetloc             = os.Getenv("DB_NETLOC")
+	dbPort               = os.Getenv("DB_PORT")
+	dbName               = os.Getenv("DB_NAME")
 	dbMaxOpenConnsStr    = os.Getenv("DBMAXOPENCONNS")
 	dbMaxOpenConns       = 10
 	dbMaxIdleConnsStr    = os.Getenv("DBMAXIDLECONNS")

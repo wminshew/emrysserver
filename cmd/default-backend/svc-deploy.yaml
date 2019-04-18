@@ -48,18 +48,18 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        - name: DBNAME
+        - name: DB_NAME
           value: "emrysserver"
-        - name: DBNETLOC
+        - name: DB_NETLOC
           value: "sqlproxy-svc"
-        - name: DBPASSWORD
+        - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: cloudsql-db-credentials
               key: password
-        - name: DBPORT
+        - name: DB_PORT
           value: "5432"
-        - name: DBUSER
+        - name: DB_USER
           valueFrom:
             secretKeyRef:
               name: cloudsql-db-credentials
