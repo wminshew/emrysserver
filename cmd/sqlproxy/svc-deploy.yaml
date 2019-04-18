@@ -8,9 +8,8 @@ spec:
   selector:
     app: sqlproxy
   type: ClusterIP
-  # type: NodePort # kubectl edit svc/sqlproxy-svc -o yaml; change type, remove nodePort
   ports:
-  - name: http
+  - name: postgres
     port: 5432
     targetPort: 5432
     protocol: TCP
@@ -22,7 +21,7 @@ metadata:
   labels:
     app: sqlproxy
 spec:
-  replicas: 1
+  replicas: 2
   strategy:
     type: RollingUpdate
   selector:
@@ -39,20 +38,83 @@ spec:
         image: gcr.io/cloudsql-docker/gce-proxy:1.11
         resources:
           requests:
-            cpu: 100m
-            memory: "100Mi"
-          # limits:
-          #   cpu: 250m
-          #   memory: "500Mi"
+            cpu: 50m
+            memory: "50Mi"
+          limits:
+            cpu: 50m
+            memory: "50Mi"
         command: ["/cloud_sql_proxy",
-          "-instances=emrys-12:us-central1:emrysserver-psql=tcp:0.0.0.0:5432",
+        "-instances=emrys-12:us-central1:emrysserver-psql=tcp:127.0.0.1:5433",
           "-credential_file=/secrets/cloudsql/credentials.json"]
         ports:
-        - containerPort: 5432
+        - containerPort: 5433
         volumeMounts:
           - name: cloudsql-instance-credentials
             mountPath: /secrets/cloudsql
             readOnly: true
+      - name: pgbouncer
+        image: edoburu/pgbouncer:1.8.1
+        resources:
+          requests:
+            cpu: 150m
+            memory: "200Mi"
+          limits:
+            cpu: 150m
+            memory: "200Mi"
+        ports:
+          - containerPort: 5432
+        env:
+        - name: DB_HOST
+          value: "localhost"
+        - name: DB_NAME
+          value: "emrysserver"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: password
+        - name: DB_PORT
+          value: "5433"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: username
+        - name: DEFAULT_POOL_SIZE
+          value: 20
+        - name: LISTEN_BACKLOG
+          value: 4096
+        - name: LISTEN_PORT
+          value: "5432"
+        - name: MAX_CLIENT_CONN
+          value: 1000
+        - name: MAX_DB_CONNECTIONS
+          value: 20
+        - name: MIN_POOL_SIZE
+          value: 5
+        - name: POOL_MODE
+          value: transaction
+        - name: SERVER_RESET_QUERY
+          value: DISCARD ALL
+        livenessProbe:
+          tcpSocket:
+            port: 5432
+          initialDelaySeconds: 10
+          periodSeconds: 60
+        readinessProbe:
+          tcpSocket:
+            port: 5432
+          initialDelaySeconds: 10
+          periodSeconds: 60
+        lifecycle:
+          preStop:
+            exec:
+              # Allow existing queries clients to complete within 120 seconds
+              command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
       volumes:
       - name: cloudsql-instance-credentials
         secret:
