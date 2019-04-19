@@ -39,6 +39,11 @@ spec:
       containers:
       - name: miner-container
         image: gcr.io/emrys-12/miner
+        securityContext:
+          runAsUser: 2 # non-root
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
         resources:
           requests:
             cpu: 200m

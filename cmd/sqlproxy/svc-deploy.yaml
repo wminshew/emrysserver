@@ -38,6 +38,11 @@ spec:
       containers:
       - name: sqlproxy-container
         image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        securityContext:
+          runAsUser: 2 # non-root
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
         resources:
           requests:
             cpu: 50m
@@ -56,6 +61,11 @@ spec:
             readOnly: true
       - name: pgbouncer
         image: edoburu/pgbouncer:1.8.1
+        securityContext:
+          runAsUser: 2 # non-root
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
         resources:
           requests:
             cpu: 150m
@@ -113,10 +123,6 @@ spec:
             exec:
               # Allow existing queries clients to complete within 120 seconds
               command: ["/bin/sh", "-c", "killall -INT pgbouncer && sleep 120"]
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ['all']
       volumes:
       - name: cloudsql-instance-credentials
         secret:

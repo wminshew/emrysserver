@@ -40,6 +40,11 @@ spec:
       containers:
       - name: image-container
         image: gcr.io/emrys-12/image:latest
+        securityContext:
+          runAsUser: 2 # non-root
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
         resources:
           requests:
             cpu: 100m
@@ -115,6 +120,8 @@ spec:
           # failureThreshold: 7
       - name: dind-daemon 
         image: docker:18.03.1-ce-dind 
+        securityContext: 
+          privileged: true 
         resources:
           requests:
             cpu: 200m
@@ -122,8 +129,6 @@ spec:
           limits:
             cpu: 200m
             memory: "1Gi"
-        securityContext: 
-          privileged: true 
         ports:
         - containerPort: 2375
         env:
@@ -135,6 +140,11 @@ spec:
       - name: registry
         image: registry:2.7.1
         args: [ "/etc/docker/registry/registry-config.yaml" ]
+        securityContext:
+          runAsUser: 2 # non-root
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
         resources:
           requests:
             cpu: 100m

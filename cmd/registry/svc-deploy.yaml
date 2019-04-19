@@ -40,6 +40,11 @@ spec:
       containers:
       - name: registry-container
         image: gcr.io/emrys-12/registry:latest
+        securityContext:
+          runAsUser: 2 # non-root
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
         resources:
           requests:
             cpu: 100m
@@ -102,6 +107,11 @@ spec:
       - name: registry
         image: registry:2.6.2
         args: [ "/etc/docker/registry/registry-config.yaml" ]
+        securityContext:
+          runAsUser: 2 # non-root
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
         resources:
           requests:
             cpu: 100m

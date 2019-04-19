@@ -39,6 +39,11 @@ spec:
       containers:
       - name: auth-container
         image: gcr.io/emrys-12/auth
+        securityContext:
+          runAsUser: 2 # non-root
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ['all']
         resources:
           requests:
             cpu: 50m
