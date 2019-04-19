@@ -23,7 +23,7 @@ spec:
   gcePersistentDisk:
     fsType: ext4
     pdName: gke-emrys-9c80fd71-dyn-pvc-45c20220-972e-11e8-b365-42010a800192
-  persistentVolumeReclaimPolicy: Retain
+  persistentVolumeReclaimPolicy: Delete
   storageClassName: standard
 status:
   phase: Available
