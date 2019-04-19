@@ -7,6 +7,7 @@ metadata:
   namespace: emrys-prod
   annotations:
     cloud.google.com/neg: '{"ingress": true}' # container-native load balancing
+    beta.cloud.google.com/backend-config: '{"ports": {"http":"image-backendconfig"}}'
 spec:
   selector:
     app: image
@@ -16,6 +17,16 @@ spec:
     port: 8080
     targetPort: 8080
     protocol: TCP
+---
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: image-backendconfig
+  namespace: emrys-prod
+spec:
+  timeoutSec: 320
+  connectionDraining:
+    drainingTimeoutSec: 330
 ---
 apiVersion: apps/v1
 kind: Deployment
