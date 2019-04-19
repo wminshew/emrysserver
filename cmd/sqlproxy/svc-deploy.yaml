@@ -62,7 +62,7 @@ spec:
       - name: pgbouncer
         image: edoburu/pgbouncer:1.8.1
         securityContext:
-          runAsUser: 2 # non-root
+          # runAsUser: 2 # non-root
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']
