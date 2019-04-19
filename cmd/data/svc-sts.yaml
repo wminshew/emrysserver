@@ -98,11 +98,11 @@ spec:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/secrets/google_application_credentials/credentials.json"
         - name: PVC_CAP_GB
-          value: "100"
+          value: "500"
         - name: PVC_MAX_PROJECT_GB
-          value: "10"
+          value: "20"
         - name: PVC_PERIOD_SEC
-          value: "300"
+          value: "600"
         - name: PVC_THRESHOLD
           value: "0.8"
         volumeMounts:
