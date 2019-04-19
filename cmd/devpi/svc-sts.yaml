@@ -41,7 +41,7 @@ spec:
       - name: devpi-container
         image: gcr.io/emrys-12/devpi:latest
         securityContext:
-          runAsUser: 2 # non-root
+          # runAsUser: 2 # non-root
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']
