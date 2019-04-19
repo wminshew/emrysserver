@@ -54,7 +54,7 @@ spec:
       - name: data-container
         image: gcr.io/emrys-12/data:latest
         securityContext:
-          runAsUser: 2 # non-root
+          # runAsUser: 2 # non-root
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']

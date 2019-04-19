@@ -54,7 +54,7 @@ spec:
       - name: image-container
         image: gcr.io/emrys-12/image:latest
         securityContext:
-          runAsUser: 2 # non-root
+          # runAsUser: 2 # non-root
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']

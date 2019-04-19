@@ -54,7 +54,7 @@ spec:
       - name: job-container
         image: gcr.io/emrys-12/job
         securityContext:
-          runAsUser: 2 # non-root
+          # runAsUser: 2 # non-root
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']
