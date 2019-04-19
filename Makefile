@@ -251,31 +251,31 @@ rollback-devpi:
 delete: delete-default-backend delete-auth delete-user delete-miner delete-job delete-notebook delete-image delete-registry delete-data
 
 delete-default-backend:
-	kubectl delete pod -lapp=default-backend
+	kubectl delete pod -lapp=default-backend -n emrys-prod
 
 delete-auth:
-	kubectl delete pod -lapp=auth
+	kubectl delete pod -lapp=auth -n emrys-prod
 
 delete-user:
-	kubectl delete pod -lapp=user
+	kubectl delete pod -lapp=user -n emrys-prod
 
 delete-miner:
-	kubectl delete pod -lapp=miner
+	kubectl delete pod -lapp=miner -n emrys-prod
 
 delete-job:
-	kubectl delete pod -lapp=job
+	kubectl delete pod -lapp=job -n emrys-prod
 
 delete-notebook:
-	kubectl delete pod -lapp=notebook
+	kubectl delete pod -lapp=notebook -n emrys-prod
 
 delete-image:
-	kubectl delete pod -lapp=image
+	kubectl delete pod -lapp=image -n emrys-prod
 
 delete-registry:
-	kubectl delete pod -lapp=registry
+	kubectl delete pod -lapp=registry -n emrys-prod
 
 delete-data:
-	kubectl delete pod -lapp=data
+	kubectl delete pod -lapp=data -n emrys-prod
 
 delete-devpi:
-	kubectl delete pod -lapp=devpi
+	kubectl delete pod -lapp=devpi -n emrys-prod
