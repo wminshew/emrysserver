@@ -25,9 +25,9 @@ metadata:
   name: image-backendconfig
   namespace: emrys-prod
 spec:
-  timeoutSec: 320
+  timeoutSec: 620
   connectionDraining:
-    drainingTimeoutSec: 330
+    drainingTimeoutSec: 630
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -37,6 +37,7 @@ metadata:
     app: image
   namespace: emrys-prod
 spec:
+  minReadySeconds: 60
   replicas: 2
   strategy:
     type: RollingUpdate
@@ -49,7 +50,7 @@ spec:
       labels:
         app: image
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 630
       restartPolicy: Always
       containers:
       - name: image-container

@@ -43,6 +43,7 @@ metadata:
     app: notebook
   namespace: emrys-prod
 spec:
+  minReadySeconds: 60
   replicas: 1
   strategy:
     type: RollingUpdate
@@ -55,7 +56,7 @@ spec:
       labels:
         app: notebook
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 330
       restartPolicy: Always
       containers:
       - name: notebook-container

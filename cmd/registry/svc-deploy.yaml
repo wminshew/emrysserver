@@ -37,6 +37,7 @@ metadata:
     app: registry
   namespace: emrys-prod
 spec:
+  minReadySeconds: 60
   replicas: 2
   strategy:
     type: RollingUpdate
@@ -49,7 +50,7 @@ spec:
       labels:
         app: registry
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 330
       restartPolicy: Always
       containers:
       - name: registry-container

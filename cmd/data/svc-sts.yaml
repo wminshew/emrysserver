@@ -25,9 +25,9 @@ metadata:
   name: data-backendconfig
   namespace: emrys-prod
 spec:
-  timeoutSec: 320
+  timeoutSec: 620
   connectionDraining:
-    drainingTimeoutSec: 330
+    drainingTimeoutSec: 630
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -49,7 +49,7 @@ spec:
       labels:
         app: data
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 630
       restartPolicy: Always
       containers:
       - name: data-container

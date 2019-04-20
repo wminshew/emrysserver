@@ -26,6 +26,7 @@ metadata:
     app: auth
   namespace: emrys-prod
 spec:
+  minReadySeconds: 60
   replicas: 2
   strategy:
     type: RollingUpdate
@@ -39,6 +40,7 @@ spec:
         app: auth
     spec:
       restartPolicy: Always
+      terminationGracePeriodSeconds: 60
       containers:
       - name: auth-container
         image: gcr.io/emrys-12/auth

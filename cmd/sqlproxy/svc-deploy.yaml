@@ -25,6 +25,7 @@ metadata:
     app: sqlproxy
   namespace: emrys-prod
 spec:
+  minReadySeconds: 60
   replicas: 2
   strategy:
     type: RollingUpdate
@@ -37,6 +38,7 @@ spec:
         app: sqlproxy
     spec:
       restartPolicy: Always
+      terminationGracePeriodSeconds: 60
       containers:
       - name: sqlproxy-container
         image: gcr.io/cloudsql-docker/gce-proxy:1.11

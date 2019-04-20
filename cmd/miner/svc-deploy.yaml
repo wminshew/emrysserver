@@ -27,7 +27,7 @@ metadata:
 spec:
   timeoutSec: 620
   connectionDraining:
-    drainingTimeoutSec: 30
+    drainingTimeoutSec: 630
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -37,6 +37,7 @@ metadata:
     app: miner
   namespace: emrys-prod
 spec:
+  minReadySeconds: 60
   replicas: 1
   strategy:
     type: RollingUpdate
@@ -49,6 +50,7 @@ spec:
       labels:
         app: miner
     spec:
+      terminationGracePeriodSeconds: 630
       restartPolicy: Always
       containers:
       - name: miner-container

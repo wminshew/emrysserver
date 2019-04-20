@@ -25,9 +25,9 @@ metadata:
   name: job-backendconfig
   namespace: emrys-prod
 spec:
-  timeoutSec: 140 # TODO: is this enough time for job output upload/downloads?
+  timeoutSec: 620
   connectionDraining:
-    drainingTimeoutSec: 150
+    drainingTimeoutSec: 630
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -49,7 +49,7 @@ spec:
       labels:
         app: job
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 630
       restartPolicy: Always
       containers:
       - name: job-container

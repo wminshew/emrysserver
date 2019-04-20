@@ -26,6 +26,7 @@ metadata:
     app: user
   namespace: emrys-prod
 spec:
+  minReadySeconds: 60
   replicas: 2
   strategy:
     type: RollingUpdate
@@ -39,6 +40,7 @@ spec:
         app: user
     spec:
       restartPolicy: Always
+      terminationGracePeriodSeconds: 60
       containers:
       - name: user-container
         image: gcr.io/emrys-12/user

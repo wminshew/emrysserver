@@ -48,7 +48,7 @@ spec:
       labels:
         app: devpi
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 330
       restartPolicy: Always
       containers:
       - name: devpi-container
