@@ -13,7 +13,7 @@ spec:
     app: default-backend
   type: NodePort
   ports:
-  - name: default-backend
+  - name: http
     port: 8080
     targetPort: 8080
     protocol: TCP
