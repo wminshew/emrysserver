@@ -126,87 +126,87 @@ deploy-ing: emrys-ing.yaml
 rollout: rollout-default-backend rollout-auth rollout-user rollout-miner rollout-job rollout-image rollout-registry rollout-data
 
 rollout-default-backend:
-	kubectl set image deploy/default-backend-deploy default-backend-container=gcr.io/emrys-12/default-backend:latest
-	kubectl rollout status deploy/default-backend-deploy
+	kubectl set image deploy/default-backend-deploy default-backend-container=gcr.io/emrys-12/default-backend:latest -n emrys-prod
+	kubectl rollout status deploy/default-backend-deploy -n emrys-prod
 
 rollout-auth:
-	kubectl set image deploy/auth-deploy auth-container=gcr.io/emrys-12/auth:latest
-	kubectl rollout status deploy/auth-deploy
+	kubectl set image deploy/auth-deploy auth-container=gcr.io/emrys-12/auth:latest -n emrys-prod
+	kubectl rollout status deploy/auth-deploy -n emrys-prod
 
 rollout-user:
-	kubectl set image deploy/user-deploy user-container=gcr.io/emrys-12/user:latest
-	kubectl rollout status deploy/user-deploy
+	kubectl set image deploy/user-deploy user-container=gcr.io/emrys-12/user:latest -n emrys-prod
+	kubectl rollout status deploy/user-deploy -n emrys-prod
 
 rollout-miner:
-	kubectl set image deploy/miner-deploy miner-container=gcr.io/emrys-12/miner:latest
-	kubectl rollout status deploy/miner-deploy
+	kubectl set image deploy/miner-deploy miner-container=gcr.io/emrys-12/miner:latest -n emrys-prod
+	kubectl rollout status deploy/miner-deploy -n emrys-prod
 
 rollout-job:
-	kubectl set image sts/job-sts job-container=gcr.io/emrys-12/job:latest
-	kubectl rollout status sts/job-sts
+	kubectl set image sts/job-sts job-container=gcr.io/emrys-12/job:latest -n emrys-prod
+	kubectl rollout status sts/job-sts -n emrys-prod
 
 rollout-notebook:
-	kubectl set image deploy/notebook-deploy notebook-container=gcr.io/emrys-12/notebook:latest
-	kubectl rollout status deploy/notebook-deploy
+	kubectl set image deploy/notebook-deploy notebook-container=gcr.io/emrys-12/notebook:latest -n emrys-prod
+	kubectl rollout status deploy/notebook-deploy -n emrys-prod
 
 rollout-image:
-	kubectl set image deploy/image-deploy image-container=gcr.io/emrys-12/image:latest
-	kubectl rollout status deploy/image-deploy
+	kubectl set image deploy/image-deploy image-container=gcr.io/emrys-12/image:latest -n emrys-prod
+	kubectl rollout status deploy/image-deploy -n emrys-prod
 
 rollout-registry:
-	kubectl set image deploy/registry-deploy image-container=gcr.io/emrys-12/registry:latest
-	kubectl rollout status deploy/registry-deploy
+	kubectl set image deploy/registry-deploy image-container=gcr.io/emrys-12/registry:latest -n emrys-prod
+	kubectl rollout status deploy/registry-deploy -n emrys-prod
 
 rollout-data:
-	kubectl set image sts/data-sts data-container=gcr.io/emrys-12/data:latest
-	kubectl rollout status sts/data-sts
+	kubectl set image sts/data-sts data-container=gcr.io/emrys-12/data:latest -n emrys-prod
+	kubectl rollout status sts/data-sts -n emrys-prod
 
 rollout-devpi:
-	kubectl set image sts/devpi-sts devpi-container=gcr.io/emrys-12/devpi:latest
-	kubectl rollout status sts/devpi-sts
+	kubectl set image sts/devpi-sts devpi-container=gcr.io/emrys-12/devpi:latest -n emrys-prod
+	kubectl rollout status sts/devpi-sts -n emrys-prod
 
 
 rollback: rollback-default-backend rollback-auth rollback-user rollback-miner rollback-job rollback-notebook rollback-image rollback-registry rollback-data
 
 rollback-default-backend:
-	kubectl rollout undo deploy/default-backend-deploy
-	kubectl rollout status deploy/default-backend-deploy
+	kubectl rollout undo deploy/default-backend-deploy -n emrys-prod
+	kubectl rollout status deploy/default-backend-deploy -n emrys-prod
 
 rollback-auth:
-	kubectl rollout undo deploy/auth-deploy
-	kubectl rollout status deploy/auth-deploy
+	kubectl rollout undo deploy/auth-deploy -n emrys-prod
+	kubectl rollout status deploy/auth-deploy -n emrys-prod
 
 rollback-user:
-	kubectl rollout undo deploy/user-deploy
-	kubectl rollout status deploy/user-deploy
+	kubectl rollout undo deploy/user-deploy -n emrys-prod
+	kubectl rollout status deploy/user-deploy -n emrys-prod
 
 rollback-miner:
-	kubectl rollout undo deploy/miner-deploy
-	kubectl rollout status deploy/miner-deploy
+	kubectl rollout undo deploy/miner-deploy -n emrys-prod
+	kubectl rollout status deploy/miner-deploy -n emrys-prod
 
 rollback-job:
-	kubectl rollout undo sts/job-sts
-	kubectl rollout status sts/job-sts
+	kubectl rollout undo sts/job-sts -n emrys-prod
+	kubectl rollout status sts/job-sts -n emrys-prod
 
 rollback-notebook:
-	kubectl rollout undo deploy/notebook-deploy
-	kubectl rollout status deploy/notebook-deploy
+	kubectl rollout undo deploy/notebook-deploy -n emrys-prod
+	kubectl rollout status deploy/notebook-deploy -n emrys-prod
 
 rollback-image:
-	kubectl rollout undo deploy/image-deploy
-	kubectl rollout status deploy/image-deploy
+	kubectl rollout undo deploy/image-deploy -n emrys-prod
+	kubectl rollout status deploy/image-deploy -n emrys-prod
 
 rollback-registry:
-	kubectl rollout undo deploy/registry-deploy
-	kubectl rollout status deploy/registry-deploy
+	kubectl rollout undo deploy/registry-deploy -n emrys-prod
+	kubectl rollout status deploy/registry-deploy -n emrys-prod
 
 rollback-data:
-	kubectl rollout undo deploy/data-deploy
-	kubectl rollout status deploy/data-deploy
+	kubectl rollout undo deploy/data-deploy -n emrys-prod
+	kubectl rollout status deploy/data-deploy -n emrys-prod
 
 rollback-devpi:
-	kubectl rollout undo sts/devpi-sts
-	kubectl rollout status sts/devpi-sts
+	kubectl rollout undo sts/devpi-sts -n emrys-prod
+	kubectl rollout status sts/devpi-sts -n emrys-prod
 
 
 delete: delete-default-backend delete-auth delete-user delete-miner delete-job delete-notebook delete-image delete-registry delete-data
