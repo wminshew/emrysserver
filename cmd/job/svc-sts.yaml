@@ -6,7 +6,7 @@ metadata:
     app: job
   namespace: emrys-prod
   annotations:
-    cloud.google.com/neg: '{"ingress": true}' # container-native load balancing
+    # cloud.google.com/neg: '{"ingress": true}' # container-native load balancing
     beta.cloud.google.com/backend-config: '{"ports": {"http":"job-backendconfig"}}'
     cloud.google.com/app-protocols: '{"http": "HTTP2"}'
 spec:
