@@ -13,7 +13,9 @@ import (
 	"time"
 )
 
-const maxRetries = 10
+const (
+	maxBackoffElapsedTime = 72 * time.Hour
+)
 
 // ChargeUser charges the user for job jUUID
 func ChargeUser(r *http.Request, jUUID uuid.UUID) {
@@ -124,8 +126,10 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 		ii, err = invoiceitem.New(params)
 		return err
 	}
+	expBackOff := backoff.NewExponentialBackOff()
+	expBackOff.MaxElapsedTime = maxBackoffElapsedTime
 	if err := backoff.RetryNotify(operation,
-		backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+		backoff.WithContext(expBackOff, ctx),
 		func(err error, t time.Duration) {
 			log.Sugar.Errorw("error creating user invoice, retrying",
 				"method", r.Method,

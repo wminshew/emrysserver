@@ -65,8 +65,10 @@ func ChargeMiner(jUUID uuid.UUID) {
 		ch, err = charge.New(params)
 		return err
 	}
+	expBackOff := backoff.NewExponentialBackOff()
+	expBackOff.MaxElapsedTime = maxBackoffElapsedTime
 	if err := backoff.RetryNotify(operation,
-		backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+		backoff.WithContext(expBackOff, ctx),
 		func(err error, t time.Duration) {
 			log.Sugar.Errorw("error creating miner charge, retrying",
 				"err", err.Error(),

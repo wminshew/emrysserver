@@ -18,8 +18,6 @@ import (
 	"time"
 )
 
-const maxRetries = 10
-
 // postOutputData receives the miner's container execution for the user
 var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
@@ -82,8 +80,8 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 	app.CheckErr(r, f.Close)
 
 	go func() {
+		ctx := context.Background()
 		operation := func() error {
-			ctx := context.Background()
 			f, err := os.Open(p)
 			if err != nil {
 				return fmt.Errorf("opening output data.tar.gz: %v", err)
@@ -96,8 +94,10 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 			}
 			return nil
 		}
+		expBackOff := backoff.NewExponentialBackOff()
+		expBackOff.MaxElapsedTime = maxBackoffElapsedTime
 		if err := backoff.RetryNotify(operation,
-			backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries),
+			backoff.WithContext(expBackOff, ctx),
 			func(err error, t time.Duration) {
 				log.Sugar.Errorw("error uploading output data.tar.gz to gcs--retrying",
 					"method", r.Method,

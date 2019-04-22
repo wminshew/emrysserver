@@ -18,6 +18,10 @@ import (
 	"time"
 )
 
+const (
+	maxBackoffElapsedTime = 72 * time.Hour
+)
+
 // postOutputLog receives the miner's container execution for the user
 var postOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
@@ -79,8 +83,8 @@ var postOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 			}
 			defer app.CheckErr(r, f.Close)
 
+			ctx := context.Background()
 			operation := func() error {
-				ctx := context.Background()
 				uploadLog := path.Join("output", jID, "log")
 				ow := storage.NewWriter(ctx, uploadLog)
 				defer app.CheckErr(r, ow.Close)
@@ -89,8 +93,10 @@ var postOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 				}
 				return nil
 			}
+			expBackOff := backoff.NewExponentialBackOff()
+			expBackOff.MaxElapsedTime = maxBackoffElapsedTime
 			if err := backoff.RetryNotify(operation,
-				backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 10),
+				backoff.WithContext(expBackOff, ctx),
 				func(err error, t time.Duration) {
 					log.Sugar.Errorw("error uploading output log to gcs--retrying",
 						"method", r.Method,
