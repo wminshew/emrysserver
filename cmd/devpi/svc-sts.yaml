@@ -24,7 +24,6 @@ metadata:
   name: devpi-backendconfig
   namespace: emrys-prod
 spec:
-  balancingMode: UTILIZATION
   timeoutSec: 320
   connectionDraining:
     drainingTimeoutSec: 330
