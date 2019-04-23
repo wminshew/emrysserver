@@ -5,7 +5,7 @@ metadata:
   labels:
     app: sqlproxy
   namespace: emrys-prod
-  annotations:
+  # annotations:
     # cloud.google.com/neg: '{"ingress": true}' # container-native load balancing
 spec:
   selector:

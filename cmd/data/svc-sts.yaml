@@ -8,7 +8,7 @@ metadata:
   annotations:
     # cloud.google.com/neg: '{"ingress": true}' # container-native load balancing
     beta.cloud.google.com/backend-config: '{"ports": {"http":"data-backendconfig"}}'
-    cloud.google.com/app-protocols: '{"http": "HTTP2"}'
+    # cloud.google.com/app-protocols: '{"http": "HTTP2"}'
 spec:
   selector:
     app: data
@@ -25,6 +25,7 @@ metadata:
   name: data-backendconfig
   namespace: emrys-prod
 spec:
+  balancingMode: UTILIZATION
   timeoutSec: 620
   connectionDraining:
     drainingTimeoutSec: 630
