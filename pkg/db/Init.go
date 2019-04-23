@@ -32,7 +32,7 @@ func Init() {
 	log.Sugar.Infof("Initializing database...")
 
 	var err error
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbNetloc, dbPort, dbName)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&binary_parameters=yes", dbUser, dbPassword, dbNetloc, dbPort, dbName)
 	if db, err = sql.Open("postgres", connStr); err != nil {
 		log.Sugar.Errorf("Error opening database: %v", err)
 		panic(err)
