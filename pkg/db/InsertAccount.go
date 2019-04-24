@@ -11,12 +11,15 @@ import (
 var (
 	// ErrEmailExists lets server send a proper response to client
 	ErrEmailExists = errors.New("an account with this email already exists")
+	// ErrNullViolation lets server send a proper response to client
+	ErrNullViolation = errors.New("your new account request is missing required information")
 )
 
 const (
-	errEmailExistsCode = "23505"
-	errBeginTx         = "error beginning tx"
-	errCommitTx        = "error committing tx"
+	errEmailExistsCode   = "23505"
+	errNullViolationCode = "23502"
+	errBeginTx           = "error beginning tx"
+	errCommitTx          = "error committing tx"
 )
 
 // InsertAccount inserts a new account into the db
@@ -76,6 +79,8 @@ func InsertAccount(r *http.Request, email, hashedPassword string, aUUID uuid.UUI
 			)
 			if pqErr.Code == errEmailExistsCode {
 				return ErrEmailExists
+			} else if pqErr.Code == errNullViolationCode {
+				return ErrNullViolation
 			}
 		} else {
 			log.Sugar.Errorw(message,
