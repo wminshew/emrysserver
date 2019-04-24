@@ -57,7 +57,8 @@ spec:
             cpu: 50m
             memory: "50Mi"
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
         env:
         - name: DB_NAME
           value: "emrysserver"

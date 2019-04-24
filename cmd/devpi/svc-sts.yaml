@@ -66,7 +66,8 @@ spec:
             cpu: 500m
             memory: "1Gi"
         ports:
-        - containerPort: 3141
+        - name: http
+          containerPort: 3141
         env:
         - name: DEVPISERVER_MAX_RETRIES
           value: "10"

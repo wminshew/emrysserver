@@ -30,6 +30,9 @@ spec:
   replicas: 2
   strategy:
     type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 25%
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -57,7 +60,8 @@ spec:
             cpu: 50m
             memory: "50Mi"
         ports:
-        - containerPort: 8080
+        - name: http
+        containerPort: 8080
         env:
         - name: AUTH_SECRET
           valueFrom:

@@ -74,7 +74,8 @@ spec:
             cpu: 500m
             memory: "1Gi"
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
         - containerPort: 2222
         env:
         - name: DB_NAME

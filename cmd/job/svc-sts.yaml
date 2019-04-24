@@ -68,7 +68,8 @@ spec:
             cpu: 500m
             memory: "1Gi"
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
         env:
         - name: AUTH_SECRET
           valueFrom:
