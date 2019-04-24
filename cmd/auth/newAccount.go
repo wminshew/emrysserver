@@ -39,6 +39,23 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusBadRequest, Message: "must agree to the Terms of Service and Privacy Policy"}
 	}
 
+	if c.FirstName == "" {
+		log.Sugar.Infow("no first name included",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must include first name"}
+	}
+	if c.LastName == "" {
+		log.Sugar.Infow("no last name included",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must include last name"}
+	}
+
 	isUser := r.URL.Query().Get("user") != ""
 	isMiner := r.URL.Query().Get("miner") != ""
 	if !isUser && !isMiner {
@@ -64,14 +81,6 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "email invalid"}
 	}
-	if !validate.PasswordRegexp().MatchString(c.Password) {
-		log.Sugar.Infow("invalid password",
-			"method", r.Method,
-			"url", r.URL,
-			"email", c.Email,
-		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
-	}
 
 	if c.Password == "" {
 		log.Sugar.Infow("no password included",
@@ -80,20 +89,13 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 			"email", c.Email,
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "must set password"}
-	} else if c.FirstName == "" {
-		log.Sugar.Infow("no first name included",
+	} else if !validate.PasswordRegexp().MatchString(c.Password) {
+		log.Sugar.Infow("invalid password",
 			"method", r.Method,
 			"url", r.URL,
 			"email", c.Email,
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "must include first name"}
-	} else if c.LastName == "" {
-		log.Sugar.Infow("no last name included",
-			"method", r.Method,
-			"url", r.URL,
-			"email", c.Email,
-		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "must include last name"}
+		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), cost)
@@ -108,7 +110,6 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	}
 
 	aUUID := uuid.NewV4()
-
 	credit := newUserCredit
 	if !isUser {
 		credit = 0
