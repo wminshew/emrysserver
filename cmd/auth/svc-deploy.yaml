@@ -85,7 +85,7 @@ spec:
         - name: DEBUG_LOG
           value: "false"
         - name: NEW_USER_CREDIT
-          value: "10"
+          value: "1000"
         - name: SENDGRID_SECRET
           valueFrom:
             secretKeyRef:

@@ -20,7 +20,7 @@ const (
 )
 
 // InsertAccount inserts a new account into the db
-func InsertAccount(r *http.Request, email, hashedPassword string, aUUID uuid.UUID, isUser, isMiner bool, newUserCredit int) error {
+func InsertAccount(r *http.Request, email, hashedPassword string, aUUID uuid.UUID, firstName, lastName string, isUser, isMiner bool, newUserCredit int) error {
 	ctx := r.Context()
 	tx, txerr := db.BeginTx(ctx, nil)
 	if message, err := func() (string, error) {
@@ -29,10 +29,10 @@ func InsertAccount(r *http.Request, email, hashedPassword string, aUUID uuid.UUI
 		}
 
 		sqlStmt := `
-		INSERT INTO accounts (uuid, email, password, credit)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO accounts (uuid, email, password, first_name, last_name, credit)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		`
-		if _, err := tx.Exec(sqlStmt, aUUID, email, hashedPassword, newUserCredit); err != nil {
+		if _, err := tx.Exec(sqlStmt, aUUID, email, hashedPassword, firstName, lastName, newUserCredit); err != nil {
 			return "error inserting account", err
 		}
 

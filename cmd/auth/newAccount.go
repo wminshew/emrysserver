@@ -42,7 +42,7 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	isUser := r.URL.Query().Get("user") != ""
 	isMiner := r.URL.Query().Get("miner") != ""
 	if !isUser && !isMiner {
-		log.Sugar.Infow("must sign up as a user or miner",
+		log.Sugar.Infow("must sign up as a user and/or miner",
 			"method", r.Method,
 			"url", r.URL,
 			"email", c.Email,
@@ -84,7 +84,7 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	if !isUser {
 		credit = 0
 	}
-	if err := db.InsertAccount(r, c.Email, string(hashedPassword), aUUID, isUser, isMiner, credit); err != nil {
+	if err := db.InsertAccount(r, c.Email, string(hashedPassword), aUUID, c.FirstName, c.LastName, isUser, isMiner, credit); err != nil {
 		// error already logged
 		if err == db.ErrEmailExists {
 			return &app.Error{Code: http.StatusBadRequest, Message: err.Error()}
