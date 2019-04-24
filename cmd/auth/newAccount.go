@@ -50,7 +50,13 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusBadRequest, Message: "must sign up as a user or miner"}
 	}
 
-	if !validate.EmailRegexp().MatchString(c.Email) {
+	if c.Email == "" {
+		log.Sugar.Infow("no email address included",
+			"method", r.Method,
+			"url", r.URL,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must sign up with email address"}
+	} else if !validate.EmailRegexp().MatchString(c.Email) {
 		log.Sugar.Infow("invalid email",
 			"method", r.Method,
 			"url", r.URL,
@@ -65,6 +71,29 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 			"email", c.Email,
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
+	}
+
+	if c.Password == "" {
+		log.Sugar.Infow("no password included",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must set password"}
+	} else if c.FirstName == "" {
+		log.Sugar.Infow("no first name included",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must include first name"}
+	} else if c.LastName == "" {
+		log.Sugar.Infow("no last name included",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "must include last name"}
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), cost)
@@ -87,6 +116,8 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	if err := db.InsertAccount(r, c.Email, string(hashedPassword), aUUID, c.FirstName, c.LastName, isUser, isMiner, credit); err != nil {
 		// error already logged
 		if err == db.ErrEmailExists {
+			return &app.Error{Code: http.StatusBadRequest, Message: err.Error()}
+		} else if err == db.ErrNullViolation {
 			return &app.Error{Code: http.StatusBadRequest, Message: err.Error()}
 		}
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
