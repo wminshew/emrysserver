@@ -15,8 +15,6 @@ import (
 	"time"
 )
 
-const cost = 14
-
 // newAccount creates a new accounts entry in database if successful
 var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	c := &creds.Account{}
@@ -98,7 +96,7 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), cost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Sugar.Errorw("error hashing password",
 			"method", r.Method,
@@ -143,6 +141,7 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
+	// TODO: put in go func?
 	if err := email.SendEmailConfirmation(c.Email, tokenString); err != nil {
 		log.Sugar.Errorw("error sending account confirmation email",
 			"method", r.Method,

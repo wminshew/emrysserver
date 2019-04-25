@@ -78,7 +78,7 @@ var confirmResetPassword app.Handler = func(w http.ResponseWriter, r *http.Reque
 		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), cost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Sugar.Errorw("error hashing password",
 			"method", r.Method,
