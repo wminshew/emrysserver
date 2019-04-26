@@ -92,16 +92,16 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 					dockerDisk := wStats.DockerDisk
 					// TODO: should probably be uint64
 					if diskQuota < (dockerDisk.SizeRw + dockerDisk.SizeRootFs +
-						int64(dockerDisk.SizeDataDir) + int64(dockerDisk.SizeOutputDir)) {
+						dockerDisk.SizeDataDir + dockerDisk.SizeOutputDir) {
 						log.Sugar.Infow("user disk quota exceeded, canceling job",
 							"method", r.Method,
 							"url", r.URL,
 							"jID", wStats.JobID,
 						)
 
-						uUUID, err := db.GetJobOwner(r, wStats.JobID)
+						uUUID, project, err := db.GetJobOwnerAndProject(r, wStats.JobID)
 						if err != nil {
-							log.Sugar.Errorw("error getting job owner",
+							log.Sugar.Errorw("error getting job owner and project",
 								"method", r.Method,
 								"url", r.URL,
 								"err", err.Error(),
@@ -128,10 +128,10 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 							return
 						}
 
-						p := path.Join("job", wStats.JobID.String(), "cancel")
+						p := path.Join("user", "project", project, "job", wStats.JobID.String(), "cancel")
 						u := url.URL{
 							Scheme: "http",
-							Host:   "job-svc:8080",
+							Host:   "user-svc:8080",
 							Path:   p,
 						}
 						operation := func() error {
@@ -160,14 +160,14 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 						if err := backoff.RetryNotify(operation,
 							backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 							func(err error, t time.Duration) {
-								log.Sugar.Errorw("error posting user cancellation to job-svc, retrying",
+								log.Sugar.Errorw("error posting user cancellation to user-svc, retrying",
 									"method", r.Method,
 									"url", r.URL,
 									"err", err.Error(),
 									"jID", wStats.JobID,
 								)
 							}); err != nil {
-							log.Sugar.Errorw("error posting user cancellation to job-svc--aborting",
+							log.Sugar.Errorw("error posting user cancellation to user-svc--aborting",
 								"method", r.Method,
 								"url", r.URL,
 								"err", err.Error(),

@@ -51,7 +51,8 @@ spec:
       labels:
         app: miner
     spec:
-      terminationGracePeriodSeconds: 630
+      terminationGracePeriodSeconds: 120
+      # terminationGracePeriodSeconds: 630
       restartPolicy: Always
       containers:
       - name: miner-container
