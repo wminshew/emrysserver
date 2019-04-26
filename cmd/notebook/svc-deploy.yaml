@@ -62,7 +62,7 @@ spec:
       - name: notebook-container
         image: gcr.io/emrys-12/notebook
         securityContext:
-          runAsUser: 2 # non-root
+          # runAsUser: 2 # non-root
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']

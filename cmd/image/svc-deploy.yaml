@@ -63,11 +63,11 @@ spec:
             drop: ['all']
         resources:
           requests:
-            cpu: 100m
+            cpu: 50m
             memory: "100Mi"
           limits:
             cpu: 100m
-            memory: "100Mi"
+            memory: "200Mi"
         ports:
         - name: http
           containerPort: 8080
@@ -144,8 +144,8 @@ spec:
             cpu: 200m
             memory: "1Gi"
           limits:
-            cpu: 200m
-            memory: "1Gi"
+            cpu: 500m
+            memory: "2Gi"
         ports:
         - containerPort: 2375
         env:
@@ -164,8 +164,8 @@ spec:
             drop: ['all']
         resources:
           requests:
-            cpu: 100m
-            memory: "500Mi"
+            cpu: 50m
+            memory: "250Mi"
           limits:
             cpu: 100m
             memory: "500Mi"
