@@ -56,16 +56,16 @@ spec:
       labels:
         app: notebook
     spec:
-      terminationGracePeriodSeconds: 330
+      terminationGracePeriodSeconds: 120
       restartPolicy: Always
       containers:
       - name: notebook-container
         image: gcr.io/emrys-12/notebook
-        securityContext:
-          # runAsUser: 2 # non-root
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: ['all']
+        # securityContext:
+        #   # runAsUser: 2 # non-root
+        #   allowPrivilegeEscalation: false
+        #   capabilities:
+        #     drop: ['all']
         resources:
           requests:
             cpu: 500m
