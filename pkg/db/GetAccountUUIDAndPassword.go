@@ -19,8 +19,8 @@ var (
 func GetAccountUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string, bool, bool, bool, bool, bool, error) {
 	aUUID := uuid.UUID{}
 	storedC := &creds.Account{}
-	uUUID := uuid.UUID{}
-	mUUID := uuid.UUID{}
+	uUUID := uuid.NullUUID{}
+	mUUID := uuid.NullUUID{}
 	confirmed := false
 	suspended := false
 	beta := false
@@ -62,7 +62,7 @@ func GetAccountUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string
 		}
 		return uuid.UUID{}, "", false, false, false, false, false, err
 	}
-	isUser := (uUUID != uuid.UUID{})
-	isMiner := (mUUID != uuid.UUID{})
+	isUser := uUUID.Valid
+	isMiner := mUUID.Valid
 	return aUUID, storedC.Password, isUser, isMiner, confirmed, suspended, beta, nil
 }
