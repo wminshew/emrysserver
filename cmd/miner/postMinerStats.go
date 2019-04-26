@@ -93,6 +93,12 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 					// TODO: should probably be uint64
 					if diskQuota < (dockerDisk.SizeRw + dockerDisk.SizeRootFs +
 						int64(dockerDisk.SizeDataDir) + int64(dockerDisk.SizeOutputDir)) {
+						log.Sugar.Infow("user disk quota exceeded, canceling job",
+							"method", r.Method,
+							"url", r.URL,
+							"jID", wStats.JobID,
+						)
+
 						uUUID, err := db.GetJobOwner(r, wStats.JobID)
 						if err != nil {
 							log.Sugar.Errorw("error getting job owner",

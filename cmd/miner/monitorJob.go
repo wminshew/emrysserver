@@ -102,6 +102,7 @@ func monitorJob(jUUID uuid.UUID, notebook bool) {
 			}
 			log.Sugar.Infow("miner failed job",
 				"jID", jUUID,
+				"mID", mUUID,
 			)
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 				"aud":   "emrys.io",
