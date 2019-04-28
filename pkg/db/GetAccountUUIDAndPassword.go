@@ -33,7 +33,7 @@ func GetAccountUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string
 	`
 	if err := db.QueryRow(sqlStmt, email).Scan(&aUUID, &storedC.Password, &uUUID, &mUUID, &confirmed, &suspended, &beta); err != nil {
 		if err == sql.ErrNoRows {
-			log.Sugar.Infow("unauthorized account",
+			log.Sugar.Infow("unauthorized account -- no email in db",
 				"method", r.Method,
 				"url", r.URL,
 				"email", email,

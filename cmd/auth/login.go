@@ -44,7 +44,7 @@ var login app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error 
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(c.Password)); err != nil {
-		log.Sugar.Infow("unauthorized account",
+		log.Sugar.Infow("unauthorized account -- incorrect password",
 			"method", r.Method,
 			"url", r.URL,
 			"aID", aUUID,
