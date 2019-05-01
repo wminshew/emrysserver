@@ -142,7 +142,8 @@ spec:
         resources:
           requests:
             cpu: 200m
-            memory: "2Gi"
+            memory: "1Gi"
+            # memory: "2Gi" TODO
           limits:
             cpu: 500m
             memory: "3Gi"

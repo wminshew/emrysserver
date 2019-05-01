@@ -98,39 +98,29 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	}
 
 	inputDockerfilePath := filepath.Join(inputDir, "Dockerfile")
-	if _, err := os.Stat(inputDockerfilePath); os.IsNotExist(err) {
-		if err := func() error {
-			dockerfile, err := os.Open(dockerfilePath)
-			if err != nil {
-				return err
-			}
-			defer check.Err(dockerfile.Close)
-			inputDockerfile, err := os.Create(inputDockerfilePath)
-			if err != nil {
-				return err
-			}
-			defer check.Err(inputDockerfile.Close)
-			_, err = io.Copy(inputDockerfile, dockerfile)
+	if err := func() error {
+		dockerfile, err := os.Open(dockerfilePath)
+		if err != nil {
 			return err
-		}(); err != nil {
-			log.Sugar.Errorw("error linking dockerfile into user dir",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		// if err := os.Symlink(dockerfilePath, inputDockerfilePath); err != nil {
-		// 	// if err := os.Link(dockerfilePath, inputDockerfilePath); err != nil {
-		// 	log.Sugar.Errorw("error linking dockerfile into user dir",
-		// 		"method", r.Method,
-		// 		"url", r.URL,
-		// 		"err", err.Error(),
-		// 		"jID", jID,
-		// 	)
-		// 	return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		// }
+		defer check.Err(dockerfile.Close)
+
+		inputDockerfile, err := os.Create(inputDockerfilePath)
+		if err != nil {
+			return err
+		}
+		defer check.Err(inputDockerfile.Close)
+
+		_, err = io.Copy(inputDockerfile, dockerfile)
+		return err
+	}(); err != nil {
+		log.Sugar.Errorw("error copying dockerfile into job input dir",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
 	main := r.Header.Get("X-Main")
@@ -162,11 +152,10 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 
 			p := filepath.Join("image", jID, "dockerContext.tar.gz")
 			ow := storage.NewWriter(ctx, p)
+			defer app.CheckErr(r, ow.Close)
+
 			if _, err = io.Copy(ow, pr); err != nil {
 				return fmt.Errorf("copying pipe reader to cloud storage object writer: %v", err)
-			}
-			if err = ow.Close(); err != nil {
-				return fmt.Errorf("closing cloud storage object writer: %v", err)
 			}
 			return nil
 		}
