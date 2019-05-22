@@ -243,31 +243,31 @@ delete-devpi:
 
 
 patch-default-backend:
-	kubectl patch deploy -lapp=default-backend -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy default-backend-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-auth:
-	kubectl patch deploy -lapp=auth -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy auth-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-user:
-	kubectl patch deploy -lapp=user -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy user-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-miner:
-	kubectl patch deploy -lapp=miner -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy miner-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-job:
-	kubectl patch deploy -lapp=job -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy job-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-notebook:
-	kubectl patch deploy -lapp=notebook -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy notebook-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-image:
-	kubectl patch deploy -lapp=image -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy image-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-registry:
-	kubectl patch deploy -lapp=registry -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy registry-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-data:
-	kubectl patch deploy -lapp=data -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy data-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-devpi:
-	kubectl patch deploy -lapp=devpi -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch deploy devpi-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
