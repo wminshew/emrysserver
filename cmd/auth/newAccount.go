@@ -86,14 +86,14 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 			"url", r.URL,
 			"email", c.Email,
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "must set password"}
-	} else if !validate.PasswordRegexp().MatchString(c.Password) {
+		return &app.Error{Code: http.StatusBadRequest, Message: "no password included"}
+	} else if !validate.Password(c.Password) {
 		log.Sugar.Infow("invalid password",
 			"method", r.Method,
 			"url", r.URL,
 			"email", c.Email,
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
+		return &app.Error{Code: http.StatusBadRequest, Message: "invalid password"}
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), bcrypt.DefaultCost)

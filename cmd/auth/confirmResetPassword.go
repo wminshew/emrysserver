@@ -70,12 +70,20 @@ var confirmResetPassword app.Handler = func(w http.ResponseWriter, r *http.Reque
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing json request body"}
 	}
 
-	if !validate.PasswordRegexp().MatchString(c.Password) {
-		log.Sugar.Errorw("error validating password",
+	if c.Password == "" {
+		log.Sugar.Infow("no password included",
 			"method", r.Method,
 			"url", r.URL,
+			"email", c.Email,
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "password invalid"}
+		return &app.Error{Code: http.StatusBadRequest, Message: "no password included"}
+	} else if !validate.Password(c.Password) {
+		log.Sugar.Infow("invalid password",
+			"method", r.Method,
+			"url", r.URL,
+			"email", c.Email,
+		)
+		return &app.Error{Code: http.StatusBadRequest, Message: "invalid password"}
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(c.Password), bcrypt.DefaultCost)
