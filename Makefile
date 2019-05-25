@@ -241,6 +241,7 @@ delete-data:
 delete-devpi:
 	kubectl delete pod -lapp=devpi -n emrys-prod
 
+patch: patch-default-backend patch-auth patch-user patch-miner patch-job patch-notebook patch-image patch-registry patch-data
 
 patch-default-backend:
 	kubectl patch deploy default-backend-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
@@ -255,7 +256,7 @@ patch-miner:
 	kubectl patch deploy miner-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-job:
-	kubectl patch deploy job-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch sts job-sts -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-notebook:
 	kubectl patch deploy notebook-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
@@ -270,4 +271,4 @@ patch-data:
 	kubectl patch deploy data-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-devpi:
-	kubectl patch deploy devpi-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch sts devpi-sts -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
