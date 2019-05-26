@@ -1,0 +1,31 @@
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  name: emrys-cert
+spec:
+  domains:
+    - emrys.io
+---
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  name: emrys-api-cert
+spec:
+  domains:
+    - api.emrys.io
+---
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  name: emrys-data-cert
+spec:
+  domains:
+    - data.emrys.io
+---
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  name: emrys-registry-cert
+spec:
+  domains:
+    - registry.emrys.io
