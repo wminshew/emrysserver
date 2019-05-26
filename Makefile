@@ -268,7 +268,7 @@ patch-registry:
 	kubectl patch deploy registry-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-data:
-	kubectl patch deploy data-deploy -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
+	kubectl patch sts data-sts -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
 
 patch-devpi:
 	kubectl patch sts devpi-sts -n emrys-prod -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}"
