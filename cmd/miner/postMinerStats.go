@@ -88,8 +88,8 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 					return
 				}
 
-				if diskQuota != 0 {
-					dockerDisk := wStats.DockerDisk
+				dockerDisk := wStats.DockerDisk
+				if dockerDisk != nil && diskQuota != 0 {
 					// TODO: should probably be uint64
 					if diskQuota < (dockerDisk.SizeRw + dockerDisk.SizeRootFs +
 						dockerDisk.SizeDataDir + dockerDisk.SizeOutputDir) {
