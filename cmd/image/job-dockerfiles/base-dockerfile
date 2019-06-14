@@ -11,6 +11,7 @@ RUN apt-get update && \
     cuda-cusparse-9-0 \
     libcudnn7=7.0.5.15-1+cuda9.0 \
     python3-pip \
+    python3-setuptools \
     && \
     apt-get clean && \
     apt-get autoremove && \
