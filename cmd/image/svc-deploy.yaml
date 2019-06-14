@@ -26,9 +26,9 @@ metadata:
   namespace: emrys-prod
 spec:
   balancingMode: UTILIZATION
-  timeoutSec: 620
+  timeoutSec: 920
   connectionDraining:
-    drainingTimeoutSec: 630
+    drainingTimeoutSec: 930
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -51,7 +51,7 @@ spec:
       labels:
         app: image
     spec:
-      terminationGracePeriodSeconds: 630
+      terminationGracePeriodSeconds: 930
       restartPolicy: Always
       containers:
       - name: image-container
