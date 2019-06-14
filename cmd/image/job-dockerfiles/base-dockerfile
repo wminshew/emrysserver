@@ -17,18 +17,20 @@ RUN apt-get update && \
     apt-get autoremove && \
 rm -rf /var/lib/apt/lists/*
 
+RUN pip3 install --upgrade pip
+
 ARG HOME="/home/user"
 RUN useradd --create-home --home-dir $HOME user \
 && chown -R user:user $HOME
 WORKDIR $HOME
+RUN pip3 --no-cache-dir --timeout=30 --retries=10 install -i http://devpi-svc:3141/root/pypi/+simple/ --trusted-host devpi-svc jupyter
+
+
+FROM base
 ARG DEVPI_HOST="http://devpi-svc:3141"
 ARG DEVPI_TRUSTED_HOST="devpi-svc"
 ARG PIP_TIMEOUT=30
 ARG PIP_RETRIES=10
-RUN pip3 --no-cache-dir --timeout=$PIP_TIMEOUT --retries=$PIP_RETRIES install -i $DEVPI_HOST/root/pypi/+simple/ --trusted-host $DEVPI_TRUSTED_HOST jupyter
-
-
-FROM base
 ARG REQS
 COPY $REQS ./
 RUN pip3 --no-cache-dir --timeout=$PIP_TIMEOUT --retries=$PIP_RETRIES install -i $DEVPI_HOST/root/pypi/+simple/ --trusted-host $DEVPI_TRUSTED_HOST -r $REQS
