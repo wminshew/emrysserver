@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/cenkalti/backoff"
 	"github.com/satori/go.uuid"
 	"github.com/stripe/stripe-go/account"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
 	"net/http"
+	"time"
 )
 
 // connect handles miner requests to /miner/connect, establishing
@@ -42,9 +44,22 @@ var connect app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 			"Please verify your payout information at https://www.emrys.io/account and reach out to support if problems continue."}
 	}
 
-	_, err = account.GetByID(acctID, nil)
-	if err != nil {
-		log.Sugar.Errorw("miner's stripe account not recognized or inactive",
+	// TODO: replace with proper stripe backend configuration
+	ctx := r.Context()
+	operation := func() error {
+		_, err = account.GetByID(acctID, nil)
+		return err
+	}
+	if err := backoff.RetryNotify(operation,
+		backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+		func(err error, t time.Duration) {
+			log.Sugar.Errorw("miner's stripe account not recognized or inactive, retrying",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+			)
+		}); err != nil {
+		log.Sugar.Errorw("miner's stripe account not recognized or inactive, aborting",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
