@@ -159,8 +159,8 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	go payments.ChargeUser(r, jUUID)
-	go payments.PayMiner(r, jUUID)
+	go payments.ChargeUser(r, stripeInvoiceItemC, jUUID)
+	go payments.PayMiner(r, stripeTransferC, jUUID)
 
 	return nil
 }

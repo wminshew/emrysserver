@@ -3,8 +3,6 @@ package main
 import (
 	"github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/customer"
-	"github.com/stripe/stripe-go/sub"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -50,7 +48,7 @@ var postStripeCustomerToken app.Handler = func(w http.ResponseWriter, r *http.Re
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		cus, err := customer.Update(stripeCustomerID, customerParams)
+		cus, err := stripeCustomerC.Update(stripeCustomerID, customerParams)
 		if err != nil {
 			log.Sugar.Errorw("error updating customer source with stripe token",
 				"method", r.Method,
@@ -80,7 +78,7 @@ var postStripeCustomerToken app.Handler = func(w http.ResponseWriter, r *http.Re
 			)
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
-		cus, err := customer.New(customerParams)
+		cus, err := stripeCustomerC.New(customerParams)
 		if err != nil {
 			log.Sugar.Errorw("error creating new stripe customer",
 				"method", r.Method,
@@ -116,7 +114,7 @@ var postStripeCustomerToken app.Handler = func(w http.ResponseWriter, r *http.Re
 			Customer:           stripe.String(stripeCustomerID),
 			Items:              subItems,
 		}
-		subscription, err := sub.New(subParams)
+		subscription, err := stripeSubC.New(subParams)
 		if err != nil {
 			log.Sugar.Errorw("error creating new stripe subscription",
 				"method", r.Method,

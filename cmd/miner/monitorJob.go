@@ -204,7 +204,7 @@ func monitorJob(jUUID uuid.UUID, notebook bool) {
 			if err := db.SetJobFailed(jUUID); err != nil {
 				return // already logged
 			}
-			go payments.ChargeMiner(jUUID)
+			go payments.ChargeMiner(stripeChargeC, jUUID)
 
 			return
 		case <-activeWorker[jUUID]:

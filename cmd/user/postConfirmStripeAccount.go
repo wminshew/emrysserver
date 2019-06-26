@@ -6,7 +6,6 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/account"
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -131,7 +130,7 @@ var postConfirmStripeAccount app.Handler = func(w http.ResponseWriter, r *http.R
 			},
 		},
 	}
-	if _, err := account.Update(stripeResp.StripeUserID, params); err != nil {
+	if _, err := stripeAccountC.Update(stripeResp.StripeUserID, params); err != nil {
 		log.Sugar.Errorw("error updating stripe account",
 			"method", r.Method,
 			"url", r.URL,

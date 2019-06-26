@@ -284,8 +284,8 @@ var postCancelJob app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 
 	// no rate for user to pay if auction hasn't completed
 	if !auctionCompleted.IsZero() {
-		go payments.ChargeUser(r, jUUID)
-		go payments.PayMiner(r, jUUID)
+		go payments.ChargeUser(r, stripeInvoiceItemC, jUUID)
+		go payments.PayMiner(r, stripeTransferC, jUUID)
 	}
 
 	return nil

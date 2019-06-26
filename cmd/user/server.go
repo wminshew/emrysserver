@@ -7,6 +7,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	stripe "github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/account"
+	"github.com/stripe/stripe-go/customer"
+	"github.com/stripe/stripe-go/invoiceitem"
+	"github.com/stripe/stripe-go/loginlink"
+	"github.com/stripe/stripe-go/sub"
+	"github.com/stripe/stripe-go/transfer"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -27,6 +33,12 @@ var (
 	stripeWebhookSecretAccount = os.Getenv("STRIPE_WEBHOOK_SECRET_ACCOUNT")
 	stripeWebhookSecretConnect = os.Getenv("STRIPE_WEBHOOK_SECRET_CONNECT")
 	stripePlanID               = os.Getenv("STRIPE_USER_PLAN_ID")
+	stripeInvoiceItemC         *invoiceitem.Client
+	stripeTransferC            *transfer.Client
+	stripeLoginLinkC           *loginlink.Client
+	stripeAccountC             *account.Client
+	stripeSubC                 *sub.Client
+	stripeCustomerC            *customer.Client
 	debugCors                  = (os.Getenv("DEBUG_CORS") == "true")
 	debugLog                   = (os.Getenv("DEBUG_LOG") == "true")
 	sheetsService              *sheets.Service
@@ -47,7 +59,35 @@ func main() {
 	}
 	db.Init()
 	defer db.Close()
-	stripe.Key = stripeSecretKey
+
+	stripeConfig := &stripe.BackendConfig{
+		// MaxNetworkRetries: maxRetries, TODO
+		LeveledLogger: log.Sugar,
+	}
+	stripeCustomerC = &customer.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
+	stripeSubC = &sub.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
+	stripeAccountC = &account.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
+	stripeInvoiceItemC = &invoiceitem.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
+	stripeTransferC = &transfer.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
+	stripeLoginLinkC = &loginlink.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 	projectRegexpMux := validate.ProjectRegexpMux()

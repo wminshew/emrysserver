@@ -14,7 +14,7 @@ import (
 )
 
 // PayMiner pays the miner for job jUUID
-func PayMiner(r *http.Request, jUUID uuid.UUID) {
+func PayMiner(r *http.Request, stripeTransferC *transfer.Client, jUUID uuid.UUID) {
 	aUUID, err := db.GetJobWinner(jUUID)
 	if err != nil {
 		log.Sugar.Errorw("error getting job winner",
@@ -60,7 +60,7 @@ func PayMiner(r *http.Request, jUUID uuid.UUID) {
 	t := &stripe.Transfer{}
 	operation := func() error {
 		var err error
-		t, err = transfer.New(params)
+		t, err = stripeTransferC.New(params)
 		return err
 	}
 	expBackOff := backoff.NewExponentialBackOff()

@@ -15,7 +15,7 @@ import (
 const baseMinerPenalty = 50
 
 // ChargeMiner pays the miner for job jUUID
-func ChargeMiner(jUUID uuid.UUID) {
+func ChargeMiner(stripeChargeC *charge.Client, jUUID uuid.UUID) {
 	aUUID, err := db.GetJobWinner(jUUID)
 	if err != nil {
 		log.Sugar.Errorw("error getting job winner",
@@ -62,7 +62,7 @@ func ChargeMiner(jUUID uuid.UUID) {
 	ch := &stripe.Charge{}
 	operation := func() error {
 		var err error
-		ch, err = charge.New(params)
+		ch, err = stripeChargeC.New(params)
 		return err
 	}
 	expBackOff := backoff.NewExponentialBackOff()

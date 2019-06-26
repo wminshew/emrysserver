@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/cenkalti/backoff"
 	"github.com/satori/go.uuid"
-	"github.com/stripe/stripe-go/account"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -44,10 +43,10 @@ var connect app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 			"Please verify your payout information at https://www.emrys.io/account and reach out to support if problems continue."}
 	}
 
-	// TODO: replace with proper stripe backend configuration
+	// TODO: replace with stripe backend configuration with retries built in?
 	ctx := r.Context()
 	operation := func() error {
-		_, err = account.GetByID(acctID, nil)
+		_, err = stripeAccountC.GetByID(acctID, nil)
 		return err
 	}
 	if err := backoff.RetryNotify(operation,

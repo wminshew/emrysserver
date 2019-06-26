@@ -5,7 +5,6 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
-	"github.com/stripe/stripe-go/sub"
 	"github.com/wminshew/emrys/pkg/check"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
@@ -53,7 +52,7 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 			"Please verify your payment information on https://www.emrys.io/account and reach out to support if problems continue."}
 	}
 
-	sub, err := sub.Get(subID, nil)
+	sub, err := stripeSubC.Get(subID, nil)
 	if err != nil {
 		log.Sugar.Errorw("error getting stripe subscription",
 			"method", r.Method,

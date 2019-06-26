@@ -18,7 +18,7 @@ const (
 )
 
 // ChargeUser charges the user for job jUUID
-func ChargeUser(r *http.Request, jUUID uuid.UUID) {
+func ChargeUser(r *http.Request, stripeInvoiceItemC *invoiceitem.Client, jUUID uuid.UUID) {
 	aUUID, err := db.GetJobOwner(r, jUUID)
 	if err != nil {
 		log.Sugar.Errorw("error getting job owner",
@@ -123,7 +123,7 @@ func ChargeUser(r *http.Request, jUUID uuid.UUID) {
 	ii := &stripe.InvoiceItem{}
 	operation := func() error {
 		var err error
-		ii, err = invoiceitem.New(params)
+		ii, err = stripeInvoiceItemC.New(params)
 		return err
 	}
 	expBackOff := backoff.NewExponentialBackOff()

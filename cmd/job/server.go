@@ -7,6 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	stripe "github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/invoiceitem"
+	"github.com/stripe/stripe-go/transfer"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -21,10 +23,12 @@ import (
 )
 
 var (
-	authSecret      = os.Getenv("AUTH_SECRET")
-	debugCors       = (os.Getenv("DEBUG_CORS") == "true")
-	debugLog        = (os.Getenv("DEBUG_LOG") == "true")
-	stripeSecretKey = os.Getenv("STRIPE_SECRET_KEY")
+	authSecret         = os.Getenv("AUTH_SECRET")
+	debugCors          = (os.Getenv("DEBUG_CORS") == "true")
+	debugLog           = (os.Getenv("DEBUG_LOG") == "true")
+	stripeSecretKey    = os.Getenv("STRIPE_SECRET_KEY")
+	stripeInvoiceItemC *invoiceitem.Client
+	stripeTransferC    *transfer.Client
 )
 
 func main() {
@@ -38,7 +42,19 @@ func main() {
 	defer db.Close()
 	storage.Init()
 	initJobsManager()
-	stripe.Key = stripeSecretKey
+
+	stripeConfig := &stripe.BackendConfig{
+		// MaxNetworkRetries: maxRetries, TODO
+		LeveledLogger: log.Sugar,
+	}
+	stripeInvoiceItemC = &invoiceitem.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
+	stripeTransferC = &transfer.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 

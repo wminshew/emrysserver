@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/loginlink"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -43,7 +42,7 @@ var getStripeAccountDashboard app.Handler = func(w http.ResponseWriter, r *http.
 	params := &stripe.LoginLinkParams{
 		Account: stripe.String(stripeAccountID),
 	}
-	link, err := loginlink.New(params)
+	link, err := stripeLoginLinkC.New(params)
 	if err != nil {
 		log.Sugar.Errorw("error getting new stripe dashboard link",
 			"method", r.Method,

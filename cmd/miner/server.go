@@ -7,6 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	stripe "github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/account"
+	"github.com/stripe/stripe-go/charge"
 	"github.com/wminshew/emrys/pkg/validate"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/auth"
@@ -29,6 +31,8 @@ var (
 	debugLog        = (os.Getenv("DEBUG_LOG") == "true")
 	minerTimeoutStr = os.Getenv("MINER_TIMEOUT")
 	minerTimeout    int
+	stripeAccountC  *account.Client
+	stripeChargeC   *charge.Client
 )
 
 func main() {
@@ -46,7 +50,19 @@ func main() {
 		panic(err)
 	}
 	initMinerManager()
-	stripe.Key = stripeSecretKey
+
+	stripeConfig := &stripe.BackendConfig{
+		// MaxNetworkRetries: maxRetries, TODO
+		LeveledLogger: log.Sugar,
+	}
+	stripeAccountC = &account.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
+	stripeChargeC = &charge.Client{
+		B:   stripe.GetBackendWithConfig(stripe.APIBackend, stripeConfig),
+		Key: stripeSecretKey,
+	}
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 
