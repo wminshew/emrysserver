@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.0-base-ubuntu16.04@sha256:ba1c9865dcafe8af90e60869f94acda6ca6b74981d59b63cff842be284ab2aed as base
+FROM nvidia/cuda:9.0-base-ubuntu16.04 as base
 LABEL maintainer="William Minshew <w@emrys.io>"
 
 RUN apt-get update && \

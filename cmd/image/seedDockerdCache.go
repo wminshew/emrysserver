@@ -9,7 +9,6 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 	"io"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -19,11 +18,11 @@ var (
 	dockerfilePath    = os.Getenv("DOCKER_PATH")
 )
 
+// TODO: move to initContainers
 // seedDockerdCache downloads and possibly builds early-stage docker images
 func seedDockerdCache(ctx context.Context) {
-	// TODO: make wait period ENV
-	time.Sleep(10 * time.Second) // wait for dockerd to boot
-	// TODO: move to initContainers
+	// TODO: make wait period ENV?
+	time.Sleep(15 * time.Second) // wait for dockerd to boot
 	log.Sugar.Infof("Seeding dockerd cache...")
 
 	var pullResp io.ReadCloser
@@ -31,10 +30,11 @@ func seedDockerdCache(ctx context.Context) {
 	// TODO: make ENV/ARGS
 	img := "nvidia/cuda"
 	tag := "9.0-base-ubuntu16.04"
-	digestAlgo := "sha256"
-	digest := "ba1c9865dcafe8af90e60869f94acda6ca6b74981d59b63cff842be284ab2aed"
+	// digestAlgo := "sha256"
+	// digest := "ba1c9865dcafe8af90e60869f94acda6ca6b74981d59b63cff842be284ab2aed"
 	local := true
-	localBaseCudaRef := fmt.Sprintf("%s/%s:%s@%s:%s", registryHost, img, tag, digestAlgo, digest)
+	// localBaseCudaRef := fmt.Sprintf("%s/%s:%s@%s:%s", registryHost, img, tag, digestAlgo, digest)
+	localBaseCudaRef := fmt.Sprintf("%s/%s:%s", registryHost, img, tag)
 	log.Sugar.Infof("Pulling %s...", localBaseCudaRef)
 	if pullResp, err = dClient.ImagePull(ctx, localBaseCudaRef, types.ImagePullOptions{}); err != nil {
 		log.Sugar.Infof("error finding %s: %v", localBaseCudaRef, err)
@@ -48,7 +48,8 @@ func seedDockerdCache(ctx context.Context) {
 		}
 	}
 
-	dockerBaseCudaRef = fmt.Sprintf("%s:%s@%s:%s", img, tag, digestAlgo, digest)
+	// dockerBaseCudaRef = fmt.Sprintf("%s:%s@%s:%s", img, tag, digestAlgo, digest)
+	dockerBaseCudaRef = fmt.Sprintf("%s:%s", img, tag)
 	log.Sugar.Infof("Pulling %s...", dockerBaseCudaRef)
 	if pullResp, err = dClient.ImagePull(ctx, dockerBaseCudaRef, types.ImagePullOptions{}); err != nil {
 		log.Sugar.Infof("error finding %s: %v", dockerBaseCudaRef, err)
@@ -59,18 +60,35 @@ func seedDockerdCache(ctx context.Context) {
 				log.Sugar.Errorf("error closing dockerd cache pull response: %v\n", err)
 			}
 		} else if !local {
-			localBaseRefNoDigest := strings.Split(localBaseCudaRef, "@")[0]
-			if err = dClient.ImageTag(ctx, dockerBaseCudaRef, localBaseRefNoDigest); err != nil {
-				log.Sugar.Errorf("error tagging %s as %s: %v", dockerBaseCudaRef, localBaseRefNoDigest, err)
+			// localBaseRefNoDigest := strings.Split(localBaseCudaRef, "@")[0]
+			// if err = dClient.ImageTag(ctx, dockerBaseCudaRef, localBaseRefNoDigest); err != nil {
+			// 	log.Sugar.Errorf("error tagging %s as %s: %v", dockerBaseCudaRef, localBaseRefNoDigest, err)
+			// } else {
+			// 	log.Sugar.Infof("Pushing %s...", localBaseRefNoDigest)
+			// 	if pushResp, err := dClient.ImagePush(ctx, localBaseRefNoDigest, types.ImagePushOptions{
+			// 		RegistryAuth: "none",
+			// 	}); err != nil {
+			// 		log.Sugar.Errorf("error pushing %s: %v", localBaseRefNoDigest, err)
+			// 	} else {
+			// 		if err = jsonmessage.DisplayJSONMessagesStream(pushResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
+			// 			log.Sugar.Errorf("error pushing %s: %v", localBaseRefNoDigest, err)
+			// 			if err := pushResp.Close(); err != nil {
+			// 				log.Sugar.Errorf("error closing dockerd cache push response: %v\n", err)
+			// 			}
+			// 		}
+			// 	}
+			// }
+			if err = dClient.ImageTag(ctx, dockerBaseCudaRef, localBaseCudaRef); err != nil {
+				log.Sugar.Errorf("error tagging %s as %s: %v", dockerBaseCudaRef, localBaseCudaRef, err)
 			} else {
-				log.Sugar.Infof("Pushing %s...", localBaseRefNoDigest)
-				if pushResp, err := dClient.ImagePush(ctx, localBaseRefNoDigest, types.ImagePushOptions{
+				log.Sugar.Infof("Pushing %s...", localBaseCudaRef)
+				if pushResp, err := dClient.ImagePush(ctx, localBaseCudaRef, types.ImagePushOptions{
 					RegistryAuth: "none",
 				}); err != nil {
-					log.Sugar.Errorf("error pushing %s: %v", localBaseRefNoDigest, err)
+					log.Sugar.Errorf("error pushing %s: %v", localBaseCudaRef, err)
 				} else {
 					if err = jsonmessage.DisplayJSONMessagesStream(pushResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-						log.Sugar.Errorf("error pushing %s: %v", localBaseRefNoDigest, err)
+						log.Sugar.Errorf("error pushing %s: %v", localBaseCudaRef, err)
 						if err := pushResp.Close(); err != nil {
 							log.Sugar.Errorf("error closing dockerd cache push response: %v\n", err)
 						}
