@@ -40,9 +40,7 @@ func main() {
 	defer db.Close()
 	storage.Init()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		cancel()
-	}()
+	defer cancel()
 	initDocker(ctx)
 	defer func() {
 		if err := dClient.Close(); err != nil {

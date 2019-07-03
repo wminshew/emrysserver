@@ -179,7 +179,7 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		}
 	}()
 
-	cacheSlice := []string{dockerBaseCudaRef, localBaseJobRef}
+	cacheSlice := []string{remoteBaseCudaRef, localBaseJobRef}
 	latestProjectBuild := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
 	imageBuildTime[latestProjectBuild] = time.Now()
 	if pullResp, err := dClient.ImagePull(ctx, latestProjectBuild, types.ImagePullOptions{}); err != nil {
