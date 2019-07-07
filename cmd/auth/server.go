@@ -44,6 +44,7 @@ func main() {
 
 	rAuth := r.PathPrefix("/auth").Subrouter()
 	rAuth.Handle("/account", newAccount).Methods("POST")
+	rAuth.Handle("/promo", getPromo).Methods("GET")
 	rAuth.Handle("/confirm-email", confirmEmail).Methods("POST")
 	rAuth.Handle("/reset-password", resetPassword).Methods("POST")
 	rAuth.Handle("/confirm-reset-password", confirmResetPassword).Methods("POST")

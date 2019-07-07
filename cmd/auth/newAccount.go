@@ -107,11 +107,55 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	aUUID := uuid.NewV4()
-	credit := newUserCredit
-	if !isUser {
-		credit = 0
+	promoUsed := false
+	var credit, promoUses int
+	promo := r.URL.Query().Get("promo")
+	if isUser {
+		if promo != "" {
+			promoCredit, expiration, uses, maxUses, err := db.GetPromoInfo(promo)
+			if err != nil {
+				log.Sugar.Errorw("error getting promo info",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+					"email", c.Email,
+				)
+				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+			}
+
+			if promoCredit == 0 {
+				// should never happen
+				log.Sugar.Errorw("promo has no credit set",
+					"method", r.Method,
+					"url", r.URL,
+					"promo", promo,
+				)
+				credit = newUserCredit
+			} else if expiration.IsZero() {
+				// should never happen
+				log.Sugar.Errorw("promo has no expiration date set",
+					"method", r.Method,
+					"url", r.URL,
+					"promo", promo,
+				)
+				credit = newUserCredit
+			} else if expiration.Before(time.Now()) {
+				log.Sugar.Infof("promo %s expired as of %s", promo, expiration.Format("2009-01-01"))
+				credit = newUserCredit
+			} else if uses >= maxUses {
+				log.Sugar.Infof("promo %s used max number of times: %d / %d", promo, uses, maxUses)
+				credit = newUserCredit
+			} else {
+				credit = promoCredit
+				promoUsed = true
+				promoUses = uses
+			}
+		} else {
+			credit = newUserCredit
+		}
 	}
+
+	aUUID := uuid.NewV4()
 	if err := db.InsertAccount(r, c.Email, string(hashedPassword), aUUID, c.FirstName, c.LastName, isUser, isMiner, credit); err != nil {
 		// error already logged
 		if err == db.ErrEmailExists {
@@ -122,6 +166,33 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	log.Sugar.Infof("Account %s (%s) successfully added!", c.Email, aUUID.String())
+
+	if promoUsed {
+		// TODO: race condition: two users registering at the same time could use the same promo but only register one use
+		// counter: would still be picked up by log
+		// solution: could add to log which "use" slot the entry takes & make a unique index across promo, use slot
+		if err := db.SetPromoUses(promo, promoUses); err != nil {
+			log.Sugar.Errorw("error updating promo uses",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"aID", aUUID,
+				"promo", promo,
+				"uses", promoUses,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+		if err := db.InsertPromoUse(aUUID, promo); err != nil {
+			log.Sugar.Errorw("error inserting promo use to log",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"aID", aUUID,
+				"promo", promo,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"aud": "emrys.io",
@@ -141,7 +212,6 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
-	// TODO: put in go func?
 	if err := email.SendEmailConfirmation(c.Email, tokenString); err != nil {
 		log.Sugar.Errorw("error sending account confirmation email",
 			"method", r.Method,
