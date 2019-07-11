@@ -59,7 +59,7 @@ func main() {
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	rDataUser := r.PathPrefix("/user").HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rDataUser := r.PathPrefix("/user").Subrouter()
 	rDataUser.Use(auth.Jwt(authSecret, []string{"user"}))
 	rDataUser.Use(auth.UserJobMiddleware)
 	rDataUser.Use(auth.JobActive)
@@ -69,7 +69,7 @@ func main() {
 	uploadDataPath := path.Join(syncUserPath, "{relPath:.*}")
 	rDataUser.Handle(uploadDataPath, uploadData).Methods("PUT")
 
-	rDataMiner := r.PathPrefix("/miner").HeadersRegexp("Authorization", "^Bearer ").Methods("GET").Subrouter()
+	rDataMiner := r.PathPrefix("/miner").Methods("GET").Subrouter()
 	getDataPath := fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)
 	rDataMiner.Handle(getDataPath, getData)
 	rDataMiner.Use(auth.Jwt(authSecret, []string{"miner"}))

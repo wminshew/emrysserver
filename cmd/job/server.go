@@ -63,7 +63,7 @@ func main() {
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
 	jobPathPrefix := fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)
-	rJob := r.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rJob := r.PathPrefix(jobPathPrefix).Subrouter()
 
 	rJobMiner := rJob.NewRoute().Subrouter()
 	rJobMiner.Use(auth.Jwt(authSecret, []string{"miner"}))

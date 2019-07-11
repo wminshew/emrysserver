@@ -102,28 +102,19 @@ func main() {
 
 	rUser := r.PathPrefix("/user").Subrouter()
 	rUser.Handle("/version", getVersion).Methods("GET")
-	rUser.Handle("/job-history", auth.Jwt(authSecret, []string{})(getJobHistory)).
-		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/credit", auth.Jwt(authSecret, []string{})(getAccountCredit)).
-		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).
-		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/feedback", auth.Jwt(authSecret, []string{})(postFeedback)).
-		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/job-history", auth.Jwt(authSecret, []string{})(getJobHistory)).Methods("GET")
+	rUser.Handle("/credit", auth.Jwt(authSecret, []string{})(getAccountCredit)).Methods("GET")
+	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).Methods("GET")
+	rUser.Handle("/feedback", auth.Jwt(authSecret, []string{})(postFeedback)).Methods("POST")
 
-	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeAccountID)).
-		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripeAccount)).
-		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeAccountDashboard)).
-		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/stripe/token", auth.Jwt(authSecret, []string{})(postStripeCustomerToken)).
-		Methods("POST").HeadersRegexp("Authorization", "^Bearer ")
-	rUser.Handle("/stripe/last4", auth.Jwt(authSecret, []string{})(getAccountStripeCustomerLast4)).
-		Methods("GET").HeadersRegexp("Authorization", "^Bearer ")
+	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeAccountID)).Methods("GET")
+	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripeAccount)).Methods("POST")
+	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeAccountDashboard)).Methods("GET")
+	rUser.Handle("/stripe/token", auth.Jwt(authSecret, []string{})(postStripeCustomerToken)).Methods("POST")
+	rUser.Handle("/stripe/last4", auth.Jwt(authSecret, []string{})(getAccountStripeCustomerLast4)).Methods("GET")
 
 	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
-	rUserAuth := rUser.PathPrefix(jobPathPrefix).HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rUserAuth := rUser.PathPrefix(jobPathPrefix).Subrouter()
 	rUserAuth.Use(auth.Jwt(authSecret, []string{"user"}))
 	rUserAuth.Handle("", auth.UserActive(postJob)).Methods("POST")
 	postCancelPath := fmt.Sprintf("/{jID:%s}/cancel", uuidRegexpMux)

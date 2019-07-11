@@ -61,7 +61,7 @@ func main() {
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
 	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
 
-	rImage := r.PathPrefix("/image").HeadersRegexp("Authorization", "^Bearer ").Methods("POST").Subrouter()
+	rImage := r.PathPrefix("/image").Methods("POST").Subrouter()
 
 	rImageMiner := rImage.PathPrefix("/downloaded").Subrouter()
 	rImageMiner.Use(auth.Jwt(authSecret, []string{"miner"}))

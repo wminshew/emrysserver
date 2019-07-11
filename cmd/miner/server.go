@@ -73,7 +73,7 @@ func main() {
 	rMiner := r.PathPrefix("/miner").Subrouter()
 	rMiner.Handle("/version", getVersion).Methods("GET")
 
-	rMinerAuth := rMiner.NewRoute().HeadersRegexp("Authorization", "^Bearer ").Subrouter()
+	rMinerAuth := rMiner.NewRoute().Subrouter()
 	rMinerAuth.Use(auth.Jwt(authSecret, []string{"miner"}))
 	rMinerAuth.Handle("/connect", auth.MinerActive(connect)).Methods("GET")
 	rMinerAuth.Handle("/stats", postMinerStats).Methods("POST")
