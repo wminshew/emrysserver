@@ -30,13 +30,13 @@ func main() {
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
-	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods(http.MethodGet)
 
-	r.Handle("/user", postUser).Methods("POST")
-	r.Handle("/user", deleteUser).Methods("DELETE")
-	r.Handle("/user", verifyUser).Methods("GET")
+	r.Handle("/user", postUser).Methods(http.MethodPost)
+	r.Handle("/user", deleteUser).Methods(http.MethodDelete)
+	r.Handle("/user", verifyUser).Methods(http.MethodGet)
 
-	r.Handle("/miner", postMiner).Methods("POST")
+	r.Handle("/miner", postMiner).Methods(http.MethodPost)
 
 	server := http.Server{
 		Addr:              ":8080",

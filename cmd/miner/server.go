@@ -68,24 +68,24 @@ func main() {
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
-	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods(http.MethodGet)
 
 	rMiner := r.PathPrefix("/miner").Subrouter()
-	rMiner.Handle("/version", getVersion).Methods("GET")
+	rMiner.Handle("/version", getVersion).Methods(http.MethodGet)
 
 	rMinerAuth := rMiner.NewRoute().Subrouter()
 	rMinerAuth.Use(auth.Jwt(authSecret, []string{"miner"}))
-	rMinerAuth.Handle("/connect", auth.MinerActive(connect)).Methods("GET")
-	rMinerAuth.Handle("/stats", postMinerStats).Methods("POST")
+	rMinerAuth.Handle("/connect", auth.MinerActive(connect)).Methods(http.MethodGet)
+	rMinerAuth.Handle("/stats", postMinerStats).Methods(http.MethodPost)
 	postBidPath := fmt.Sprintf("/job/{jID:%s}/bid", uuidRegexpMux)
-	rMinerAuth.Handle(postBidPath, auth.JobActive(postBid)).Methods("POST")
+	rMinerAuth.Handle(postBidPath, auth.JobActive(postBid)).Methods(http.MethodPost)
 
 	rAuction := r.PathPrefix("/auction").Subrouter()
 	rAuction.Use(auth.Jwt(authSecret, []string{"user"}))
 	rAuction.Use(auth.UserJobMiddleware)
 	rAuction.Use(auth.JobActive)
 	postAuctionPath := fmt.Sprintf("/{jID:%s}", uuidRegexpMux)
-	rAuction.Handle(postAuctionPath, postAuction).Methods("POST")
+	rAuction.Handle(postAuctionPath, postAuction).Methods(http.MethodPost)
 
 	corsR := cors.New(cors.Options{
 		AllowedOrigins: []string{

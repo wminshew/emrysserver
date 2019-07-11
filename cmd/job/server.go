@@ -60,7 +60,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
-	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods(http.MethodGet)
 
 	jobPathPrefix := fmt.Sprintf("/job/{jID:%s}", uuidRegexpMux)
 	rJob := r.PathPrefix(jobPathPrefix).Subrouter()
@@ -69,18 +69,18 @@ func main() {
 	rJobMiner.Use(auth.Jwt(authSecret, []string{"miner"}))
 	rJobMiner.Use(auth.MinerJobMiddleware)
 	rJobMiner.Use(auth.JobActive)
-	rJobMiner.Handle("/log", postOutputLog).Methods("POST")
-	rJobMiner.Handle("/data", postOutputData).Methods("POST")
-	rJobMiner.Handle("/cancel", getJobCancel).Methods("GET")
+	rJobMiner.Handle("/log", postOutputLog).Methods(http.MethodPost)
+	rJobMiner.Handle("/data", postOutputData).Methods(http.MethodPost)
+	rJobMiner.Handle("/cancel", getJobCancel).Methods(http.MethodGet)
 
 	rJobUser := rJob.NewRoute().Subrouter()
 	rJobUser.Use(auth.Jwt(authSecret, []string{"user"}))
 	rJobUser.Use(auth.UserJobMiddleware)
-	rJobUser.Handle("/log", auth.JobActive(streamOutputLog)).Methods("GET")
-	rJobUser.Handle("/log/download", downloadOutputLog).Methods("GET")
-	rJobUser.Handle("/data", getOutputData).Methods("GET")
-	rJobUser.Handle("/data/posted", getJobOutputDataPosted).Methods("GET") // TODO: add JobActive mdlwre?
-	rJobUser.Handle("/cancel", postJobCancel).Methods("POST")
+	rJobUser.Handle("/log", auth.JobActive(streamOutputLog)).Methods(http.MethodGet)
+	rJobUser.Handle("/log/download", downloadOutputLog).Methods(http.MethodGet)
+	rJobUser.Handle("/data", getOutputData).Methods(http.MethodGet)
+	rJobUser.Handle("/data/posted", getJobOutputDataPosted).Methods(http.MethodGet) // TODO: add JobActive mdlwre?
+	rJobUser.Handle("/cancel", postJobCancel).Methods(http.MethodPost)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{

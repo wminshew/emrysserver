@@ -94,32 +94,32 @@ func main() {
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
-	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods(http.MethodGet)
 
 	rStripe := r.PathPrefix("/stripe").Subrouter()
-	rStripe.Handle("/webhook/account", postStripeWebhookAccount).Methods("POST")
-	rStripe.Handle("/webhook/connect", postStripeWebhookConnect).Methods("POST")
+	rStripe.Handle("/webhook/account", postStripeWebhookAccount).Methods(http.MethodPost)
+	rStripe.Handle("/webhook/connect", postStripeWebhookConnect).Methods(http.MethodPost)
 
 	rUser := r.PathPrefix("/user").Subrouter()
-	rUser.Handle("/version", getVersion).Methods("GET")
-	rUser.Handle("/job-history", auth.Jwt(authSecret, []string{})(getJobHistory)).Methods("GET")
-	rUser.Handle("/credit", auth.Jwt(authSecret, []string{})(getAccountCredit)).Methods("GET")
-	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).Methods("GET")
-	rUser.Handle("/feedback", auth.Jwt(authSecret, []string{})(postFeedback)).Methods("POST")
+	rUser.Handle("/version", getVersion).Methods(http.MethodGet)
+	rUser.Handle("/job-history", auth.Jwt(authSecret, []string{})(getJobHistory)).Methods(http.MethodGet)
+	rUser.Handle("/credit", auth.Jwt(authSecret, []string{})(getAccountCredit)).Methods(http.MethodGet)
+	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).Methods(http.MethodGet)
+	rUser.Handle("/feedback", auth.Jwt(authSecret, []string{})(postFeedback)).Methods(http.MethodPost)
 
-	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeAccountID)).Methods("GET")
-	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripeAccount)).Methods("POST")
-	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeAccountDashboard)).Methods("GET")
-	rUser.Handle("/stripe/token", auth.Jwt(authSecret, []string{})(postStripeCustomerToken)).Methods("POST")
-	rUser.Handle("/stripe/last4", auth.Jwt(authSecret, []string{})(getAccountStripeCustomerLast4)).Methods("GET")
+	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeAccountID)).Methods(http.MethodGet)
+	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripeAccount)).Methods(http.MethodPost)
+	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeAccountDashboard)).Methods(http.MethodGet)
+	rUser.Handle("/stripe/token", auth.Jwt(authSecret, []string{})(postStripeCustomerToken)).Methods(http.MethodPost)
+	rUser.Handle("/stripe/last4", auth.Jwt(authSecret, []string{})(getAccountStripeCustomerLast4)).Methods(http.MethodGet)
 
 	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).Subrouter()
 	rUserAuth.Use(auth.Jwt(authSecret, []string{"user"}))
-	rUserAuth.Handle("", auth.UserActive(postJob)).Methods("POST")
+	rUserAuth.Handle("", auth.UserActive(postJob)).Methods(http.MethodPost)
 	postCancelPath := fmt.Sprintf("/{jID:%s}/cancel", uuidRegexpMux)
 	rUserAuth.Handle(postCancelPath,
-		auth.JobActive(auth.UserJobMiddleware(postCancelJob))).Methods("POST")
+		auth.JobActive(auth.UserJobMiddleware(postCancelJob))).Methods(http.MethodPost)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{

@@ -29,7 +29,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
-	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods(http.MethodGet)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{

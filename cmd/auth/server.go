@@ -40,16 +40,16 @@ func main() {
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
-	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods(http.MethodGet)
 
 	rAuth := r.PathPrefix("/auth").Subrouter()
-	rAuth.Handle("/account", newAccount).Methods("POST")
-	rAuth.Handle("/promo", getPromo).Methods("GET")
-	rAuth.Handle("/confirm-email", confirmEmail).Methods("POST")
-	rAuth.Handle("/reset-password", resetPassword).Methods("POST")
-	rAuth.Handle("/confirm-reset-password", confirmResetPassword).Methods("POST")
-	rAuth.Handle("/token", refreshToken).Methods("POST").Queries("grant_type", "token")
-	rAuth.Handle("/token", login).Methods("POST")
+	rAuth.Handle("/account", newAccount).Methods(http.MethodPost)
+	rAuth.Handle("/promo", getPromo).Methods(http.MethodGet)
+	rAuth.Handle("/confirm-email", confirmEmail).Methods(http.MethodPost)
+	rAuth.Handle("/reset-password", resetPassword).Methods(http.MethodPost)
+	rAuth.Handle("/confirm-reset-password", confirmResetPassword).Methods(http.MethodPost)
+	rAuth.Handle("/token", refreshToken).Methods(http.MethodPost).Queries("grant_type", "token")
+	rAuth.Handle("/token", login).Methods(http.MethodPost)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{

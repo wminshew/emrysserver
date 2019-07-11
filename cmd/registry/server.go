@@ -60,9 +60,9 @@ func main() {
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
-	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods(http.MethodGet)
 
-	rRegistry := r.PathPrefix("/v2").Methods("GET", "HEAD").Subrouter()
+	rRegistry := r.PathPrefix("/v2").Methods(http.MethodGet, http.MethodHead).Subrouter()
 	rRegistry.Use(auth.Jwt(authSecret, []string{"miner"}))
 	rRegistry.Handle("/", registryRP)
 

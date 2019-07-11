@@ -59,9 +59,9 @@ func main() {
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(app.APINotFound)
-	r.HandleFunc("/healthz", app.HealthCheck).Methods("GET")
+	r.HandleFunc("/healthz", app.HealthCheck).Methods(http.MethodGet)
 
-	rImage := r.PathPrefix("/image").Methods("POST").Subrouter()
+	rImage := r.PathPrefix("/image").Methods(http.MethodPost).Subrouter()
 
 	rImageMiner := rImage.PathPrefix("/downloaded").Subrouter()
 	rImageMiner.Use(auth.Jwt(authSecret, []string{"miner"}))
