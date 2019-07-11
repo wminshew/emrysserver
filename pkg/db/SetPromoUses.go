@@ -9,7 +9,7 @@ import (
 func SetPromoUses(promo string, uses int) error {
 	sqlStmt := `
 		UPDATE promos
-		SET uses = $2,
+		SET uses = $2
 		WHERE promo = $1
 		`
 	if _, err := db.Exec(sqlStmt, promo, uses); err != nil {

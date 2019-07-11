@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/satori/go.uuid"
@@ -113,7 +114,15 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	if isUser {
 		if promo != "" {
 			promoCredit, expiration, uses, maxUses, err := db.GetPromoInfo(promo)
-			if err != nil {
+			if err == sql.ErrNoRows {
+				log.Sugar.Infow("promo doesn't exist",
+					"method", r.Method,
+					"url", r.URL,
+					"email", c.Email,
+					"promo", promo,
+				)
+				credit = newUserCredit
+			} else if err != nil {
 				log.Sugar.Errorw("error getting promo info",
 					"method", r.Method,
 					"url", r.URL,
@@ -121,34 +130,35 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 					"email", c.Email,
 				)
 				return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-			}
-
-			if promoCredit == 0 {
-				// should never happen
-				log.Sugar.Errorw("promo has no credit set",
-					"method", r.Method,
-					"url", r.URL,
-					"promo", promo,
-				)
-				credit = newUserCredit
-			} else if expiration.IsZero() {
-				// should never happen
-				log.Sugar.Errorw("promo has no expiration date set",
-					"method", r.Method,
-					"url", r.URL,
-					"promo", promo,
-				)
-				credit = newUserCredit
-			} else if expiration.Before(time.Now()) {
-				log.Sugar.Infof("promo %s expired as of %s", promo, expiration.Format("2009-01-01"))
-				credit = newUserCredit
-			} else if uses >= maxUses {
-				log.Sugar.Infof("promo %s used max number of times: %d / %d", promo, uses, maxUses)
-				credit = newUserCredit
 			} else {
-				credit = promoCredit
-				promoUsed = true
-				promoUses = uses
+
+				if promoCredit == 0 {
+					// should never happen
+					log.Sugar.Errorw("promo has no credit set",
+						"method", r.Method,
+						"url", r.URL,
+						"promo", promo,
+					)
+					credit = newUserCredit
+				} else if expiration.IsZero() {
+					// should never happen
+					log.Sugar.Errorw("promo has no expiration date set",
+						"method", r.Method,
+						"url", r.URL,
+						"promo", promo,
+					)
+					credit = newUserCredit
+				} else if expiration.Before(time.Now()) {
+					log.Sugar.Infof("promo %s expired as of %s", promo, expiration.Format("2009-01-01"))
+					credit = newUserCredit
+				} else if uses >= maxUses {
+					log.Sugar.Infof("promo %s used max number of times: %d / %d", promo, uses, maxUses)
+					credit = newUserCredit
+				} else {
+					credit = promoCredit
+					promoUsed = true
+					promoUses = uses
+				}
 			}
 		} else {
 			credit = newUserCredit

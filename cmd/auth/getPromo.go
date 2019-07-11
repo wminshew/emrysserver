@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
@@ -16,7 +17,10 @@ var getPromo app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Err
 	}
 
 	promoCredit, expiration, uses, maxUses, err := db.GetPromoInfo(promo)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		log.Sugar.Infof("promo doesn't exist")
+		return &app.Error{Code: http.StatusPaymentRequired, Message: "invalid promo"}
+	} else if err != nil {
 		log.Sugar.Errorw("error getting promo info",
 			"method", r.Method,
 			"url", r.URL,
