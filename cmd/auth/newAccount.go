@@ -159,7 +159,7 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 				} else {
 					credit = promoCredit
 					promoUsed = true
-					promoUses = uses
+					promoUses = uses + 1
 				}
 			}
 		} else {
