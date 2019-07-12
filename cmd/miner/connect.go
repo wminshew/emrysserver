@@ -58,7 +58,7 @@ var connect app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 				"err", err.Error(),
 			)
 		}); err != nil {
-		log.Sugar.Errorw("miner's stripe account not recognized or inactive, aborting",
+		log.Sugar.Errorw("miner's stripe account not recognized or inactive--aborting",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),

@@ -180,7 +180,7 @@ var postBid app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 					"err", err.Error(),
 				)
 			}); err != nil {
-			log.Sugar.Errorw("error adding notebook user, aborting",
+			log.Sugar.Errorw("error adding notebook user--aborting",
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
