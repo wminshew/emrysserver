@@ -9,8 +9,8 @@ import (
 	"net/http"
 )
 
-// getStripeAccountDashboard returns the user's stripe dashboard url
-var getStripeAccountDashboard app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+// getStripeDashboard returns the user's stripe dashboard url
+var getStripeDashboard app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	aID := r.Header.Get("X-Jwt-Claims-Subject")
 	aUUID, err := uuid.FromString(aID)
 	if err != nil {

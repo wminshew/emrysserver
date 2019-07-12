@@ -8,8 +8,8 @@ import (
 	"net/http"
 )
 
-// getAccountStripeCustomerLast4 returns the account's stripe's card last4
-var getAccountStripeCustomerLast4 app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+// getStripeCustomerLast4 returns the account's stripe's card last4
+var getStripeCustomerLast4 app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	aID := r.Header.Get("X-Jwt-Claims-Subject")
 	aUUID, err := uuid.FromString(aID)
 	if err != nil {

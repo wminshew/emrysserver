@@ -28,8 +28,8 @@ type stripeOAuth struct {
 	ErrDetail    string `json:"error_description,omitempty"`
 }
 
-// postConfirmStripeAccount confirms a new stripe account
-var postConfirmStripeAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+// postStripeConfirmAccount confirms a new stripe account
+var postStripeConfirmAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		return &app.Error{Code: http.StatusBadRequest, Message: "no stripe authorization code"}

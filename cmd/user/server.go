@@ -108,11 +108,11 @@ func main() {
 	rUser.Handle("/email", auth.Jwt(authSecret, []string{})(getAccountEmail)).Methods(http.MethodGet)
 	rUser.Handle("/feedback", auth.Jwt(authSecret, []string{})(postFeedback)).Methods(http.MethodPost)
 
-	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getAccountStripeAccountID)).Methods(http.MethodGet)
-	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postConfirmStripeAccount)).Methods(http.MethodPost)
-	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeAccountDashboard)).Methods(http.MethodGet)
+	rUser.Handle("/stripe-id", auth.Jwt(authSecret, []string{})(getStripeAccountID)).Methods(http.MethodGet)
+	rUser.Handle("/confirm-stripe", auth.Jwt(authSecret, []string{})(postStripeConfirmAccount)).Methods(http.MethodPost)
+	rUser.Handle("/stripe/dashboard", auth.Jwt(authSecret, []string{})(getStripeDashboard)).Methods(http.MethodGet)
 	rUser.Handle("/stripe/token", auth.Jwt(authSecret, []string{})(postStripeCustomerToken)).Methods(http.MethodPost)
-	rUser.Handle("/stripe/last4", auth.Jwt(authSecret, []string{})(getAccountStripeCustomerLast4)).Methods(http.MethodGet)
+	rUser.Handle("/stripe/last4", auth.Jwt(authSecret, []string{})(getStripeCustomerLast4)).Methods(http.MethodGet)
 
 	jobPathPrefix := fmt.Sprintf("/project/{project:%s}/job", projectRegexpMux)
 	rUserAuth := rUser.PathPrefix(jobPathPrefix).Subrouter()

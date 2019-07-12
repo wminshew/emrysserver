@@ -8,8 +8,8 @@ import (
 	"net/http"
 )
 
-// getAccountStripeAccountID returns the account's stripe id
-var getAccountStripeAccountID app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
+// getStripeAccountID returns the account's stripe id
+var getStripeAccountID app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	aID := r.Header.Get("X-Jwt-Claims-Subject")
 	aUUID, err := uuid.FromString(aID)
 	if err != nil {
