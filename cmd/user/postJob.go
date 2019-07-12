@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/cenkalti/backoff"
 	"github.com/gorilla/mux"
@@ -19,6 +22,10 @@ const (
 	maxRetries = 10
 )
 
+type slackMsg struct {
+	Text string `json:"text,omitempty"`
+}
+
 // postJob handles new jobs posted by users
 var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
@@ -33,6 +40,73 @@ var postJob app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 		)
 		return &app.Error{Code: http.StatusBadRequest, Message: "error parsing user ID"}
 	}
+
+	go func() {
+		userEmail, err := db.GetAccountEmail(r, uUUID)
+		if err != nil {
+			return // already logged
+		}
+
+		ctx := context.Background()
+		client := &http.Client{}
+		u := url.URL{
+			Scheme: "https",
+			Host:   "hooks.slack.com",
+			Path:   "services/TJ42GDSA0/BLBTB84JG/19807dDjC06aY1EwVP5NOnfR",
+		}
+
+		var buf *bytes.Buffer
+		msg := slackMsg{
+			Text: fmt.Sprintf("new job posted by %s", userEmail),
+		}
+		if err := json.NewEncoder(buf).Encode(&msg); err != nil {
+			log.Sugar.Errorw("error encoding slack message",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+			)
+			return
+		}
+
+		operation := func() error {
+			req, err := http.NewRequest(http.MethodPost, u.String(), nil)
+			if err != nil {
+				return err
+			}
+			req.Header.Set("Content-type", "application/json")
+
+			resp, err := client.Do(req)
+			if err != nil {
+				return err
+			}
+			defer check.Err(resp.Body.Close)
+
+			if resp.StatusCode == http.StatusBadGateway {
+				return fmt.Errorf("server: temporary error")
+			} else if resp.StatusCode >= 300 {
+				b, _ := ioutil.ReadAll(resp.Body)
+				return backoff.Permanent(fmt.Errorf("server: %v", string(b)))
+			}
+
+			return nil
+		}
+		if err := backoff.RetryNotify(operation,
+			backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
+			func(err error, t time.Duration) {
+				log.Sugar.Errorw("error posting new job to slack, retrying",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+				)
+			}); err != nil {
+			log.Sugar.Errorw("error posting new job to slack, aborting",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+			)
+			return
+		}
+	}()
 
 	subID, err := db.GetAccountStripeSubscriptionID(r, uUUID)
 	if err != nil {
