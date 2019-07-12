@@ -52,19 +52,18 @@ var connect app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Erro
 	if err := backoff.RetryNotify(operation,
 		backoff.WithContext(backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetries), ctx),
 		func(err error, t time.Duration) {
-			log.Sugar.Errorw("miner's stripe account not recognized or inactive, retrying",
+			log.Sugar.Errorw("error getting miner's stripe account, retrying",
 				"method", r.Method,
 				"url", r.URL,
 				"err", err.Error(),
 			)
 		}); err != nil {
-		log.Sugar.Errorw("miner's stripe account not recognized or inactive--aborting",
+		log.Sugar.Errorw("error getting miner's stripe account--aborting",
 			"method", r.Method,
 			"url", r.URL,
 			"err", err.Error(),
 		)
-		return &app.Error{Code: http.StatusBadRequest, Message: "your stripe account is inactive or non-existent. " +
-			"Please verify your payout information on https://www.emrys.io/account and reach out to support if problems continue."}
+		return &app.Error{Code: http.StatusBadGateway, Message: "error pinging stripe's servers"}
 	}
 
 	q := r.URL.Query()
