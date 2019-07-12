@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrysserver/pkg/app"
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/slack"
 	sheets "google.golang.org/api/sheets/v4"
 	"io/ioutil"
 	"net/http"
@@ -49,6 +51,20 @@ var postFeedback app.Handler = func(w http.ResponseWriter, r *http.Request) *app
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+
+	go func() {
+		if err := slack.PostToFeedback(
+			fmt.Sprintf("%s: %s", email, body),
+		); err != nil {
+			log.Sugar.Errorw("error posting to slack",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"aID", aUUID,
+			)
+			return
+		}
+	}()
 
 	a1Range := "Sheet1!A2:E2"
 	valueInputOption := "RAW"

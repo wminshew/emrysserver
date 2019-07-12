@@ -60,6 +60,7 @@ func main() {
 	db.Init()
 	defer db.Close()
 
+	// TODO: should move all of this into the payments pkg, or a new package which covers all of stripe
 	stripeConfig := &stripe.BackendConfig{
 		// MaxNetworkRetries: maxRetries, TODO
 		LeveledLogger: log.Sugar,
