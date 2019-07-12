@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/satori/go.uuid"
 	"github.com/wminshew/emrys/pkg/creds"
@@ -11,6 +12,7 @@ import (
 	"github.com/wminshew/emrysserver/pkg/db"
 	"github.com/wminshew/emrysserver/pkg/email"
 	"github.com/wminshew/emrysserver/pkg/log"
+	"github.com/wminshew/emrysserver/pkg/slack"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
@@ -231,6 +233,19 @@ var newAccount app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+
+	go func() {
+		if err := slack.PostToNewAccounts(
+			fmt.Sprintf("New account: %s", c.Email),
+		); err != nil {
+			log.Sugar.Errorw("error posting to slack",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+			)
+			return
+		}
+	}()
 
 	return nil
 }
