@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	maxBackoffElapsedTime = 72 * time.Hour
+	maxBackOffElapsedTime = 72 * time.Hour
 )
 
 // postOutputLog receives the miner's container execution for the user
@@ -94,7 +94,7 @@ var postOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 				return nil
 			}
 			expBackOff := backoff.NewExponentialBackOff()
-			expBackOff.MaxElapsedTime = maxBackoffElapsedTime
+			expBackOff.MaxElapsedTime = maxBackOffElapsedTime
 			if err := backoff.RetryNotify(operation,
 				backoff.WithContext(expBackOff, ctx),
 				func(err error, t time.Duration) {

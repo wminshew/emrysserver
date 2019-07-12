@@ -95,7 +95,7 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 			return nil
 		}
 		expBackOff := backoff.NewExponentialBackOff()
-		expBackOff.MaxElapsedTime = maxBackoffElapsedTime
+		expBackOff.MaxElapsedTime = maxBackOffElapsedTime
 		if err := backoff.RetryNotify(operation,
 			backoff.WithContext(expBackOff, ctx),
 			func(err error, t time.Duration) {
