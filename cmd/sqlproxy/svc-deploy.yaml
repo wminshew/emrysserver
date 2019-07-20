@@ -56,7 +56,8 @@ spec:
             memory: "50Mi"
         command: ["/cloud_sql_proxy",
         "-instances=emrys-12:us-central1:emrysserver-psql=tcp:127.0.0.1:5433",
-          "-credential_file=/secrets/cloudsql/credentials.json"]
+          "-credential_file=/secrets/cloudsql/credentials.json",
+          "-log_debug_stdout=true"]
         ports:
         - containerPort: 5433
         volumeMounts:
