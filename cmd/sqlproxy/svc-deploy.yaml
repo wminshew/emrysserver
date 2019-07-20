@@ -41,7 +41,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
       - name: sqlproxy-container
-        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        image: gcr.io/cloudsql-docker/gce-proxy:1.14
         securityContext:
           runAsUser: 2 # non-root
           allowPrivilegeEscalation: false
@@ -65,7 +65,7 @@ spec:
             mountPath: /secrets/cloudsql
             readOnly: true
       - name: pgbouncer
-        image: edoburu/pgbouncer:1.8.1
+        image: edoburu/pgbouncer:1.9.0
         securityContext:
           # runAsUser: 2 # non-root
           allowPrivilegeEscalation: false
