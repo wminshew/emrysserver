@@ -20,27 +20,25 @@ rm -rf /var/lib/apt/lists/*
 RUN pip3 install --upgrade pip
 
 ARG HOME="/home/user"
-RUN useradd --create-home --home-dir $HOME user \
-&& chown -R user:user $HOME
+RUN useradd --create-home --home-dir $HOME user
 WORKDIR $HOME
 RUN pip3 --no-cache-dir --timeout=30 --retries=10 install -i http://devpi-svc:3141/root/pypi/+simple/ --trusted-host devpi-svc jupyter
 
 
 FROM base
-ARG DEVPI_HOST="http://devpi-svc:3141"
-ARG DEVPI_TRUSTED_HOST="devpi-svc"
-ARG PIP_TIMEOUT=30
-ARG PIP_RETRIES=10
+ARG HOME="/home/user"
+COPY ./entrypoint.sh /entrypoint.sh
+RUN ["chmod", "+x", "/entrypoint.sh"]
 ARG REQS
 COPY $REQS ./
-RUN pip3 --no-cache-dir --timeout=$PIP_TIMEOUT --retries=$PIP_RETRIES install -i $DEVPI_HOST/root/pypi/+simple/ --trusted-host $DEVPI_TRUSTED_HOST -r $REQS
+RUN pip3 --no-cache-dir --timeout=30 --retries=10 install -i http://devpi-svc:3141/root/pypi/+simple/ --trusted-host devpi-svc -r $REQS
 
-ARG NOTEBOOK=false
-ENV NOTEBOOK $NOTEBOOK
+ARG NOTEBOOK
+ARG HAS_MAIN
 ARG MAIN
-ENV MAIN $MAIN
-# re-copying REQS keeps command from failing if MAIN is blank, which may be the case for notebook jobs
-COPY --chown=user:user $REQS $MAIN ./
+COPY $MAIN ./
 
+ENV MAIN=$MAIN HAS_MAIN=$HAS_MAIN NOTEBOOK=$NOTEBOOK
+RUN chown -R user:user $HOME
 USER user
-CMD sh -c 'if [ "$NOTEBOOK" = true ]; then jupyter notebook --ip=0.0.0.0 --no-browser "$MAIN" ; else python3 "$MAIN" ; fi'
+ENTRYPOINT ["/entrypoint.sh"]

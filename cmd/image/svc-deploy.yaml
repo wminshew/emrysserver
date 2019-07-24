@@ -101,6 +101,8 @@ spec:
           value: "http://devpi-svc:3141"
         - name: DOCKER_API_VERSION
           value: "1.37"
+        - name: DOCKER_ENTRYPOINT_PATH
+          value: "/docker_entrypoint/entrypoint.sh"
         - name: DOCKER_HOST
           value: "tcp://127.0.0.1:2375"
         - name: DOCKER_PATH
@@ -115,6 +117,9 @@ spec:
             readOnly: true
           - name: base-dockerfile
             mountPath: /Dockerfiles
+            readOnly: true
+          - name: docker-entrypoint
+            mountPath: /docker_entrypoint
             readOnly: true
         readinessProbe:
           httpGet:
@@ -201,3 +206,6 @@ spec:
       - name: base-dockerfile
         configMap:
           name: base-dockerfile
+      - name: docker-entrypoint
+        configMap:
+          name: docker-entrypoint

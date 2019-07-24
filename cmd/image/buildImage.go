@@ -123,14 +123,80 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 
+	if _, err := os.Stat(dockerEntrypointPath); os.IsNotExist(err) {
+		log.Sugar.Errorw("entrypoint.sh missing",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
+	inputDockerEntrypointPath := filepath.Join(inputDir, "entrypoint.sh")
+	if err := func() error {
+		dockerEntrypoint, err := os.Open(dockerEntrypointPath)
+		if err != nil {
+			return err
+		}
+		defer check.Err(dockerEntrypoint.Close)
+
+		inputDockerEntrypoint, err := os.Create(inputDockerEntrypointPath)
+		if err != nil {
+			return err
+		}
+		defer check.Err(inputDockerEntrypoint.Close)
+
+		_, err = io.Copy(inputDockerEntrypoint, dockerEntrypoint)
+		return err
+	}(); err != nil {
+		log.Sugar.Errorw("error copying entrypoint.sh into job input dir",
+			"method", r.Method,
+			"url", r.URL,
+			"err", err.Error(),
+			"jID", jID,
+		)
+		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+	}
+
 	main := r.Header.Get("X-Main")
 	reqs := r.Header.Get("X-Reqs")
-	ctxFiles := []string{
-		filepath.Join(inputDir, reqs),
-		filepath.Join(inputDir, "Dockerfile"),
+
+	hasMain := "true"
+	if main == "" {
+		hasMain = "false"
+		if reqs != "blank" {
+			main = "blank"
+		} else {
+			main = "blank-main"
+		}
+		blankFile, err := os.Create(filepath.Join(inputDir, main))
+		if err != nil {
+			log.Sugar.Errorw("error creating blank file",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
+
+		if err := blankFile.Close(); err != nil {
+			log.Sugar.Errorw("error closing blank file",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
+		}
 	}
-	if main != "" {
-		ctxFiles = append(ctxFiles, filepath.Join(inputDir, main))
+
+	ctxFiles := []string{
+		inputDockerfilePath,
+		inputDockerEntrypointPath,
+		filepath.Join(inputDir, reqs),
+		filepath.Join(inputDir, main),
 	}
 
 	defer func() {
@@ -222,11 +288,12 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		log.Sugar.Infof("Tagging as: %v", strRefs)
 		buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
 			BuildArgs: map[string]*string{
-				"DEVPI_HOST":         &devpiHost,
-				"DEVPI_TRUSTED_HOST": &devpiTrustedHost,
-				"MAIN":               &main,
-				"REQS":               &reqs,
-				"NOTEBOOK":           &notebookStr,
+				// "DEVPI_HOST":         &devpiHost,
+				// "DEVPI_TRUSTED_HOST": &devpiTrustedHost,
+				"HAS_MAIN": &hasMain,
+				"MAIN":     &main,
+				"REQS":     &reqs,
+				"NOTEBOOK": &notebookStr,
 			},
 			CacheFrom:   cacheSlice,
 			ForceRemove: true,

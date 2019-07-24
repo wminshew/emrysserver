@@ -13,7 +13,6 @@ import (
 	"github.com/wminshew/emrysserver/pkg/log"
 	"github.com/wminshew/emrysserver/pkg/storage"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,12 +20,13 @@ import (
 )
 
 var (
-	authSecret       = os.Getenv("AUTH_SECRET")
-	registryHost     = os.Getenv("REGISTRY_HOST")
-	debugCors        = (os.Getenv("DEBUG_CORS") == "true")
-	debugLog         = (os.Getenv("DEBUG_LOG") == "true")
-	devpiHost        = os.Getenv("DEVPI_HOST")
-	devpiTrustedHost string
+	authSecret   = os.Getenv("AUTH_SECRET")
+	registryHost = os.Getenv("REGISTRY_HOST")
+	debugCors    = (os.Getenv("DEBUG_CORS") == "true")
+	debugLog     = (os.Getenv("DEBUG_LOG") == "true")
+	// devpiHost        = os.Getenv("DEVPI_HOST")
+	// devpiTrustedHost string
+	dockerEntrypointPath = os.Getenv("DOCKER_ENTRYPOINT_PATH")
 )
 
 func main() {
@@ -47,12 +47,12 @@ func main() {
 			log.Sugar.Errorf("Error closing docker client: %v\n", err)
 		}
 	}()
-	if u, err := url.Parse(devpiHost); err != nil {
-		log.Sugar.Errorf("Error parsing devpiHost %s: %v\n", devpiHost, err)
-		panic(err)
-	} else {
-		devpiTrustedHost = u.Hostname()
-	}
+	// if u, err := url.Parse(devpiHost); err != nil {
+	// 	log.Sugar.Errorf("Error parsing devpiHost %s: %v\n", devpiHost, err)
+	// 	panic(err)
+	// } else {
+	// 	devpiTrustedHost = u.Hostname()
+	// }
 
 	uuidRegexpMux := validate.UUIDRegexpMux()
 	projectRegexpMux := validate.ProjectRegexpMux()
