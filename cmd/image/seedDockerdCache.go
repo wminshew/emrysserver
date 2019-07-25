@@ -34,7 +34,7 @@ func seedDockerdCache(ctx context.Context) {
 	registry := registryHost
 	repo := "nvidia"
 	img := "cuda"
-	tag := "9.0-base-ubuntu16.04"
+	tag := "9.0-base-ubuntu18.04"
 	localBaseCudaRef := fmt.Sprintf("%s/%s/%s:%s", registry, repo, img, tag)
 	log.Sugar.Infof("Pulling %s...", localBaseCudaRef)
 	if pullResp, err = dClient.ImagePull(ctx, localBaseCudaRef, types.ImagePullOptions{}); err != nil {
@@ -73,6 +73,8 @@ func seedDockerdCache(ctx context.Context) {
 
 	repo = "emrys"
 	img = "base"
+	tag = "1604-90"
+	localBaseJobRef = fmt.Sprintf("%s/%s/%s:%s", registry, repo, img, tag)
 	log.Sugar.Infof("Pulling %s...", localBaseJobRef)
 	if pullResp, err = dClient.ImagePull(ctx, localBaseJobRef, types.ImagePullOptions{}); err != nil {
 		log.Sugar.Infof("error finding %s: %v", localBaseJobRef, err)
