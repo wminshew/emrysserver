@@ -97,8 +97,6 @@ spec:
           value: "false"
         - name: DEBUG_LOG
           value: "false"
-        # - name: DEVPI_HOST
-        #   value: "http://devpi-svc:3141"
         - name: DOCKER_API_VERSION
           value: "1.37"
         - name: DOCKER_ENTRYPOINT_PATH

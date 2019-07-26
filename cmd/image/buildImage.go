@@ -273,8 +273,6 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		log.Sugar.Infof("Tagging as: %v", strRefs)
 		buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
 			BuildArgs: map[string]*string{
-				// "DEVPI_HOST":         &devpiHost,
-				// "DEVPI_TRUSTED_HOST": &devpiTrustedHost,
 				"MAIN":      &main,
 				"CONDA_ENV": &condaEnv,
 				"PIP_REQS":  &pipReqs,
