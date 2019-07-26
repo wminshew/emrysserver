@@ -160,43 +160,27 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	}
 
 	main := r.Header.Get("X-Main")
-	reqs := r.Header.Get("X-Reqs")
-
-	hasMain := "true"
-	if main == "" {
-		hasMain = "false"
-		if reqs != "blank" {
-			main = "blank"
-		} else {
-			main = "blank-main"
-		}
-		blankFile, err := os.Create(filepath.Join(inputDir, main))
-		if err != nil {
-			log.Sugar.Errorw("error creating blank file",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-
-		if err := blankFile.Close(); err != nil {
-			log.Sugar.Errorw("error closing blank file",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
-		}
-	}
+	condaEnv := r.Header.Get("X-Conda-Env")
+	pipReqs := r.Header.Get("X-Pip-Reqs")
 
 	ctxFiles := []string{
 		inputDockerfilePath,
 		inputDockerEntrypointPath,
-		filepath.Join(inputDir, reqs),
-		filepath.Join(inputDir, main),
+	}
+	if main != "" {
+		ctxFiles = append(ctxFiles, filepath.Join(inputDir, main))
+	} else {
+		main = "does-not-exist"
+	}
+	if condaEnv != "" {
+		ctxFiles = append(ctxFiles, filepath.Join(inputDir, condaEnv))
+	} else {
+		condaEnv = "does-not-exist"
+	}
+	if pipReqs != "" {
+		ctxFiles = append(ctxFiles, filepath.Join(inputDir, pipReqs))
+	} else {
+		pipReqs = "does-not-exist"
 	}
 
 	defer func() {
@@ -245,25 +229,25 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		}
 	}()
 
-	cacheSlice := []string{remoteBaseCudaRef, localBaseJobRef}
-	latestProjectBuild := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
-	imageBuildTime[latestProjectBuild] = time.Now()
-	if pullResp, err := dClient.ImagePull(ctx, latestProjectBuild, types.ImagePullOptions{}); err != nil {
-		log.Sugar.Infof("error finding %s: %v", latestProjectBuild, err)
-	} else {
-		if err := jsonmessage.DisplayJSONMessagesStream(pullResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
-			log.Sugar.Errorf("error pulling %s: %v", latestProjectBuild, err)
-		} else {
-			cacheSlice = append(cacheSlice, latestProjectBuild)
-		}
-		if err := pullResp.Close(); err != nil {
-			log.Sugar.Errorf("error closing cache pull response %s: %v\n", latestProjectBuild, err)
-		}
-	}
+	// cacheSlice := []string{remoteBaseCudaRef, localBaseJobRef}
+	// latestProjectBuild := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
+	// imageBuildTime[latestProjectBuild] = time.Now()
+	// if pullResp, err := dClient.ImagePull(ctx, latestProjectBuild, types.ImagePullOptions{}); err != nil {
+	// 	log.Sugar.Infof("error finding %s: %v", latestProjectBuild, err)
+	// } else {
+	// 	if err := jsonmessage.DisplayJSONMessagesStream(pullResp, os.Stdout, os.Stdout.Fd(), nil); err != nil {
+	// 		log.Sugar.Errorf("error pulling %s: %v", latestProjectBuild, err)
+	// 	} else {
+	// 		cacheSlice = append(cacheSlice, latestProjectBuild)
+	// 	}
+	// 	if err := pullResp.Close(); err != nil {
+	// 		log.Sugar.Errorf("error closing cache pull response %s: %v\n", latestProjectBuild, err)
+	// 	}
+	// }
 
 	strRef := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, jID)
 	strRefLatest := fmt.Sprintf("%s/%s/%s:%s", registryHost, uUUID, project, "latest")
-	strRefMiner := fmt.Sprintf("%s/%s/%s:%s", registryHost, "miner", jID, "latest")
+	strRefMiner := fmt.Sprintf("%s/%s/%s:%s", registryHost, "miner", jID, "latest") // TODO: remove latest tag?
 	strRefs := []string{strRef, strRefLatest, strRefMiner}
 	operation := func() error {
 		log.Sugar.Infof("Sending ctxFiles to docker daemon...")
@@ -281,19 +265,20 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 			}
 		}()
 
-		for _, ref := range strRefs {
-			imageBuildTime[ref] = time.Now()
-		}
+		// for _, ref := range strRefs {
+		// 	imageBuildTime[ref] = time.Now()
+		// }
+		cacheSlice := []string{remoteBaseCudaRef, localBaseJobRef}
 		log.Sugar.Infof("Caching from: %v", cacheSlice)
 		log.Sugar.Infof("Tagging as: %v", strRefs)
 		buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
 			BuildArgs: map[string]*string{
 				// "DEVPI_HOST":         &devpiHost,
 				// "DEVPI_TRUSTED_HOST": &devpiTrustedHost,
-				"HAS_MAIN": &hasMain,
-				"MAIN":     &main,
-				"REQS":     &reqs,
-				"NOTEBOOK": &notebookStr,
+				"MAIN":      &main,
+				"CONDA_ENV": &condaEnv,
+				"PIP_REQS":  &pipReqs,
+				"NOTEBOOK":  &notebookStr,
 			},
 			CacheFrom:   cacheSlice,
 			ForceRemove: true,
@@ -325,6 +310,38 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		)
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
+
+	defer func() {
+		// wait to remove image, in case job fails & is promptly re-run
+		time.Sleep(5 * time.Minute) // TODO: make wait period ENV
+
+		log.Sugar.Infof("Removing images %v", strRefs)
+		for _, ref := range strRefs {
+			if _, err := dClient.ImageRemove(ctx, ref, types.ImageRemoveOptions{
+				Force: true,
+			}); err != nil {
+				log.Sugar.Errorw("error removing image",
+					"method", r.Method,
+					"url", r.URL,
+					"err", err.Error(),
+					"jID", jID,
+					"ref", ref,
+				)
+				return
+			}
+		}
+
+		log.Sugar.Infof("Pruning build cache")
+		if _, err := dClient.BuildCachePrune(ctx); err != nil {
+			log.Sugar.Errorw("error pruning build cache: %v",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+			return
+		}
+	}()
 
 	for _, ref := range strRefs {
 		pushAddr := ref

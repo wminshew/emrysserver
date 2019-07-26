@@ -26,9 +26,9 @@ metadata:
   namespace: emrys-prod
 spec:
   balancingMode: UTILIZATION
-  timeoutSec: 920
+  timeoutSec: 320
   connectionDraining:
-    drainingTimeoutSec: 930
+    drainingTimeoutSec: 330
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -51,7 +51,7 @@ spec:
       labels:
         app: image
     spec:
-      terminationGracePeriodSeconds: 930
+      terminationGracePeriodSeconds: 330
       restartPolicy: Always
       containers:
       - name: image-container
@@ -66,8 +66,8 @@ spec:
             cpu: 50m
             memory: "100Mi"
           limits:
-            cpu: 100m
-            memory: "200Mi"
+            cpu: 50m
+            memory: "100Mi"
         ports:
         - name: http
           containerPort: 8080
@@ -97,8 +97,8 @@ spec:
           value: "false"
         - name: DEBUG_LOG
           value: "false"
-        - name: DEVPI_HOST
-          value: "http://devpi-svc:3141"
+        # - name: DEVPI_HOST
+        #   value: "http://devpi-svc:3141"
         - name: DOCKER_API_VERSION
           value: "1.37"
         - name: DOCKER_ENTRYPOINT_PATH
@@ -132,8 +132,8 @@ spec:
           httpGet:
             path: /healthz
             port: 8080
-          # initialDelaySeconds: 30
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
+          # initialDelaySeconds: 60
           # periodSeconds: 30
           periodSeconds: 10
           timeoutSeconds: 1
@@ -146,12 +146,11 @@ spec:
           privileged: true 
         resources:
           requests:
-            cpu: 200m
+            cpu: 100m
             memory: "1Gi"
-            # memory: "2Gi" TODO
           limits:
-            cpu: 500m
-            memory: "3Gi"
+            cpu: 100m
+            memory: "1Gi"
         ports:
         - containerPort: 2375
         env:
@@ -173,8 +172,8 @@ spec:
             cpu: 50m
             memory: "250Mi"
           limits:
-            cpu: 100m
-            memory: "500Mi"
+            cpu: 50m
+            memory: "250Mi"
         ports:
         - containerPort: 5000
         env:

@@ -1,44 +1,54 @@
-FROM nvidia/cuda:9.0-base-ubuntu16.04 as base
+FROM nvidia/cuda:10.1-base-ubuntu18.04 as base
 LABEL maintainer="William Minshew <w@emrys.io>"
 
-RUN apt-get update && \
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV PATH /opt/conda/bin:$PATH
+
+RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
-    cuda-command-line-tools-9-0 \
-    cuda-cublas-9-0 \
-    cuda-cufft-9-0 \
-    cuda-curand-9-0 \
-    cuda-cusolver-9-0 \
-    cuda-cusparse-9-0 \
-    libcudnn7=7.0.5.15-1+cuda9.0 \
-    python3-pip \
-    python3-setuptools \
+    bzip2 \
+    ca-certificates \
+    curl \
+    git \
+    wget \
     && \
     apt-get clean && \
     apt-get autoremove && \
-rm -rf /var/lib/apt/lists/*
-
-RUN pip3 install --upgrade pip
+    rm -rf /var/lib/apt/lists/*
 
 ARG HOME="/home/user"
-RUN useradd --create-home --home-dir $HOME user
-WORKDIR $HOME
-RUN pip3 --no-cache-dir --timeout=30 --retries=10 install -i http://devpi-svc:3141/root/pypi/+simple/ --trusted-host devpi-svc jupyter
+RUN useradd --create-home --home-dir ${HOME} user
+
+ENV MINICONDA_VERSION 4.7.10
+ENV CONDA_PATH /opt/conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p ${CONDA_PATH} && \
+    rm ~/miniconda.sh && \
+    ${CONDA_PATH}/bin/conda clean -qtipsy && \
+    echo ". ${CONDA_PATH}/etc/profile.d/conda.sh" >> ${HOME}/.bashrc && \
+    chown -R user:user /opt/conda
+
+ENV TINI_VERSION v0.16.1
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
+RUN chmod +x /usr/bin/tini
+
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR ${HOME}
 
 
 FROM base
-ARG HOME="/home/user"
-COPY ./entrypoint.sh /entrypoint.sh
-RUN ["chmod", "+x", "/entrypoint.sh"]
-ARG REQS
-COPY $REQS ./
-RUN pip3 --no-cache-dir --timeout=30 --retries=10 install -i http://devpi-svc:3141/root/pypi/+simple/ --trusted-host devpi-svc -r $REQS
 
-ARG NOTEBOOK
-ARG HAS_MAIN
 ARG MAIN
-COPY $MAIN ./
+ARG CONDA_ENV
+ARG PIP_REQS
+ARG NOTEBOOK
+ENV MAIN=${MAIN} CONDA_ENV=${CONDA_ENV} PIP_REQS=${PIP_REQS} NOTEBOOK=${NOTEBOOK} HOME="/home/user"
 
-ENV MAIN=$MAIN HAS_MAIN=$HAS_MAIN NOTEBOOK=$NOTEBOOK
-RUN chown -R user:user $HOME
+COPY Dockerfile ${MAIN}* ${CONDA_ENV}* ${PIP_REQS}* ./
+RUN rm -f Dockerfile
+RUN chown -R user:user ${HOME}
 USER user
-ENTRYPOINT ["/entrypoint.sh"]
+
+ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
