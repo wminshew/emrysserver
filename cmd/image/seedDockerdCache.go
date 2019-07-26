@@ -138,7 +138,7 @@ func seedDockerdCache(ctx context.Context) {
 	}
 
 	// build from dockerfile, then push it to local registry
-	ctxFiles := []string{inputDockerfilePath}
+	ctxFiles := []string{inputDockerfilePath, inputDockerEntrypointPath}
 	pr, pw := io.Pipe()
 	go func() {
 		if err := archiver.TarGz.Write(pw, ctxFiles); err != nil {
