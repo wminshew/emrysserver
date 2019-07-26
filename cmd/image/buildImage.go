@@ -310,35 +310,38 @@ var buildImage app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	}
 
 	defer func() {
-		// wait to remove image, in case job fails & is promptly re-run
-		time.Sleep(5 * time.Minute) // TODO: make wait period ENV
+		// regular defer func seems to prevent http server response
+		go func() {
+			// wait to remove image, in case job fails & is promptly re-run
+			time.Sleep(5 * time.Minute) // TODO: make wait period ENV
 
-		log.Sugar.Infof("Removing images %v", strRefs)
-		for _, ref := range strRefs {
-			if _, err := dClient.ImageRemove(ctx, ref, types.ImageRemoveOptions{
-				Force: true,
-			}); err != nil {
-				log.Sugar.Errorw("error removing image",
+			log.Sugar.Infof("Removing images %v", strRefs)
+			for _, ref := range strRefs {
+				if _, err := dClient.ImageRemove(ctx, ref, types.ImageRemoveOptions{
+					Force: true,
+				}); err != nil {
+					log.Sugar.Errorw("error removing image",
+						"method", r.Method,
+						"url", r.URL,
+						"err", err.Error(),
+						"jID", jID,
+						"ref", ref,
+					)
+					return
+				}
+			}
+
+			log.Sugar.Infof("Pruning build cache")
+			if _, err := dClient.BuildCachePrune(ctx); err != nil {
+				log.Sugar.Errorw("error pruning build cache: %v",
 					"method", r.Method,
 					"url", r.URL,
 					"err", err.Error(),
 					"jID", jID,
-					"ref", ref,
 				)
 				return
 			}
-		}
-
-		log.Sugar.Infof("Pruning build cache")
-		if _, err := dClient.BuildCachePrune(ctx); err != nil {
-			log.Sugar.Errorw("error pruning build cache: %v",
-				"method", r.Method,
-				"url", r.URL,
-				"err", err.Error(),
-				"jID", jID,
-			)
-			return
-		}
+		}()
 	}()
 
 	for _, ref := range strRefs {
