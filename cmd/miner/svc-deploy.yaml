@@ -51,7 +51,7 @@ spec:
       labels:
         app: miner
     spec:
-      terminationGracePeriodSeconds: 120
+      terminationGracePeriodSeconds: 140
       # terminationGracePeriodSeconds: 630
       restartPolicy: Always
       containers:
@@ -103,7 +103,7 @@ spec:
         - name: DEBUG_LONGPOLL
           value: "false"
         - name: MINER_SEMVER
-          value: "0.11.0"
+          value: "0.11.1"
         - name: MINER_TIMEOUT
           value: "120"
         - name: SENDGRID_SECRET
