@@ -113,9 +113,19 @@ var postOutputLog app.Handler = func(w http.ResponseWriter, r *http.Request) *ap
 				)
 				return
 			}
-			go func() {
-				defer app.CheckErr(r, func() error { return os.Remove(outputLog) }) // no need to cache locally
-				time.Sleep(15 * time.Minute)
+			defer func() {
+				go func() {
+					time.Sleep(15 * time.Minute)
+					if err := os.Remove(outputLog); err != nil { // no need to cache locally
+						log.Sugar.Errorw("error removing output log",
+							"method", r.Method,
+							"url", r.URL,
+							"err", err.Error(),
+							"jID", jID,
+						)
+						return
+					}
+				}()
 			}()
 		}()
 
