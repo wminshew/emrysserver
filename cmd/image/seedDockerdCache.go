@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	localBaseJobRef   string
-	remoteBaseCudaRef string
-	dockerfilePath    = os.Getenv("DOCKER_PATH")
+	localBaseJobRef      string
+	remoteBaseCudaRef    string
+	dockerfilePath       = os.Getenv("DOCKER_PATH")
+	dockerEntrypointPath = os.Getenv("DOCKER_ENTRYPOINT_PATH")
 )
 
 // TODO: move to initContainers
@@ -115,6 +116,27 @@ func seedDockerdCache(ctx context.Context) {
 		return
 	}
 
+	inputDockerEntrypointPath := filepath.Join(seedBuildCtx, "entrypoint.sh")
+	if err := func() error {
+		dockerEntrypoint, err := os.Open(dockerEntrypointPath)
+		if err != nil {
+			return err
+		}
+		defer check.Err(dockerEntrypoint.Close)
+
+		inputDockerEntrypoint, err := os.Create(inputDockerEntrypointPath)
+		if err != nil {
+			return err
+		}
+		defer check.Err(inputDockerEntrypoint.Close)
+
+		_, err = io.Copy(inputDockerEntrypoint, dockerEntrypoint)
+		return err
+	}(); err != nil {
+		log.Sugar.Errorf("error copying docker entrypoint into %s: %s", seedBuildCtx, err)
+		return
+	}
+
 	// build from dockerfile, then push it to local registry
 	ctxFiles := []string{inputDockerfilePath}
 	pr, pw := io.Pipe()
@@ -130,9 +152,8 @@ func seedDockerdCache(ctx context.Context) {
 	log.Sugar.Infof("Building %s...", localBaseJobRef)
 	if buildResp, err := dClient.ImageBuild(ctx, pr, types.ImageBuildOptions{
 		CacheFrom: []string{remoteBaseCudaRef, localBaseJobRef},
-		// Dockerfile: filepath.Base(dockerfilePath),
-		Tags:   []string{localBaseJobRef},
-		Target: "base",
+		Tags:      []string{localBaseJobRef},
+		Target:    "base",
 	}); err != nil {
 		log.Sugar.Infof("error building %s: %v", localBaseJobRef, err)
 	} else if err = jsonmessage.DisplayJSONMessagesStream(buildResp.Body, os.Stdout, os.Stdout.Fd(), nil); err != nil {

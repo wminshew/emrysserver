@@ -26,7 +26,6 @@ var (
 	debugLog     = (os.Getenv("DEBUG_LOG") == "true")
 	// devpiHost        = os.Getenv("DEVPI_HOST")
 	// devpiTrustedHost string
-	dockerEntrypointPath = os.Getenv("DOCKER_ENTRYPOINT_PATH")
 )
 
 func main() {
