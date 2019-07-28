@@ -17,12 +17,12 @@ if [ -f "$PIP_REQS" ]; then
   if ! [ `conda list "^pip" | grep "^pip"` ]; then
     conda install -q -y -n $CONDA_ENV_NAME pip 1>/dev/null
   fi
-  pip --no-cache-dir --timeout=30 --retries=10 install -r "$PIP_REQS"
+  pip --no-cache-dir --progress-bar ascii --timeout=30 --retries=10 install -r "$PIP_REQS"
 fi
 
 if [ "$NOTEBOOK" = 'true' ]; then
   if ! [ `command -v jupyter` ]; then
-    conda install jupyter
+    conda install -q -y -n $CONDA_ENV_NAME jupyter 1>/dev/null
   fi
 
   if [ -f "$MAIN" ]; then

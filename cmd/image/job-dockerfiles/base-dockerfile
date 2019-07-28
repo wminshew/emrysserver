@@ -44,11 +44,10 @@ ARG MAIN
 ARG CONDA_ENV
 ARG PIP_REQS
 ARG NOTEBOOK
-ENV MAIN=${MAIN} CONDA_ENV=${CONDA_ENV} PIP_REQS=${PIP_REQS} NOTEBOOK=${NOTEBOOK} HOME="/home/user"
+ENV MAIN=${MAIN} CONDA_ENV=${CONDA_ENV} PIP_REQS=${PIP_REQS} NOTEBOOK=${NOTEBOOK}
 
-COPY Dockerfile ${MAIN}* ${CONDA_ENV}* ${PIP_REQS}* ./
+COPY --chown=user:user Dockerfile ${MAIN}* ${CONDA_ENV}* ${PIP_REQS}* ./
 RUN rm -f Dockerfile
-RUN chown -R user:user ${HOME}
 USER user
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
