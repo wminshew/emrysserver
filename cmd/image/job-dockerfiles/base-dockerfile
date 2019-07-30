@@ -6,6 +6,7 @@ ENV PATH /opt/conda/bin:$PATH
 
 RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
+    build-essential \
     bzip2 \
     ca-certificates \
     curl \
@@ -16,12 +17,12 @@ RUN apt-get update --fix-missing && \
     apt-get autoremove && \
     rm -rf /var/lib/apt/lists/*
 
-ARG HOME="/home/user"
-RUN useradd --create-home --home-dir ${HOME} user
 
+ARG HOME="/home/user"
 ENV MINICONDA_VERSION 4.7.10
 ENV CONDA_PATH /opt/conda
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -O ~/miniconda.sh && \
+RUN useradd --create-home --home-dir ${HOME} user && \
+    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p ${CONDA_PATH} && \
     rm ~/miniconda.sh && \
     ${CONDA_PATH}/bin/conda clean -qtipsy && \
@@ -30,11 +31,10 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${MINICONDA_VERS
 
 ENV TINI_VERSION v0.16.1
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
-RUN chmod +x /usr/bin/tini
 
 COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
+RUN chmod +x /usr/bin/tini /entrypoint.sh
 WORKDIR ${HOME}
 
 
