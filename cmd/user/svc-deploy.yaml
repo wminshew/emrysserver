@@ -110,7 +110,7 @@ spec:
               name: stripe-webhook-keys
               key: connect-key
         - name: USER_SEMVER
-          value: "0.11.0"
+          value: "0.12.0"
         volumeMounts:
           - name: user-creds
             mountPath: /secrets/google_application_credentials
