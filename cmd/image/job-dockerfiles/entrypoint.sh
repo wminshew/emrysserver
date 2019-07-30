@@ -22,7 +22,7 @@ fi
 
 if [ "$NOTEBOOK" = 'true' ]; then
   if ! [ `command -v jupyter` ]; then
-    conda install -q -y -n $CONDA_ENV_NAME jupyter
+    conda install -q -y -n $CONDA_ENV_NAME jupyter 1>/dev/null
   fi
 
   if [ -f "$MAIN" ]; then
