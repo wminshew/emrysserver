@@ -6,7 +6,7 @@ source $CONDA_BASE/etc/profile.d/conda.sh
 
 if [ -f "$CONDA_ENV" ]; then
   CONDA_ENV_NAME=`sed -n 's/name: //pI' "$CONDA_ENV"`
-  conda env create -q -y -f "$CONDA_ENV"
+  conda env create -q -f "$CONDA_ENV"
 else
   CONDA_ENV_NAME=user
   conda create -q -y -n $CONDA_ENV_NAME 1>/dev/null
