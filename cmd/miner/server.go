@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	"github.com/satori/go.uuid"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/account"
 	"github.com/stripe/stripe-go/charge"
@@ -50,6 +51,43 @@ func main() {
 		panic(err)
 	}
 	initMinerManager()
+
+	// TODO: make distributed friendly
+	activeMiners = map[uuid.UUID]*activeMiner{}
+	stopMonitoring := make(chan struct{})
+	defer close(stopMonitoring)
+	go func() {
+		for {
+			select {
+			case <-stopMonitoring:
+				return
+			// TODO: use separate timer from minerTimeout
+			case <-time.After(time.Second * time.Duration(minerTimeout)):
+				numWorkers := 0
+				numBusyWorkers := 0
+				t := time.Now()
+				for mUUID, miner := range activeMiners {
+					for dUUID, worker := range miner.ActiveWorkers {
+						if t.Sub(worker.lastPost) > (time.Second * time.Duration(minerTimeout)) {
+							delete(miner.ActiveWorkers, dUUID)
+						} else if !uuid.Equal(worker.JobID, uuid.Nil) {
+							numBusyWorkers++
+						}
+					}
+
+					if len(miner.ActiveWorkers) == 0 {
+						delete(activeMiners, mUUID)
+					}
+					numWorkers += len(miner.ActiveWorkers)
+				}
+				log.Sugar.Infow("active miners",
+					"numMiners", len(activeMiners),
+					"numWorkers", numWorkers,
+					"activeMiners", activeMiners,
+				)
+			}
+		}
+	}()
 
 	stripeConfig := &stripe.BackendConfig{
 		// MaxNetworkRetries: maxRetries, TODO

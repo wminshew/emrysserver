@@ -19,11 +19,23 @@ import (
 	"time"
 )
 
+type activeMiner struct {
+	ActiveWorkers map[uuid.UUID]*activeWorker `json:"activeWorkers"`
+}
+
+type activeWorker struct {
+	lastPost time.Time
+	JobID    uuid.UUID `json:"JobID"`
+}
+
+var (
+	activeMiners map[uuid.UUID]*activeMiner
+)
+
 // postMinerStats receives a snapshot of the miner's system and resets active workers' timeouts
 var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	mID := r.Header.Get("X-Jwt-Claims-Subject")
-	// mUUID, err := uuid.FromString(mID)
-	_, err := uuid.FromString(mID)
+	mUUID, err := uuid.FromString(mID)
 	if err != nil {
 		log.Sugar.Errorw("error parsing miner ID",
 			"method", r.Method,
@@ -44,9 +56,16 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 		return &app.Error{Code: http.StatusBadRequest, Message: "error decoding miner stats request body"}
 	}
 
+	if activeMiners[mUUID] == nil {
+		activeMiners[mUUID] = &activeMiner{
+			ActiveWorkers: map[uuid.UUID]*activeWorker{},
+		}
+	}
+	aMiner := activeMiners[mUUID]
+
 	for _, wStats := range minerStats.WorkerStats {
 		if !uuid.Equal(wStats.JobID, uuid.Nil) {
-			if ch, ok := activeWorker[wStats.JobID]; ok {
+			if ch, ok := activeWorkers[wStats.JobID]; ok {
 				ch <- struct{}{}
 			} else {
 				// should only happen if the pod is restarted while a job is running
@@ -63,6 +82,12 @@ var postMinerStats app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 				go monitorJob(wStats.JobID, notebook)
 			}
 		}
+		if aMiner.ActiveWorkers[wStats.GPUStats.ID] == nil {
+			aMiner.ActiveWorkers[wStats.GPUStats.ID] = &activeWorker{}
+		}
+		aWorker := aMiner.ActiveWorkers[wStats.GPUStats.ID]
+		aWorker.JobID = wStats.JobID
+		aWorker.lastPost = time.Now()
 	}
 
 	go func() {

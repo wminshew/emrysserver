@@ -18,16 +18,18 @@ import (
 )
 
 var (
-	activeWorker = make(map[uuid.UUID]chan struct{})
+	activeWorkers = make(map[uuid.UUID]chan struct{})
 )
 
 const (
 	maxRetries = 10
 )
 
+// TODO: make friendly for rolling restarts
+// TODO: make distributed friendly
 func monitorJob(jUUID uuid.UUID, notebook bool) {
-	activeWorker[jUUID] = make(chan struct{})
-	defer delete(activeWorker, jUUID)
+	activeWorkers[jUUID] = make(chan struct{})
+	defer delete(activeWorkers, jUUID)
 	for {
 		select {
 		case <-time.After(time.Second * time.Duration(minerTimeout)):
@@ -207,7 +209,7 @@ func monitorJob(jUUID uuid.UUID, notebook bool) {
 			go payments.ChargeMiner(stripeChargeC, jUUID)
 
 			return
-		case <-activeWorker[jUUID]:
+		case <-activeWorkers[jUUID]:
 		}
 	}
 }
