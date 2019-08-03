@@ -25,11 +25,11 @@ if [ "$NOTEBOOK" = 'true' ]; then
     conda install -q -y -n $CONDA_ENV_NAME jupyter 1>/dev/null
   fi
 
-  if [ -f "$MAIN" ]; then
-    exec jupyter notebook --ip=0.0.0.0 --no-browser "$MAIN"
-  fi
-
-  exec jupyter notebook --ip=0.0.0.0 --no-browser
+  # if [ -f "$MAIN" ]; then
+  #   exec jupyter notebook --ip=0.0.0.0 --no-browser "$MAIN"
+  # fi
+  
+  exec jupyter notebook --ip=0.0.0.0 --no-browser --port=8888 --NotebookApp.custom_display_url=http://127.0.0.1:8888
 fi
 
 exec python "$MAIN"
