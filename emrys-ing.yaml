@@ -6,7 +6,7 @@ metadata:
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "emrys-static-ip"
     kubernetes.io/ingress.allow-http: "false"
-    networking.gke.io/managed-certificates: "emrys-cert, emrys-api-cert, emrys-data-cert, emrys-registry-cert"
+    networking.gke.io/managed-certificates: "emrys-cert,emrys-api-cert,emrys-data-cert,emrys-registry-cert"
   namespace: emrys-prod
 spec:
   # tls:
