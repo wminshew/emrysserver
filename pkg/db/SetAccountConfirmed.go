@@ -25,6 +25,7 @@ func SetAccountConfirmed(r *http.Request, aUUID uuid.UUID) error {
 				"aID", aUUID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
+				"pq_name", pqErr.Name,
 				"pq_detail", pqErr.Detail,
 			)
 		} else {

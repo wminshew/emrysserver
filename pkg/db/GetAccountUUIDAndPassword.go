@@ -50,6 +50,7 @@ func GetAccountUUIDAndPassword(r *http.Request, email string) (uuid.UUID, string
 				"email", email,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
+				"pq_name", pqErr.Name,
 				"pq_detail", pqErr.Detail,
 			)
 		} else {

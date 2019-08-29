@@ -25,6 +25,7 @@ func GetJobDiskQuota(jUUID uuid.UUID) (int64, error) {
 				"jID", jUUID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
+				"pq_name", pqErr.Name,
 				"pq_detail", pqErr.Detail,
 			)
 		} else {

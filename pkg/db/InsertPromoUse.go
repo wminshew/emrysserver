@@ -28,6 +28,7 @@ func InsertPromoUse(aUUID uuid.UUID, promo string) error {
 				"promo_id", promoID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
+				"pq_name", pqErr.Name,
 				"pq_detail", pqErr.Detail,
 			)
 		} else {

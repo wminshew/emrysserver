@@ -40,6 +40,7 @@ func GetValidBids(r *http.Request, jUUID uuid.UUID) (*sql.Rows, error) {
 				"jID", jUUID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
+				"pq_name", pqErr.Name,
 				"pq_detail", pqErr.Detail,
 			)
 		} else {

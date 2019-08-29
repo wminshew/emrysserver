@@ -26,6 +26,7 @@ func GetAccountStripeCustomerID(r *http.Request, aUUID uuid.UUID) (string, error
 				"err", err.Error(),
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
+				"pq_name", pqErr.Name,
 				"pq_detail", pqErr.Detail,
 			)
 		} else {
