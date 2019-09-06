@@ -28,7 +28,7 @@ func GetStatusAuctionPrereqs(r *http.Request, jUUID uuid.UUID) (time.Time, time.
 				"jID", jUUID,
 				"pq_sev", pqErr.Severity,
 				"pq_code", pqErr.Code,
-				"pq_name", pqErr.Name,
+				"pq_msg", pqErr.Message,
 				"pq_detail", pqErr.Detail,
 			)
 		} else {
