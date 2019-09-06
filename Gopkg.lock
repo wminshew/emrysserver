@@ -184,9 +184,10 @@
   name = "github.com/lib/pq"
   packages = [
     ".",
-    "oid"
+    "oid",
+    "scram"
   ]
-  revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
+  revision = "78223426e7c66d631117c0a9da1b7f3fde4d23a5"
 
 [[projects]]
   branch = "master"
