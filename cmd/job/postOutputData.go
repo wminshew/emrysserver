@@ -18,6 +18,10 @@ import (
 	"time"
 )
 
+const (
+	jobFinishedBuffer = 5 * time.Second
+)
+
 // postOutputData receives the miner's container execution for the user
 var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *app.Error {
 	vars := mux.Vars(r)
@@ -121,22 +125,7 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 	}()
 
 	if jobCanceled {
-		var err error
-		defer func() {
-			if err == nil {
-				if err := jobsManager.Publish(fmt.Sprintf("%s-output-data-posted", jID), struct{}{}); err != nil {
-					log.Sugar.Errorw("error publishing empty struct for output-data-posted",
-						"method", r.Method,
-						"url", r.URL,
-						"err", err.Error(),
-						"jID", jID,
-					)
-					return
-				}
-			}
-		}()
-
-		if err = db.SetStatusOutputDataPosted(jUUID); err != nil {
+		if err := db.SetStatusOutputDataPosted(jUUID); err != nil {
 			log.Sugar.Errorw("error setting output data posted status",
 				"method", r.Method,
 				"url", r.URL,
@@ -146,8 +135,20 @@ var postOutputData app.Handler = func(w http.ResponseWriter, r *http.Request) *a
 			return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 		}
 
+		if err := jobsManager.Publish(fmt.Sprintf("%s-output-data-posted", jID), struct{}{}); err != nil {
+			log.Sugar.Errorw("error publishing empty struct for output-data-posted",
+				"method", r.Method,
+				"url", r.URL,
+				"err", err.Error(),
+				"jID", jID,
+			)
+		}
+
 		return nil
 	}
+
+	// TODO: fix race condition between user pulling last logs / data & miner finishing job which makes it inactive
+	time.Sleep(jobFinishedBuffer)
 
 	if err := db.SetJobFinishedAndStatusOutputDataPosted(r, jUUID); err != nil {
 		log.Sugar.Errorw("error setting job finished and output data posted status",
