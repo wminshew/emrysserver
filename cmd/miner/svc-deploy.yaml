@@ -103,7 +103,7 @@ spec:
         - name: DEBUG_LONGPOLL
           value: "false"
         - name: MINER_SEMVER
-          value: "0.12.1"
+          value: "0.13.0"
         - name: MINER_TIMEOUT
           value: "120"
         - name: SENDGRID_SECRET
