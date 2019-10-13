@@ -49,7 +49,7 @@ func checkAndEvictProjects() error {
 	var diskSizeGb float64
 	var err error
 	for diskSizeGb, err = getDirSizeGb(pvcPath); err != nil && diskSizeGb > pvcThreshold*pvcCapGb; diskSizeGb, err = getDirSizeGb(pvcPath) {
-		log.Sugar.Infof("Disk size: %.1f, evicting...", diskSizeGb)
+		log.Sugar.Infof("Disk size: %.1f / %.1f exceeds threshold %.1f, evicting...", diskSizeGb, pvcCapGb, pvcThreshold*pvcCapGb)
 		if err := evictLRUProjectFromDisk(); err != nil {
 			return err
 		}
@@ -57,7 +57,7 @@ func checkAndEvictProjects() error {
 	if err != nil {
 		return err
 	}
-	log.Sugar.Infof("Disk size: %.1f", diskSizeGb)
+	log.Sugar.Infof("Disk size: %.1f / %.1f", diskSizeGb, pvcCapGb)
 	return nil
 }
 

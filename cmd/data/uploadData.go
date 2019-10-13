@@ -131,9 +131,10 @@ var uploadData app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	defer app.CheckErr(r, f.Close)
 
 	pr, pw := io.Pipe()
+	defer app.CheckErr(r, pr.Close)
 	go func() {
 		defer app.CheckErr(r, pw.Close)
-		if _, err := io.Copy(pw, r.Body); err != nil {
+		if _, err := io.Copy(pw, r.Body); err != nil && err != io.ErrClosedPipe {
 			log.Sugar.Errorw("error copying request body to pipe writer",
 				"method", r.Method,
 				"url", r.URL,
