@@ -11,6 +11,7 @@ RUN apt-get update --fix-missing && \
     ca-certificates \
     curl \
     git \
+    unzip \
     wget \
     && \
     apt-get clean && \
