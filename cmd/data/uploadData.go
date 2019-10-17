@@ -131,7 +131,7 @@ var uploadData app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	defer app.CheckErr(r, f.Close)
 
 	pr, pw := io.Pipe()
-	// defer app.CheckErr(r, pr.Close)
+	// defer app.CheckErr(r, pr.Close) TODO: maybe should move below to after zr.Close
 	defer app.CheckErr(r, pw.Close)
 	go func() {
 		// defer app.CheckErr(r, pw.Close) TODO: does moving the pw.close to outside the go func remove the error?
