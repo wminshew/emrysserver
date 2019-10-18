@@ -131,10 +131,8 @@ var uploadData app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 	defer app.CheckErr(r, f.Close)
 
 	pr, pw := io.Pipe()
-	// defer app.CheckErr(r, pr.Close) TODO: maybe should move below to after zr.Close
-	defer app.CheckErr(r, pw.Close)
 	go func() {
-		// defer app.CheckErr(r, pw.Close) TODO: does moving the pw.close to outside the go func remove the error?
+		defer app.CheckErr(r, pw.Close)
 		if _, err := io.Copy(pw, r.Body); err != nil && err != io.ErrClosedPipe {
 			log.Sugar.Errorw("error copying request body to pipe writer",
 				"method", r.Method,
@@ -168,6 +166,7 @@ var uploadData app.Handler = func(w http.ResponseWriter, r *http.Request) *app.E
 		return &app.Error{Code: http.StatusInternalServerError, Message: "internal error"}
 	}
 	app.CheckErr(r, zr.Close)
+	app.CheckErr(r, pr.Close)
 
 	hStr := base64.StdEncoding.EncodeToString(h.Sum(nil))
 	uIDProject := path.Join(uID, project)
