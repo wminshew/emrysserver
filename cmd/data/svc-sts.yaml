@@ -26,7 +26,7 @@ metadata:
   namespace: emrys-prod
 spec:
   balancingMode: UTILIZATION
-  timeoutSec: 620
+  timeoutSec: 1820
   connectionDraining:
     drainingTimeoutSec: 630
 ---
