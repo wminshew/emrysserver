@@ -62,13 +62,13 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']
-        resources:
-          requests:
-            cpu: 200m
-            memory: "400Mi"
-          limits:
-            cpu: 200m
-            memory: "400Mi"
+        # resources:
+        #   requests:
+        #     cpu: 200m
+        #     memory: "400Mi"
+        #   limits:
+        #     cpu: 200m
+        #     memory: "400Mi"
         ports:
         - name: http
           containerPort: 8080

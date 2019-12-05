@@ -26,7 +26,8 @@ metadata:
   namespace: emrys-prod
 spec:
   minReadySeconds: 60
-  replicas: 2
+  replicas: 1
+  # replicas: 2
   strategy:
     type: RollingUpdate
   selector:
@@ -47,13 +48,13 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']
-        resources:
-          requests:
-            cpu: 50m
-            memory: "50Mi"
-          limits:
-            cpu: 50m
-            memory: "50Mi"
+        # resources:
+        #   requests:
+        #     cpu: 50m
+        #     memory: "50Mi"
+        #   limits:
+        #     cpu: 50m
+        #     memory: "50Mi"
         command: ["/cloud_sql_proxy",
         "-instances=emrys-12:us-central1:emrysserver-psql=tcp:127.0.0.1:5433",
           "-credential_file=/secrets/cloudsql/credentials.json",
@@ -71,13 +72,13 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']
-        resources:
-          requests:
-            cpu: 150m
-            memory: "300Mi"
-          limits:
-            cpu: 150m
-            memory: "300Mi"
+        # resources:
+        #   requests:
+        #     cpu: 150m
+        #     memory: "300Mi"
+        #   limits:
+        #     cpu: 150m
+        #     memory: "300Mi"
         ports:
         - name: postgres
           containerPort: 5432

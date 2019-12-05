@@ -39,7 +39,8 @@ metadata:
   namespace: emrys-prod
 spec:
   minReadySeconds: 60
-  replicas: 2
+  replicas: 1
+  # replicas: 2
   strategy:
     type: RollingUpdate
   revisionHistoryLimit: 3
@@ -61,13 +62,13 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']
-        resources:
-          requests:
-            cpu: 100m
-            memory: "200Mi"
-          limits:
-            cpu: 100m
-            memory: "200Mi"
+        # resources:
+        #   requests:
+        #     cpu: 100m
+        #     memory: "200Mi"
+        #   limits:
+        #     cpu: 100m
+        #     memory: "200Mi"
         ports:
         - name: http
           containerPort: 5000
@@ -129,13 +130,13 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: ['all']
-        resources:
-          requests:
-            cpu: 100m
-            memory: "500Mi"
-          limits:
-            cpu: 100m
-            memory: "500Mi"
+        # resources:
+        #   requests:
+        #     cpu: 100m
+        #     memory: "500Mi"
+        #   limits:
+        #     cpu: 100m
+        #     memory: "500Mi"
         ports:
         - containerPort: 5001
         env:
